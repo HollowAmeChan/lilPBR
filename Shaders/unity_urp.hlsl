@@ -194,6 +194,14 @@ float3 GetOpaquePosW(float2 uvScreen, float3 V)
     }
 }
 
+#define LILPBR_PROPERTY(t,n) t n;
+#define LILPBR_TEXTURE(t,n) t n;
+#define LILPBR_SAMPLER(t,n) t n;
+
+LILPBR_PROPERTIES
+LILPBR_TEXTURES
+LILPBR_SAMPLERS
+
 // Lightings
 
 InputData GetInputData(ShadingParams p, v2f i)
@@ -266,6 +274,39 @@ SurfaceData GetSurfaceData(ShadingParams p, v2f i)
     return surfaceData;
 }
 
+half RemapLILPBRScreenSpaceAO(half ao)
+{
+    half occlusion = 1.0 - ao;
+    half softness = max(_SSAOSoftness, 0.0001);
+    half edge0 = saturate(_SSAOThreshold - softness);
+    half edge1 = max(saturate(_SSAOThreshold + softness), edge0 + 0.0001);
+    half toonAO = 1.0 - smoothstep(edge0, edge1, occlusion);
+    return lerp(ao, toonAO, _SSAOToonStrength);
+}
+
+AmbientOcclusionFactor CreateLILPBRAmbientOcclusionFactor(InputData inputData, SurfaceData surfaceData)
+{
+    AmbientOcclusionFactor aoFactor;
+    aoFactor.directAmbientOcclusion = 1.0;
+    aoFactor.indirectAmbientOcclusion = surfaceData.occlusion;
+
+    #if defined(_SCREEN_SPACE_OCCLUSION) && !defined(_TRANSPARENT)
+        if(_UseSSAO != 0)
+        {
+            AmbientOcclusionFactor ssaoFactor = GetScreenSpaceAmbientOcclusion(inputData.normalizedScreenSpaceUV);
+            ssaoFactor.directAmbientOcclusion = RemapLILPBRScreenSpaceAO(ssaoFactor.directAmbientOcclusion);
+            ssaoFactor.indirectAmbientOcclusion = RemapLILPBRScreenSpaceAO(ssaoFactor.indirectAmbientOcclusion);
+
+            half directAO = lerp(1.0, ssaoFactor.directAmbientOcclusion, _SSAODirectStrength);
+            half indirectAO = lerp(1.0, ssaoFactor.indirectAmbientOcclusion, _SSAOIndirectStrength);
+            aoFactor.directAmbientOcclusion = lerp(1.0, directAO, _SSAOStrength);
+            aoFactor.indirectAmbientOcclusion = min(surfaceData.occlusion, lerp(1.0, indirectAO, _SSAOStrength));
+        }
+    #endif
+
+    return aoFactor;
+}
+
 VertexPositionInputs GetVertexPositionInputs(float3 positionWS, float4 positionCS)
 {
     VertexPositionInputs input;
@@ -299,7 +340,7 @@ half3 GetReflection(ShadingParams p, v2f i)
 {
     InputData inputData = GetInputData(p, i);
     SurfaceData surfaceData = GetSurfaceData(p, i);
-    AmbientOcclusionFactor aoFactor = CreateAmbientOcclusionFactor(inputData, surfaceData);
+    AmbientOcclusionFactor aoFactor = CreateLILPBRAmbientOcclusionFactor(inputData, surfaceData);
     return GlossyEnvironmentReflection(-reflect(p.V,p.refN), p.posWorld, p.perceptualRoughness, 1.0, GetNormalizedScreenSpaceUV(i.pos)) * aoFactor.indirectAmbientOcclusion;
 }
 
@@ -308,12 +349,18 @@ void DoLight(inout half3 diff, inout half3 spec, ShadingParams p, Light light)
     DoLight(diff, spec, p, light.direction, light.color * (light.distanceAttenuation * light.shadowAttenuation));
 }
 
+half GetSubsurfaceShadowAttenuation(Light light)
+{
+    half shadowAttenuation = _SubsurfaceReceiveShadow != 0 ? light.shadowAttenuation : 1.0;
+    return light.distanceAttenuation * shadowAttenuation;
+}
+
 void ComputeLights(out half3 diff, out half3 spec, out half3 reflectionStrength, ShadingParams p, v2f i)
 {
     uint meshRenderingLayers = GetMeshRenderingLayer();
     InputData inputData = GetInputData(p, i);
     SurfaceData surfaceData = GetSurfaceData(p, i);
-    AmbientOcclusionFactor aoFactor = CreateAmbientOcclusionFactor(inputData, surfaceData);
+    AmbientOcclusionFactor aoFactor = CreateLILPBRAmbientOcclusionFactor(inputData, surfaceData);
     diff = 0;
     spec = 0;
 
@@ -374,7 +421,7 @@ half3 DoTranslucent(ShadingParams p, v2f i, half translucentRoughness)
 {
     InputData inputData = GetInputData(p, i);
     SurfaceData surfaceData = GetSurfaceData(p, i);
-    AmbientOcclusionFactor aoFactor = CreateAmbientOcclusionFactor(inputData, surfaceData);
+    AmbientOcclusionFactor aoFactor = CreateLILPBRAmbientOcclusionFactor(inputData, surfaceData);
     return GlossyEnvironmentReflection(-p.V+p.N*0.2, p.posWorld, translucentRoughness, 1.0, GetNormalizedScreenSpaceUV(i.pos)) * aoFactor.indirectAmbientOcclusion;
 }
 
@@ -383,7 +430,7 @@ void ComputeSubsurface(out half3 diff, ShadingParams p, v2f i)
     uint meshRenderingLayers = GetMeshRenderingLayer();
     InputData inputData = GetInputData(p, i);
     SurfaceData surfaceData = GetSurfaceData(p, i);
-    AmbientOcclusionFactor aoFactor = CreateAmbientOcclusionFactor(inputData, surfaceData);
+    AmbientOcclusionFactor aoFactor = CreateLILPBRAmbientOcclusionFactor(inputData, surfaceData);
     diff = 0;
 
     half roughness = p.subsurfaceThickness * 0.5;
@@ -401,7 +448,7 @@ void ComputeSubsurface(out half3 diff, ShadingParams p, v2f i)
         #ifdef _LIGHT_LAYERS
         if (IsMatchingLightLayer(mainLight.layerMask, meshRenderingLayers))
         #endif
-        diff += pow(saturate(dot(mainLight.direction,-p.V)), lightpow) * (mainLight.distanceAttenuation * mainLight.shadowAttenuation) * mainLight.color;
+        diff += pow(saturate(dot(mainLight.direction,-p.V)), lightpow) * GetSubsurfaceShadowAttenuation(mainLight) * mainLight.color;
     }
 
     diff = GlossyEnvironmentReflection(-p.V, p.posWorld, roughness, 1.0, GetNormalizedScreenSpaceUV(i.pos)) * aoFactor.indirectAmbientOcclusion;
@@ -424,7 +471,7 @@ void ComputeSubsurface(out half3 diff, ShadingParams p, v2f i)
             #ifdef _LIGHT_LAYERS
             if (IsMatchingLightLayer(light.layerMask, meshRenderingLayers))
             #endif
-            diff += pow(saturate(dot(light.direction,-p.V)), lightpow) * (light.distanceAttenuation * light.shadowAttenuation) * light.color;
+            diff += pow(saturate(dot(light.direction,-p.V)), lightpow) * GetSubsurfaceShadowAttenuation(light) * light.color;
         }
         #endif
 
@@ -433,7 +480,7 @@ void ComputeSubsurface(out half3 diff, ShadingParams p, v2f i)
             #ifdef _LIGHT_LAYERS
             if (IsMatchingLightLayer(light.layerMask, meshRenderingLayers))
             #endif
-            diff += pow(saturate(dot(light.direction,-p.V)), lightpow) * (light.distanceAttenuation * light.shadowAttenuation) * light.color;
+            diff += pow(saturate(dot(light.direction,-p.V)), lightpow) * GetSubsurfaceShadowAttenuation(light) * light.color;
         LIGHT_LOOP_END
     }
     #endif
@@ -470,13 +517,5 @@ struct appdata
     #endif
     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
-
-#define LILPBR_PROPERTY(t,n) t n;
-#define LILPBR_TEXTURE(t,n) t n;
-#define LILPBR_SAMPLER(t,n) t n;
-
-LILPBR_PROPERTIES
-LILPBR_TEXTURES
-LILPBR_SAMPLERS
 
 #endif

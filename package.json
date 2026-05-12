@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "displayName": "lilPBR",
   "description": "PBR Shaders",
-  "unity": "2022.3",
+  "unity": "6000.0",
   "hideInEditor": false,
   "url" : "https://github.com/lilxyzw/lilPBR/releases/download/1.0.0/jp.lilxyzw.lilpbr-1.0.0.zip?",
   "repo" : "https://lilxyzw.github.io/vpm-repos/vpm.json"

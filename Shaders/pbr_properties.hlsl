@@ -18,6 +18,13 @@ LILPBR_PROPERTY(float,_ParallaxQuality)\
 LILPBR_PROPERTY(float,_ParallaxRandomize)\
 LILPBR_PROPERTY(float,_Reflectance)\
 LILPBR_PROPERTY(float,_GSAAStrength)\
+LILPBR_PROPERTY(uint,_UseSSAO)\
+LILPBR_PROPERTY(float,_SSAOStrength)\
+LILPBR_PROPERTY(float,_SSAODirectStrength)\
+LILPBR_PROPERTY(float,_SSAOIndirectStrength)\
+LILPBR_PROPERTY(float,_SSAOToonStrength)\
+LILPBR_PROPERTY(float,_SSAOThreshold)\
+LILPBR_PROPERTY(float,_SSAOSoftness)\
 LILPBR_PROPERTY(float4,_EmissionColor)\
 LILPBR_PROPERTY(float4,_EmissionMap_TexelSize)\
 LILPBR_PROPERTY(float4,_EmissionSubpixel_ST)\
@@ -42,8 +49,11 @@ LILPBR_PROPERTY(float,_TranslucentRoughness)\
 LILPBR_PROPERTY(float,_TranslucentRoughnessBlend)\
 LILPBR_PROPERTY(float,_SubsurfaceScattering)\
 LILPBR_PROPERTY(uint,_SubsurfaceChannel)\
+LILPBR_PROPERTY(uint,_SubsurfaceInvert)\
+LILPBR_PROPERTY(float,_SubsurfacePower)\
 LILPBR_PROPERTY(float,_SubsurfaceThickness)\
 LILPBR_PROPERTY(float,_SubsurfaceRim)\
+LILPBR_PROPERTY(uint,_SubsurfaceReceiveShadow)\
 LILPBR_PROPERTY(float4,_SubsurfaceColor)\
 LILPBR_PROPERTY(float,_SubsurfaceAlbedoBlend)\
 LILPBR_PROPERTY(float,_ScreeningScaleX)\

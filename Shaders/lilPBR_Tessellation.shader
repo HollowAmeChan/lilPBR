@@ -55,6 +55,16 @@ Shader "lilPBR Tessellation"
         _GSAAStrength ("GSAA", Range(0.0, 1.0)) = 0.5
         [LILFoldoutEnd]
 
+        [LILFoldout(SSAO)]
+        [ToggleUI] _UseSSAO ("SSAO", Int) = 0
+        _SSAOStrength ("Strength", Range(0.0, 1.0)) = 1.0
+        _SSAODirectStrength ("Direct Strength", Range(0.0, 1.0)) = 1.0
+        _SSAOIndirectStrength ("Indirect Strength", Range(0.0, 1.0)) = 0.5
+        _SSAOToonStrength ("Toon Remap", Range(0.0, 1.0)) = 0.0
+        _SSAOThreshold ("Threshold", Range(0.0, 1.0)) = 0.5
+        _SSAOSoftness ("Softness", Range(0.0, 1.0)) = 0.5
+        [LILFoldoutEnd]
+
         [LILFoldout(Emission)]
         [LILKeyword(_EMISSION)][LILPropertyCache][LILHDR] _EmissionColor ("Emission", Color) = (0,0,0)
         [NoScaleOffset] _EmissionMap ("Emission", 2D) = "white" {}
@@ -102,8 +112,11 @@ Shader "lilPBR Tessellation"
         [LILKeyword(_SUBSURFACE)][LILPropertyCache] _SubsurfaceScattering ("Strength", Range(0.0, 1.0)) = 0.0
         [NoScaleOffset] _SubsurfaceMap ("Strength", 2D) = "white" {}
         [Enum(R, 0, G, 1, B, 2, A, 3)] _SubsurfaceChannel ("Channel", Int) = 0
+        [ToggleUI] _SubsurfaceInvert ("Invert Strength", Int) = 0
+        _SubsurfacePower ("Power", Range(0.1, 8.0)) = 1.0
         _SubsurfaceThickness ("Thickness", Range(0.0, 1.0)) = 1.0
         _SubsurfaceRim ("Rim", Range(0.0, 1.0)) = 1.0
+        [ToggleUI] _SubsurfaceReceiveShadow ("Receive Shadow", Int) = 1
         _SubsurfaceColor ("Color", Color) = (1,1,1,1)
         _SubsurfaceAlbedoBlend ("Albedo Blend", Range(0.0, 1.0)) = 1.0
         [LILFoldoutEnd]
@@ -260,11 +273,6 @@ Shader "lilPBR Tessellation"
 
     SubShader
     {
-        PackageRequirements
-        {
-            "com.unity.render-pipelines.universal": "17.0"
-        }
-
         Tags
         {
             "RenderType" = "Opaque"
@@ -353,8 +361,6 @@ Shader "lilPBR Tessellation"
             #pragma multi_compile _ LOD_FADE_CROSSFADE
             #pragma multi_compile_fragment _ DEBUG_DISPLAY
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Fog.hlsl"
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ProbeVolumeVariants.hlsl"
-
             //--------------------------------------
             // GPU Instancing
             #pragma multi_compile_instancing

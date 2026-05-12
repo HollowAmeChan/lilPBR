@@ -875,7 +875,9 @@ half4 Shading(v2f i, float4 posSV, float3 posWorld, half3 V, half3 tangent, half
     #endif
 
     #ifdef _SUBSURFACE
-    half subsurface = Sample(_SubsurfaceMap, sampler_MainTex, uv_MainTex, dx, dy)[_SubsurfaceChannel] * _SubsurfaceScattering;
+    half subsurfaceMask = Sample(_SubsurfaceMap, sampler_MainTex, uv_MainTex, dx, dy)[_SubsurfaceChannel];
+    if(_SubsurfaceInvert != 0) subsurfaceMask = 1.0 - subsurfaceMask;
+    half subsurface = pow(saturate(subsurfaceMask), _SubsurfacePower) * _SubsurfaceScattering;
     half subsurfaceRim = lerp(1, abs(dot(p.N, p.V)), _SubsurfaceRim);
     p.subsurfaceThickness = lerp(1, _SubsurfaceThickness * subsurfaceRim, subsurface);
     p.subsurfaceColor = lerp(_SubsurfaceColor.rgb, _SubsurfaceColor.rgb * min(p.albedo, p.albedoback), _SubsurfaceAlbedoBlend);

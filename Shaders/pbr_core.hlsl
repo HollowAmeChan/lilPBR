@@ -620,12 +620,10 @@ half4 Shading(v2f i, float4 posSV, float3 posWorld, half3 V, half3 tangent, half
     FixAtras(uv_MainTex, uv[0]);
     #endif
 
-    #if defined(_SCREEN_SPACE_OCCLUSION)
-    if(_UseSSAO != 0)
+    if(_UseScreenSpaceAO != 0)
     {
         p.ssaoMask = Sample(_SSAOMask, sampler_MainTex, uv_MainTex, dx, dy).r;
     }
-    #endif
 
     // Albedo
     half4 mainTex = Sample(_MainTex, sampler_MainTex, uv_MainTex, dx, dy) * _Color;

@@ -55,14 +55,15 @@ Shader "lilPBR Tessellation"
         _GSAAStrength ("GSAA", Range(0.0, 1.0)) = 0.5
         [LILFoldoutEnd]
 
-        [LILFoldout(SSAO)]
-        [ToggleUI] _UseSSAO ("SSAO", Int) = 0
-        _SSAOStrength ("Strength", Range(0.0, 1.0)) = 1.0
-        _SSAODirectStrength ("Direct Strength", Range(0.0, 1.0)) = 1.0
-        _SSAOIndirectStrength ("Indirect Strength", Range(0.0, 1.0)) = 0.5
-        [LILVector2] _SSAORemap ("SSAO Remap Min Max", Vector) = (0,1,0,0)
-        _SSAOContrast ("SSAO Contrast", Range(0.0, 4.0)) = 1.0
-        [NoScaleOffset] _SSAOMask ("SSAO Mask", 2D) = "white" {}
+        [LILFoldout(Screen Space AO)]
+        [ToggleUI] _UseScreenSpaceAO ("Screen Space AO", Int) = 1
+        [Enum(ScreenSpaceOcclusionTexture, 0, HTraceBufferAO, 1)] _ScreenSpaceAOSource ("AO RT", Int) = 0
+        _SSAOStrength ("AO Strength", Range(0.0, 1.0)) = 1.0
+        _SSAODirectStrength ("Direct AO Strength", Range(0.0, 1.0)) = 1.0
+        _SSAOIndirectStrength ("Indirect AO Strength", Range(0.0, 1.0)) = 0.5
+        [LILVector2] _SSAORemap ("AO Remap Min Max", Vector) = (0,1,0,0)
+        _SSAOContrast ("AO Contrast", Range(0.0, 4.0)) = 1.0
+        [NoScaleOffset] _SSAOMask ("AO Mask", 2D) = "white" {}
         [LILFoldoutEnd]
 
         [LILFoldout(Emission)]

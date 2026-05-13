@@ -201,6 +201,7 @@ float3 GetOpaquePosW(float2 uvScreen, float3 V)
 LILPBR_PROPERTIES
 LILPBR_TEXTURES
 LILPBR_SAMPLERS
+TEXTURE2D(_HTraceBufferAO);
 
 // Lightings
 
@@ -288,15 +289,32 @@ AmbientOcclusionFactor CreateLILPBRAmbientOcclusionFactor(InputData inputData, S
     aoFactor.directAmbientOcclusion = 1.0;
     aoFactor.indirectAmbientOcclusion = surfaceData.occlusion;
 
-    #if defined(_SCREEN_SPACE_OCCLUSION) && !defined(_TRANSPARENT)
-        if(_UseSSAO != 0)
+    #if !defined(_TRANSPARENT)
+        if(_UseScreenSpaceAO != 0)
         {
-            AmbientOcclusionFactor ssaoFactor = GetScreenSpaceAmbientOcclusion(inputData.normalizedScreenSpaceUV);
-            ssaoFactor.directAmbientOcclusion = RemapLILPBRScreenSpaceAO(ssaoFactor.directAmbientOcclusion);
-            ssaoFactor.indirectAmbientOcclusion = RemapLILPBRScreenSpaceAO(ssaoFactor.indirectAmbientOcclusion);
+            half screenSpaceDirectAO = 1.0;
+            half screenSpaceIndirectAO = 1.0;
 
-            half directAO = lerp(1.0, ssaoFactor.directAmbientOcclusion, _SSAODirectStrength);
-            half indirectAO = lerp(1.0, ssaoFactor.indirectAmbientOcclusion, _SSAOIndirectStrength);
+            if(_ScreenSpaceAOSource == 1)
+            {
+                half htraceAO = SAMPLE_TEXTURE2D(_HTraceBufferAO, sampler_linear_clamp, inputData.normalizedScreenSpaceUV).r;
+                screenSpaceDirectAO = htraceAO;
+                screenSpaceIndirectAO = htraceAO;
+            }
+            else
+            {
+                #if defined(_SCREEN_SPACE_OCCLUSION)
+                    AmbientOcclusionFactor ssaoFactor = GetScreenSpaceAmbientOcclusion(inputData.normalizedScreenSpaceUV);
+                    screenSpaceDirectAO = ssaoFactor.directAmbientOcclusion;
+                    screenSpaceIndirectAO = ssaoFactor.indirectAmbientOcclusion;
+                #endif
+            }
+
+            screenSpaceDirectAO = RemapLILPBRScreenSpaceAO(screenSpaceDirectAO);
+            screenSpaceIndirectAO = RemapLILPBRScreenSpaceAO(screenSpaceIndirectAO);
+
+            half directAO = lerp(1.0, screenSpaceDirectAO, _SSAODirectStrength);
+            half indirectAO = lerp(1.0, screenSpaceIndirectAO, _SSAOIndirectStrength);
             half ssaoStrength = _SSAOStrength * ssaoMask;
             aoFactor.directAmbientOcclusion = lerp(1.0, directAO, ssaoStrength);
             aoFactor.indirectAmbientOcclusion = min(surfaceData.occlusion, lerp(1.0, indirectAO, ssaoStrength));

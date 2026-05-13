@@ -314,6 +314,11 @@ namespace jp.lilxyzw.lilpbr
                         foreach (var propc in propertyCache) DoKeyword(propc);
                     }
 
+                    if (prop.name == "_ScreenSpaceAOSource")
+                    {
+                        EditorGUILayout.HelpBox("HTraceAO writes _ScreenSpaceOcclusionTexture. Insert HTraceAO before opaque/lit materials so this shader can read the AO result.", MessageType.Info);
+                    }
+
                     propertyCache.Clear();
                 }
             }

@@ -18,7 +18,8 @@ LILPBR_PROPERTY(float,_ParallaxQuality)\
 LILPBR_PROPERTY(float,_ParallaxRandomize)\
 LILPBR_PROPERTY(float,_Reflectance)\
 LILPBR_PROPERTY(float,_GSAAStrength)\
-LILPBR_PROPERTY(uint,_UseSSAO)\
+LILPBR_PROPERTY(uint,_UseScreenSpaceAO)\
+LILPBR_PROPERTY(uint,_ScreenSpaceAOSource)\
 LILPBR_PROPERTY(float,_SSAOStrength)\
 LILPBR_PROPERTY(float,_SSAODirectStrength)\
 LILPBR_PROPERTY(float,_SSAOIndirectStrength)\

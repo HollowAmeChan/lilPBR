@@ -178,7 +178,7 @@ Weighted OIT
 
 ## 6. 双仓同步规则
 
-- 先定义共享语义：例如 `_UseScreenSpaceAO` / 旧 `_UseSSAO`、AO remap、SSS thickness、OIT mode 的含义要一致。
+- 先定义共享语义：例如 `_UseScreenSpaceAO`、AO remap、SSS thickness、OIT mode 的含义要一致；旧 `_UseSSAO` 不再作为入口。
 - lilPBR 可以拥有更完整的 PBR 参数；lilToon 只同步角色确实需要的入口。
 - 管线功能优先抽成共享 Renderer Feature 或保持同名设置，避免两边各写一套不可互通的实现。
 - 每做一个 P0/P1 功能，都补一段“lilToon 同步点”和“lilPBR 私有点”。

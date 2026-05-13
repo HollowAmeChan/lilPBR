@@ -44,6 +44,7 @@ struct ShadingParams
     half3 emission;
     half subsurfaceThickness;
     half3 subsurfaceColor;
+    half ssaoMask;
     half3 oneMinusReflectionStrength;
 };
 

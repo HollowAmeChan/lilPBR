@@ -276,15 +276,13 @@ SurfaceData GetSurfaceData(ShadingParams p, v2f i)
 
 half RemapLILPBRScreenSpaceAO(half ao)
 {
-    half occlusion = 1.0 - ao;
-    half softness = max(_SSAOSoftness, 0.0001);
-    half edge0 = saturate(_SSAOThreshold - softness);
-    half edge1 = max(saturate(_SSAOThreshold + softness), edge0 + 0.0001);
-    half toonAO = 1.0 - smoothstep(edge0, edge1, occlusion);
-    return lerp(ao, toonAO, _SSAOToonStrength);
+    half ssaoMin = min(_SSAORemap.x, _SSAORemap.y - 0.001);
+    half ssaoMax = max(_SSAORemap.y, ssaoMin + 0.001);
+    ao = saturate((ao - ssaoMin) / max(ssaoMax - ssaoMin, 0.001));
+    return saturate(1.0 - pow(saturate(1.0 - ao), max(_SSAOContrast, 0.001)));
 }
 
-AmbientOcclusionFactor CreateLILPBRAmbientOcclusionFactor(InputData inputData, SurfaceData surfaceData)
+AmbientOcclusionFactor CreateLILPBRAmbientOcclusionFactor(InputData inputData, SurfaceData surfaceData, half ssaoMask)
 {
     AmbientOcclusionFactor aoFactor;
     aoFactor.directAmbientOcclusion = 1.0;
@@ -299,8 +297,9 @@ AmbientOcclusionFactor CreateLILPBRAmbientOcclusionFactor(InputData inputData, S
 
             half directAO = lerp(1.0, ssaoFactor.directAmbientOcclusion, _SSAODirectStrength);
             half indirectAO = lerp(1.0, ssaoFactor.indirectAmbientOcclusion, _SSAOIndirectStrength);
-            aoFactor.directAmbientOcclusion = lerp(1.0, directAO, _SSAOStrength);
-            aoFactor.indirectAmbientOcclusion = min(surfaceData.occlusion, lerp(1.0, indirectAO, _SSAOStrength));
+            half ssaoStrength = _SSAOStrength * ssaoMask;
+            aoFactor.directAmbientOcclusion = lerp(1.0, directAO, ssaoStrength);
+            aoFactor.indirectAmbientOcclusion = min(surfaceData.occlusion, lerp(1.0, indirectAO, ssaoStrength));
         }
     #endif
 
@@ -340,7 +339,7 @@ half3 GetReflection(ShadingParams p, v2f i)
 {
     InputData inputData = GetInputData(p, i);
     SurfaceData surfaceData = GetSurfaceData(p, i);
-    AmbientOcclusionFactor aoFactor = CreateLILPBRAmbientOcclusionFactor(inputData, surfaceData);
+    AmbientOcclusionFactor aoFactor = CreateLILPBRAmbientOcclusionFactor(inputData, surfaceData, p.ssaoMask);
     return GlossyEnvironmentReflection(-reflect(p.V,p.refN), p.posWorld, p.perceptualRoughness, 1.0, GetNormalizedScreenSpaceUV(i.pos)) * aoFactor.indirectAmbientOcclusion;
 }
 
@@ -360,7 +359,7 @@ void ComputeLights(out half3 diff, out half3 spec, out half3 reflectionStrength,
     uint meshRenderingLayers = GetMeshRenderingLayer();
     InputData inputData = GetInputData(p, i);
     SurfaceData surfaceData = GetSurfaceData(p, i);
-    AmbientOcclusionFactor aoFactor = CreateLILPBRAmbientOcclusionFactor(inputData, surfaceData);
+    AmbientOcclusionFactor aoFactor = CreateLILPBRAmbientOcclusionFactor(inputData, surfaceData, p.ssaoMask);
     diff = 0;
     spec = 0;
 
@@ -421,7 +420,7 @@ half3 DoTranslucent(ShadingParams p, v2f i, half translucentRoughness)
 {
     InputData inputData = GetInputData(p, i);
     SurfaceData surfaceData = GetSurfaceData(p, i);
-    AmbientOcclusionFactor aoFactor = CreateLILPBRAmbientOcclusionFactor(inputData, surfaceData);
+    AmbientOcclusionFactor aoFactor = CreateLILPBRAmbientOcclusionFactor(inputData, surfaceData, p.ssaoMask);
     return GlossyEnvironmentReflection(-p.V+p.N*0.2, p.posWorld, translucentRoughness, 1.0, GetNormalizedScreenSpaceUV(i.pos)) * aoFactor.indirectAmbientOcclusion;
 }
 
@@ -430,7 +429,7 @@ void ComputeSubsurface(out half3 diff, ShadingParams p, v2f i)
     uint meshRenderingLayers = GetMeshRenderingLayer();
     InputData inputData = GetInputData(p, i);
     SurfaceData surfaceData = GetSurfaceData(p, i);
-    AmbientOcclusionFactor aoFactor = CreateLILPBRAmbientOcclusionFactor(inputData, surfaceData);
+    AmbientOcclusionFactor aoFactor = CreateLILPBRAmbientOcclusionFactor(inputData, surfaceData, p.ssaoMask);
     diff = 0;
 
     half roughness = p.subsurfaceThickness * 0.5;

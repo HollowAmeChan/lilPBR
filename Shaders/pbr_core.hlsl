@@ -594,6 +594,7 @@ half4 Shading(v2f i, float4 posSV, float3 posWorld, half3 V, half3 tangent, half
     p.V = V;
     p.N = normal;
     p.origN = normal;
+    p.ssaoMask = 1.0;
     float2 uv_MainTex = p.uv[0] * _MainTex_ST.xy + _MainTex_ST.zw;
     float2 dx = ddx(uv_MainTex);
     float2 dy = ddy(uv_MainTex);
@@ -617,6 +618,13 @@ half4 Shading(v2f i, float4 posSV, float3 posWorld, half3 V, half3 tangent, half
 
     #ifdef _ATRASMASK
     FixAtras(uv_MainTex, uv[0]);
+    #endif
+
+    #if defined(_SCREEN_SPACE_OCCLUSION)
+    if(_UseSSAO != 0)
+    {
+        p.ssaoMask = Sample(_SSAOMask, sampler_MainTex, uv_MainTex, dx, dy).r;
+    }
     #endif
 
     // Albedo

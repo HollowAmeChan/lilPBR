@@ -22,9 +22,8 @@ LILPBR_PROPERTY(uint,_UseSSAO)\
 LILPBR_PROPERTY(float,_SSAOStrength)\
 LILPBR_PROPERTY(float,_SSAODirectStrength)\
 LILPBR_PROPERTY(float,_SSAOIndirectStrength)\
-LILPBR_PROPERTY(float,_SSAOToonStrength)\
-LILPBR_PROPERTY(float,_SSAOThreshold)\
-LILPBR_PROPERTY(float,_SSAOSoftness)\
+LILPBR_PROPERTY(float4,_SSAORemap)\
+LILPBR_PROPERTY(float,_SSAOContrast)\
 LILPBR_PROPERTY(float4,_EmissionColor)\
 LILPBR_PROPERTY(float4,_EmissionMap_TexelSize)\
 LILPBR_PROPERTY(float4,_EmissionSubpixel_ST)\
@@ -120,6 +119,7 @@ LILPBR_TEXTURE(Texture2D,_MetallicGlossMap)\
 LILPBR_TEXTURE(Texture2D,_OcclusionMap)\
 LILPBR_TEXTURE(Texture2D,_ParallaxMap)\
 LILPBR_TEXTURE(Texture2D,_SmoothnessMap)\
+LILPBR_TEXTURE(Texture2D,_SSAOMask)\
 LILPBR_TEXTURE(Texture2D,_EmissionMap)\
 LILPBR_TEXTURE(Texture2D,_EmissionSubpixel)\
 LILPBR_TEXTURE(Texture2D,_AnisotropyDirection)\

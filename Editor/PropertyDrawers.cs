@@ -106,6 +106,16 @@ namespace jp.lilxyzw.lilpbr
         }
     }
 
+    internal class LILVector2Drawer : EzDrawer
+    {
+        protected override void OnGUIEz(Rect position, MaterialProperty prop, GUIContent label, MaterialEditor editor)
+        {
+            Vector4 current = prop.vectorValue;
+            var value = EditorGUI.Vector2Field(position, label, new Vector2(current.x, current.y));
+            if (EditorGUI.EndChangeCheck()) prop.vectorValue = new Vector4(value.x, value.y, current.z, current.w);
+        }
+    }
+
     internal class LILShaderLayerOneDrawer : EzDrawer
     {
         protected override void OnGUIEz(Rect position, MaterialProperty prop, GUIContent label, MaterialEditor editor)

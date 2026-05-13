@@ -60,9 +60,9 @@ Shader "lilPBR Tessellation"
         _SSAOStrength ("Strength", Range(0.0, 1.0)) = 1.0
         _SSAODirectStrength ("Direct Strength", Range(0.0, 1.0)) = 1.0
         _SSAOIndirectStrength ("Indirect Strength", Range(0.0, 1.0)) = 0.5
-        _SSAOToonStrength ("Toon Remap", Range(0.0, 1.0)) = 0.0
-        _SSAOThreshold ("Threshold", Range(0.0, 1.0)) = 0.5
-        _SSAOSoftness ("Softness", Range(0.0, 1.0)) = 0.5
+        [LILVector2] _SSAORemap ("SSAO Remap Min Max", Vector) = (0,1,0,0)
+        _SSAOContrast ("SSAO Contrast", Range(0.0, 4.0)) = 1.0
+        [NoScaleOffset] _SSAOMask ("SSAO Mask", 2D) = "white" {}
         [LILFoldoutEnd]
 
         [LILFoldout(Emission)]

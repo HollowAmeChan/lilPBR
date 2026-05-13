@@ -1,5 +1,12 @@
 # lilPBR Quality Roadmap
 
+## 0.1 2026-05-14 Planar Reflection
+
+- lilPBR shader adds a `Planar Reflection` material entry that samples `_LILPBRPlanarReflectionTexture` and blends it with environment reflection by smoothness, edge fade, and tint.
+- The rendering side lives in `lilToon-URP-Extensions/Runtime/PlanarReflection/LILPlanarReflectionSurface.cs`.
+- SSR remains a cheap fallback; flat mirror floors, polished floors, and water sheets should use Planar Reflection first.
+- Pipeline code stays in the shared URP extensions package instead of the lilPBR material package.
+
 > 目标：把 lilPBR 作为 PBR、场景材质和共享 URP 管线功能的主战场。lilToon 侧已经验证过的 Screen Space AO、Fake SSS、透明/OIT 方向，优先迁到 lilPBR，再把共享接口反向同步给 lilToon。
 
 ## 0. 2026-05-14 HTrace AO / SSGI 路线更新

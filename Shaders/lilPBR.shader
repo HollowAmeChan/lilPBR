@@ -66,6 +66,28 @@ Shader "lilPBR"
         [NoScaleOffset] _SSAOMask ("AO Mask", 2D) = "white" {}
         [LILFoldoutEnd]
 
+        [LILFoldout(Screen Space Reflection)]
+        [ToggleUI] _UseScreenSpaceReflection ("Screen Space Reflection", Int) = 0
+        _SSRStrength ("SSR Strength", Range(0.0, 1.0)) = 1.0
+        _SSRMaxDistance ("Max Distance", Range(0.1, 50.0)) = 10.0
+        _SSRThickness ("Thickness", Range(0.001, 1.0)) = 0.15
+        [IntRange] _SSRStepCount ("Steps", Range(4, 64)) = 32
+        _SSRMinSmoothness ("Min Smoothness", Range(0.0, 1.0)) = 0.75
+        _SSREdgeFade ("Edge Fade", Range(0.0, 32.0)) = 8.0
+        [LILFoldoutEnd]
+
+        [LILFoldout(Planar Reflection)]
+        [ToggleUI] _UsePlanarReflection ("Planar Reflection", Int) = 0
+        _PlanarReflectionStrength ("Strength", Range(0.0, 1.0)) = 1.0
+        _PlanarReflectionMinSmoothness ("Min Smoothness", Range(0.0, 1.0)) = 0.75
+        _PlanarReflectionEdgeFade ("Edge Fade", Range(0.0, 32.0)) = 4.0
+        _PlanarReflectionFadeStart ("Fade Start", Float) = 0.0
+        _PlanarReflectionFadeEnd ("Fade End", Float) = 0.0
+        _PlanarReflectionTint ("Tint", Color) = (1,1,1,1)
+        [ToggleUI] _PlanarReflectionFlipY ("Flip Y", Int) = 0
+        [HideInInspector][NoScaleOffset] _LILPBRPlanarReflectionTexture ("Planar Reflection Texture", 2D) = "black" {}
+        [LILFoldoutEnd]
+
         [LILFoldout(Emission)]
         [LILKeyword(_EMISSION)][LILPropertyCache][LILHDR] _EmissionColor ("Emission", Color) = (0,0,0)
         [NoScaleOffset] _EmissionMap ("Emission", 2D) = "white" {}
@@ -427,6 +449,114 @@ Shader "lilPBR"
                 float cameradepth = _CameraDepthTexture[uint2(i.pos.xy)].r;
                 depth = abs(depth - cameradepth) < saturate(depth * depth) ? cameradepth : depth;
                 #endif
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "GBuffer"
+            Tags { "LightMode" = "UniversalGBuffer" }
+            ZWrite [_ZWrite]
+            Cull [_Cull]
+            AlphaToMask [_AlphaToMask]
+
+            HLSLPROGRAM
+            #pragma target 5.0
+
+            #pragma shader_feature_local _UVMODE_DEFAULT _UVMODE_PLANAR _UVMODE_TRIPLANAR
+            #pragma shader_feature_local _ATRASMASK
+            #pragma shader_feature_local_fragment _ _CUTOUT _DITHER _TRANSPARENT
+            #pragma shader_feature_local _RANDOMIZE_UV
+            #pragma shader_feature_local _TEXTUREMODE_SEPARATE
+            #pragma shader_feature_local_vertex _PARALLAXMODE_VERTEX
+            #pragma shader_feature_local_fragment _PARALLAXMODE_PIXEL
+            #pragma shader_feature_local_fragment _EMISSION
+            #pragma shader_feature_local_fragment _EMISSION_SUBPIXEL
+            #pragma shader_feature_local_fragment _TRANSLUCENT
+            #pragma shader_feature_local_vertex _WINDMODE_NONE _WINDMODE_CLOTH _WINDMODE_TREE
+            #pragma shader_feature_local_fragment _WINDMODE_POM
+
+            #pragma multi_compile _ LOD_FADE_CROSSFADE
+            #pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT
+            #pragma multi_compile_instancing
+            #pragma instancing_options renderinglayer
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/GBufferOutput.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/ShaderPass.hlsl"
+            #if defined(LOD_FADE_CROSSFADE)
+                #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/LODCrossFade.hlsl"
+            #endif
+
+            struct v2f
+            {
+                POS_INTERPOLATION float4 pos : SV_POSITION;
+                float4 uv01 : TEXCOORD0;
+                float4 uv23 : TEXCOORD1;
+                float4 normal : TEXCOORD2;
+                float4 tangent : TEXCOORD3;
+                float4 binormal : TEXCOORD4;
+                float4 color : TEXCOORD5;
+                float3 V : TEXCOORD6;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            #define SHADERPASS SHADERPASS_GBUFFER
+            #include "unity_urp.hlsl"
+            #include "pbr_core.hlsl"
+
+            v2f vert (appdata v)
+            {
+                v2f o = (v2f)0;
+                UNITY_SETUP_INSTANCE_ID(v);
+                UNITY_TRANSFER_INSTANCE_ID(v, o);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
+                DoVertex(v, o.pos, o.uv01, o.uv23, o.normal, o.tangent, o.binormal, o.color, o.V);
+                return o;
+            }
+
+            GBufferFragOutput frag (v2f i, bool isFront : SV_IsFrontFace DEPTH_OUT)
+            {
+                UNITY_SETUP_INSTANCE_ID(i);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
+                #ifdef LOD_FADE_CROSSFADE
+                LODFadeCrossFade(i.pos);
+                #endif
+
+                #ifdef _TRANSPARENT
+                clip(-1.0);
+                #endif
+
+                UnpackAndShadingAlpha(i, i.normal, i.tangent, i.binormal, i.color, i.V, i.uv01, i.uv23, isFront, depth);
+
+                float2 uv[4];
+                uv[0] = i.uv01.xy;
+                uv[1] = i.uv01.zw;
+                uv[2] = i.uv23.xy;
+                uv[3] = i.uv23.zw;
+                ShadingParams p = ShadingMeta(i, i.pos, uv);
+
+                InputData inputData = (InputData)0;
+                inputData.positionWS = float3(i.normal.w, i.tangent.w, i.binormal.w);
+                inputData.positionCS = i.pos;
+                inputData.normalWS = NormalizeNormalPerPixel(i.normal.xyz);
+                inputData.viewDirectionWS = GetWorldSpaceNormalizeViewDir(inputData.positionWS);
+                inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(i.pos);
+                inputData.bakedGI = SampleSH(inputData.normalWS);
+                inputData.shadowMask = 1.0;
+
+                SurfaceData surfaceData = GetSurfaceData(p, i);
+                BRDFData brdfData;
+                InitializeBRDFData(surfaceData.albedo, surfaceData.metallic, surfaceData.specular, surfaceData.smoothness, surfaceData.alpha, brdfData);
+                half3 color = GlobalIllumination(brdfData, (BRDFData)0, 0,
+                                                  inputData.bakedGI, surfaceData.occlusion, inputData.positionWS,
+                                                  inputData.normalWS, inputData.viewDirectionWS, inputData.normalizedScreenSpaceUV);
+                return PackGBuffersBRDFData(brdfData, inputData, surfaceData.smoothness, surfaceData.emission + color, surfaceData.occlusion);
             }
             ENDHLSL
         }

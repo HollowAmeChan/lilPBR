@@ -112,6 +112,7 @@ half3 BlendNormals(half3 n1, half3 n2)
 
 // Depth
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareOpaqueTexture.hlsl"
 float2 ScreenUV(float4 pos){ return pos.xy / _ScreenParams.xy; }
 float2 ClampScreenUV(float2 uv){ return saturate(uv); }
 
@@ -125,7 +126,6 @@ half SampleDepth(float2 uv)
     return SampleSceneDepth(uv, sampler_linear_clamp);
 }
 
-#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareOpaqueTexture.hlsl"
 half4 SampleScreen(float2 uv)
 {
     return half4(SampleSceneColor(uv), 1);
@@ -202,6 +202,8 @@ LILPBR_PROPERTIES
 LILPBR_TEXTURES
 LILPBR_SAMPLERS
 TEXTURE2D(_HTraceBufferAO);
+float4x4 _LILPBRPlanarReflectionTextureMatrix;
+float4 _LILPBRPlanarReflectionParams;
 
 // Lightings
 
@@ -358,7 +360,94 @@ half3 GetReflection(ShadingParams p, v2f i)
     InputData inputData = GetInputData(p, i);
     SurfaceData surfaceData = GetSurfaceData(p, i);
     AmbientOcclusionFactor aoFactor = CreateLILPBRAmbientOcclusionFactor(inputData, surfaceData, p.ssaoMask);
-    return GlossyEnvironmentReflection(-reflect(p.V,p.refN), p.posWorld, p.perceptualRoughness, 1.0, GetNormalizedScreenSpaceUV(i.pos)) * aoFactor.indirectAmbientOcclusion;
+    half3 environmentReflection = GlossyEnvironmentReflection(-reflect(p.V,p.refN), p.posWorld, p.perceptualRoughness, 1.0, GetNormalizedScreenSpaceUV(i.pos)) * aoFactor.indirectAmbientOcclusion;
+    half3 reflection = environmentReflection;
+
+    if(_UsePlanarReflection != 0 && _PlanarReflectionStrength > 0.0 && _LILPBRPlanarReflectionParams.x > 0.5)
+    {
+        half planarSmoothnessFade = saturate((p.smoothness - _PlanarReflectionMinSmoothness) / max(1.0 - _PlanarReflectionMinSmoothness, 0.0001));
+        if(planarSmoothnessFade > 0.0)
+        {
+            float2 planarUV = GetNormalizedScreenSpaceUV(i.pos);
+            if(_PlanarReflectionFlipY != 0) planarUV.y = 1.0 - planarUV.y;
+            if(all(planarUV >= 0.0) && all(planarUV <= 1.0))
+            {
+                float planarEdge = min(min(planarUV.x, 1.0 - planarUV.x), min(planarUV.y, 1.0 - planarUV.y));
+                half planarEdgeFade = saturate(planarEdge * _PlanarReflectionEdgeFade);
+                half planarDistanceFade = 1.0;
+                if(_PlanarReflectionFadeEnd > _PlanarReflectionFadeStart)
+                {
+                    float viewDistance = distance(GetCameraPos(), p.posWorld);
+                    planarDistanceFade = 1.0 - smoothstep(_PlanarReflectionFadeStart, _PlanarReflectionFadeEnd, viewDistance);
+                }
+                half planarWeight = saturate(_PlanarReflectionStrength * planarSmoothnessFade * planarEdgeFade * planarDistanceFade * _PlanarReflectionTint.a);
+                half3 planarColor = SAMPLE_TEXTURE2D(_LILPBRPlanarReflectionTexture, sampler_linear_clamp, planarUV).rgb * _PlanarReflectionTint.rgb;
+                reflection = lerp(reflection, planarColor * aoFactor.indirectAmbientOcclusion, planarWeight);
+            }
+        }
+    }
+
+    if(_UseScreenSpaceReflection == 0 || _SSRStrength <= 0.0)
+    {
+        return reflection;
+    }
+
+    half smoothnessFade = saturate((p.smoothness - _SSRMinSmoothness) / max(1.0 - _SSRMinSmoothness, 0.0001));
+    if(smoothnessFade <= 0.0)
+    {
+        return reflection;
+    }
+
+    float3 rayDirectionWS = normalize(reflect(-p.V, normalize(p.refN)));
+    if(dot(rayDirectionWS, p.origN) <= 0.0)
+    {
+        return reflection;
+    }
+
+    int stepCount = (int)clamp(_SSRStepCount, 4.0, 64.0);
+    float rayLength = max(_SSRMaxDistance, 0.001);
+    float rayStride = rayLength / stepCount;
+    float3 rayOriginWS = p.posWorld + rayDirectionWS * max(rayStride, _SSRThickness) * 0.5;
+
+    half3 ssrColor = reflection;
+    half ssrWeight = 0.0;
+
+    [loop]
+    for(int stepIndex = 1; stepIndex <= 64; stepIndex++)
+    {
+        if(stepIndex > stepCount) break;
+
+        float3 rayPositionWS = rayOriginWS + rayDirectionWS * (rayStride * stepIndex);
+        float4 rayPositionCS = TransformWorldToHClip(rayPositionWS);
+        if(rayPositionCS.w <= 0.0) break;
+
+        float2 rayUV = GetNormalizedScreenSpaceUV(rayPositionCS);
+        if(any(rayUV < 0.0) || any(rayUV > 1.0)) break;
+
+        float sceneRawDepth = SampleDepth(rayUV);
+        #if UNITY_REVERSED_Z
+            if(sceneRawDepth <= 0.00001) continue;
+        #else
+            if(sceneRawDepth >= 0.99999) continue;
+        #endif
+
+        float sceneEyeDepth = LinearEyeDepth(sceneRawDepth, _ZBufferParams);
+        float rayEyeDepth = -TransformWorldToView(rayPositionWS).z;
+        float depthDelta = rayEyeDepth - sceneEyeDepth;
+        float thickness = max(_SSRThickness, sceneEyeDepth * _SSRThickness * 0.025);
+
+        if(depthDelta > 0.0 && depthDelta < thickness)
+        {
+            float edge = min(min(rayUV.x, 1.0 - rayUV.x), min(rayUV.y, 1.0 - rayUV.y));
+            half edgeFade = saturate(edge * _SSREdgeFade);
+            half distanceFade = saturate(1.0 - (stepIndex - 1.0) / stepCount);
+            ssrColor = SampleSceneColor(rayUV) * aoFactor.indirectAmbientOcclusion;
+            ssrWeight = saturate(_SSRStrength * smoothnessFade * edgeFade * distanceFade);
+            break;
+        }
+    }
+
+    return lerp(reflection, ssrColor, ssrWeight);
 }
 
 void DoLight(inout half3 diff, inout half3 spec, ShadingParams p, Light light)

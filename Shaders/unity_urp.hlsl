@@ -131,6 +131,18 @@ half4 SampleScreen(float2 uv)
     return half4(SampleSceneColor(uv), 1);
 }
 
+half SampleDepthLod0(float2 uv)
+{
+    uv = ClampAndScaleUVForBilinear(UnityStereoTransformScreenSpaceTex(uv), _CameraDepthTexture_TexelSize.xy);
+    return SAMPLE_TEXTURE2D_X_LOD(_CameraDepthTexture, sampler_linear_clamp, uv, 0).r;
+}
+
+half3 SampleSceneColorLod0(float2 uv)
+{
+    uv = ClampAndScaleUVForBilinear(UnityStereoTransformScreenSpaceTex(uv), _CameraOpaqueTexture_TexelSize.xy);
+    return SAMPLE_TEXTURE2D_X_LOD(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, uv, 0).rgb;
+}
+
 float lilLinearEyeDepth(float z, float2 uvScreen)
 {
     return LinearEyeDepth(z, _ZBufferParams);
@@ -424,7 +436,7 @@ half3 GetReflection(ShadingParams p, v2f i)
         float2 rayUV = GetNormalizedScreenSpaceUV(rayPositionCS);
         if(any(rayUV < 0.0) || any(rayUV > 1.0)) break;
 
-        float sceneRawDepth = SampleDepth(rayUV);
+        float sceneRawDepth = SampleDepthLod0(rayUV);
         #if UNITY_REVERSED_Z
             if(sceneRawDepth <= 0.00001) continue;
         #else
@@ -441,7 +453,7 @@ half3 GetReflection(ShadingParams p, v2f i)
             float edge = min(min(rayUV.x, 1.0 - rayUV.x), min(rayUV.y, 1.0 - rayUV.y));
             half edgeFade = saturate(edge * _SSREdgeFade);
             half distanceFade = saturate(1.0 - (stepIndex - 1.0) / stepCount);
-            ssrColor = SampleSceneColor(rayUV) * aoFactor.indirectAmbientOcclusion;
+            ssrColor = SampleSceneColorLod0(rayUV) * aoFactor.indirectAmbientOcclusion;
             ssrWeight = saturate(_SSRStrength * smoothnessFade * edgeFade * distanceFade);
             break;
         }

@@ -559,6 +559,7 @@ Shader "lilPBR Tessellation"
                                                   inputData.normalWS, inputData.viewDirectionWS, inputData.normalizedScreenSpaceUV);
                 return PackGBuffersBRDFData(brdfData, inputData, surfaceData.smoothness, surfaceData.emission + color, surfaceData.occlusion);
             }
+            #include "tessellation.hlsl"
             ENDHLSL
         }
 

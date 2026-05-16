@@ -35,7 +35,10 @@ LILPBR_PROPERTY(float,_HoAovFlags)\
 LILPBR_PROPERTY(float,_HoAovThickness)\
 LILPBR_PROPERTY(float,_HoAovCurvature)\
 LILPBR_PROPERTY(float,_HoAovUtility)\
-LILPBR_PROPERTY(float4,_HoAovCustomValues0)\
+LILPBR_PROPERTY(float4,_HoAovCustom0Color)\
+LILPBR_PROPERTY(float4,_HoAovCustom1Color)\
+LILPBR_PROPERTY(float4,_HoAovCustom2Color)\
+LILPBR_PROPERTY(float4,_HoAovCustom3Color)\
 LILPBR_PROPERTY(float4,_HoAovCustomValues1)\
 LILPBR_PROPERTY(float4,_HoAovCustomValues2)\
 LILPBR_PROPERTY(uint,_UseScreenSpaceReflection)\
@@ -153,6 +156,10 @@ LILPBR_TEXTURE(Texture2D,_OcclusionMap)\
 LILPBR_TEXTURE(Texture2D,_ParallaxMap)\
 LILPBR_TEXTURE(Texture2D,_SmoothnessMap)\
 LILPBR_TEXTURE(Texture2D,_SSAOMask)\
+LILPBR_TEXTURE(Texture2D,_HoAovCustom0Tex)\
+LILPBR_TEXTURE(Texture2D,_HoAovCustom1Tex)\
+LILPBR_TEXTURE(Texture2D,_HoAovCustom2Tex)\
+LILPBR_TEXTURE(Texture2D,_HoAovCustom3Tex)\
 LILPBR_TEXTURE(Texture2D,_LILPBRPlanarReflectionTexture)\
 LILPBR_TEXTURE(Texture2D,_EmissionMap)\
 LILPBR_TEXTURE(Texture2D,_EmissionSubpixel)\

@@ -45,6 +45,15 @@ float4 HoAovApplyCustomWriteMask(float4 values, float startBit)
         values.w * HoAovHasBit(_HoAovCustomWriteMask, exp2(startBit + 3.0)));
 }
 
+float4 HoAovSampleCustom0To3(float2 uv_MainTex)
+{
+    return float4(
+        _HoAovCustom0Tex.Sample(sampler_trilinear_repeat, uv_MainTex).r * _HoAovCustom0Color.r,
+        _HoAovCustom1Tex.Sample(sampler_trilinear_repeat, uv_MainTex).r * _HoAovCustom1Color.r,
+        _HoAovCustom2Tex.Sample(sampler_trilinear_repeat, uv_MainTex).r * _HoAovCustom2Color.r,
+        _HoAovCustom3Tex.Sample(sampler_trilinear_repeat, uv_MainTex).r * _HoAovCustom3Color.r);
+}
+
 half3 HoAovGetNormal(v2f i, bool isFront, out half3 normalTS)
 {
     half3 tangent = normalize(i.tangent.xyz);
@@ -64,7 +73,7 @@ half3 HoAovGetNormal(v2f i, bool isFront, out half3 normalTS)
     float2 dy = ddy(uv_MainTex);
 
     #ifdef _NORMALMAP
-        half4 bumpmap = Sample(_BumpMap, sampler_MainTex, uv_MainTex, dx, dy);
+        half4 bumpmap = _BumpMap.SampleGrad(sampler_trilinear_repeat, uv_MainTex, dx, dy);
         normalTS = normalize(UnpackScaleNormal(bumpmap, _BumpScale));
         return normalize(mul(normalTS, matrixTBN));
     #else
@@ -72,9 +81,18 @@ half3 HoAovGetNormal(v2f i, bool isFront, out half3 normalTS)
     #endif
 }
 
+void HoAovApplyAlpha(v2f i, bool isFront, inout float depth)
+{
+    #ifdef _CUTOUT
+        float2 uv_MainTex = i.uv01.xy * _MainTex_ST.xy + _MainTex_ST.zw;
+        half alpha = _MainTex.Sample(sampler_trilinear_repeat, uv_MainTex).a * _Color.a;
+        clip(alpha - _Cutoff);
+    #endif
+}
+
 HoAovOutput HoAovFrag(v2f i, bool isFront, inout float depth)
 {
-    UnpackAndShadingAlpha(i, i.normal, i.tangent, i.binormal, i.color, i.V, i.uv01, i.uv23, isFront, depth);
+    HoAovApplyAlpha(i, isFront, depth);
     float maskEnabled = HoAovHasSystemChannel(1.0);
     float idEnabled = HoAovHasSystemChannel(2.0);
     float flagsEnabled = HoAovHasSystemChannel(4.0);
@@ -86,6 +104,7 @@ HoAovOutput HoAovFrag(v2f i, bool isFront, inout float depth)
     float utilityEnabled = HoAovHasSystemChannel(2048.0);
 
     float linearDepth = LinearEyeDepth(i.pos.z, _ZBufferParams);
+    float2 uv_MainTex = i.uv01.xy * _MainTex_ST.xy + _MainTex_ST.zw;
     half3 normalTS;
     half3 normalWS = HoAovGetNormal(i, isFront, normalTS);
 
@@ -102,7 +121,7 @@ HoAovOutput HoAovFrag(v2f i, bool isFront, inout float depth)
         saturate(abs(_HoAovCurvature)) * curvatureEnabled,
         HoAovEncodeScalar(_HoAovMaterialClass) * materialEnabled,
         saturate(_HoAovUtility) * utilityEnabled);
-    output.custom0 = half4(HoAovApplyCustomWriteMask(_HoAovCustomValues0, 0.0));
+    output.custom0 = half4(HoAovSampleCustom0To3(uv_MainTex));
     output.custom1 = half4(HoAovApplyCustomWriteMask(_HoAovCustomValues1, 4.0));
     output.custom2 = half4(HoAovApplyCustomWriteMask(_HoAovCustomValues2, 8.0));
     return output;

@@ -66,6 +66,33 @@ Shader "lilPBR Tessellation"
         [NoScaleOffset] _SSAOMask ("AO Mask", 2D) = "white" {}
         [LILFoldoutEnd]
 
+        [LILFoldout(HoAOV)]
+        [HideInInspector] _HoAovMaskWeight ("HoAOV Mask Weight", Range(0, 1)) = 1
+        [HideInInspector] _HoAovSystemWriteMask ("HoAOV System Write Mask", Float) = 3935
+        [HideInInspector] _HoAovCustomWriteMask ("HoAOV Custom Write Mask", Float) = 0
+        [HideInInspector] _HoAovGroupId ("HoAOV Group ID", Float) = 0
+        [HideInInspector] _HoAovObjectId ("HoAOV Object ID", Float) = 0
+        [HideInInspector] _HoAovMaterialClass ("HoAOV Material Class", Float) = 0
+        [HideInInspector] _HoAovFlags ("HoAOV Flags", Float) = 1
+        [HideInInspector] _HoAovThickness ("HoAOV Thickness", Range(0, 1)) = 0
+        [HideInInspector] _HoAovCurvature ("HoAOV Curvature", Range(-1, 1)) = 0
+        [HideInInspector] _HoAovUtility ("HoAOV Utility", Range(0, 1)) = 0
+        [LILPropertyCache] _HoAovCustom0Color ("Custom 0", Color) = (0,0,0,0)
+        [NoScaleOffset] _HoAovCustom0Tex ("Custom 0", 2D) = "white" {}
+        [LILPropertyCacheClear]
+        [LILPropertyCache] _HoAovCustom1Color ("Custom 1", Color) = (0,0,0,0)
+        [NoScaleOffset] _HoAovCustom1Tex ("Custom 1", 2D) = "white" {}
+        [LILPropertyCacheClear]
+        [LILPropertyCache] _HoAovCustom2Color ("Custom 2", Color) = (0,0,0,0)
+        [NoScaleOffset] _HoAovCustom2Tex ("Custom 2", 2D) = "white" {}
+        [LILPropertyCacheClear]
+        [LILPropertyCache] _HoAovCustom3Color ("Custom 3", Color) = (0,0,0,0)
+        [NoScaleOffset] _HoAovCustom3Tex ("Custom 3", 2D) = "white" {}
+        [LILPropertyCacheClear]
+        [HideInInspector] _HoAovCustomValues1 ("HoAOV Custom 4-7", Vector) = (0,0,0,0)
+        [HideInInspector] _HoAovCustomValues2 ("HoAOV Custom 8-11", Vector) = (0,0,0,0)
+        [LILFoldoutEnd]
+
         [LILFoldout(Screen Space Reflection)]
         [ToggleUI] _UseScreenSpaceReflection ("Screen Space Reflection", Int) = 0
         _SSRStrength ("SSR Strength", Range(0.0, 1.0)) = 1.0
@@ -816,6 +843,80 @@ Shader "lilPBR Tessellation"
                 #ifdef _WRITE_RENDERING_LAYERS
                 outRenderingLayers = EncodeMeshRenderingLayer();
                 #endif
+            }
+
+            #include "tessellation.hlsl"
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "HoAOV"
+            Tags { "LightMode" = "HoAOV" }
+            ZWrite On
+            ZTest LEqual
+            Cull [_Cull]
+            AlphaToMask [_AlphaToMask]
+
+            HLSLPROGRAM
+            #pragma target 5.0
+
+            #pragma shader_feature_local _UVMODE_DEFAULT _UVMODE_PLANAR _UVMODE_TRIPLANAR
+            #pragma shader_feature_local _ATRASMASK
+            #pragma shader_feature_local_fragment _ _CUTOUT _DITHER _TRANSPARENT
+            #pragma shader_feature_local _RANDOMIZE_UV
+            #pragma shader_feature_local _TEXTUREMODE_SEPARATE
+            #pragma shader_feature_local_vertex _PARALLAXMODE_VERTEX
+            #pragma shader_feature_local_fragment _PARALLAXMODE_PIXEL
+            #pragma shader_feature_local_fragment _NORMALMAP
+            #pragma shader_feature_local_fragment _TRANSLUCENT
+            #pragma shader_feature_local_vertex _WINDMODE_NONE _WINDMODE_CLOTH _WINDMODE_TREE
+            #pragma shader_feature_local_fragment _WINDMODE_POM
+
+            #pragma multi_compile _ LOD_FADE_CROSSFADE
+            #pragma multi_compile_instancing
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/ShaderPass.hlsl"
+            struct v2f
+            {
+                POS_INTERPOLATION float4 pos : SV_POSITION;
+                float4 uv01 : TEXCOORD0;
+                float4 uv23 : TEXCOORD1;
+                float4 normal : TEXCOORD2;
+                float4 tangent : TEXCOORD3;
+                float4 binormal : TEXCOORD4;
+                float4 color : TEXCOORD5;
+                float3 V : TEXCOORD6;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            #define SHADERPASS SHADERPASS_DEPTHNORMALSONLY
+            #include "unity_urp.hlsl"
+            #include "pbr_core.hlsl"
+            #include "hoaov.hlsl"
+
+            v2f vert (appdata v)
+            {
+                v2f o = (v2f)0;
+                UNITY_SETUP_INSTANCE_ID(v);
+                UNITY_TRANSFER_INSTANCE_ID(v, o);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
+                DoVertex(v, o.pos, o.uv01, o.uv23, o.normal, o.tangent, o.binormal, o.color, o.V);
+                return o;
+            }
+
+            HoAovOutput frag (v2f i, bool isFront : SV_IsFrontFace DEPTH_OUT)
+            {
+                UNITY_SETUP_INSTANCE_ID(i);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
+                #ifdef LOD_FADE_CROSSFADE
+                LODFadeCrossFade(i.pos);
+                #endif
+                return HoAovFrag(i, isFront, depth);
             }
 
             #include "tessellation.hlsl"

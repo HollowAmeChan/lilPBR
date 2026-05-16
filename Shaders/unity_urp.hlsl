@@ -210,7 +210,9 @@ float3 GetOpaquePosW(float2 uvScreen, float3 V)
 #define LILPBR_TEXTURE(t,n) t n;
 #define LILPBR_SAMPLER(t,n) t n;
 
+CBUFFER_START(UnityPerMaterial)
 LILPBR_PROPERTIES
+CBUFFER_END
 LILPBR_TEXTURES
 LILPBR_SAMPLERS
 TEXTURE2D(_HTraceBufferAO);

@@ -66,6 +66,22 @@ Shader "lilPBR"
         [NoScaleOffset] _SSAOMask ("AO Mask", 2D) = "white" {}
         [LILFoldoutEnd]
 
+        [LILFoldout(HoAOV)]
+        _HoAovMaskWeight ("HoAOV Mask Weight", Range(0, 1)) = 1
+        _HoAovSystemWriteMask ("HoAOV System Write Mask", Float) = 3935
+        _HoAovCustomWriteMask ("HoAOV Custom Write Mask", Float) = 0
+        _HoAovGroupId ("HoAOV Group ID", Float) = 0
+        _HoAovObjectId ("HoAOV Object ID", Float) = 0
+        _HoAovMaterialClass ("HoAOV Material Class", Float) = 0
+        _HoAovFlags ("HoAOV Flags", Float) = 1
+        _HoAovThickness ("HoAOV Thickness", Range(0, 1)) = 0
+        _HoAovCurvature ("HoAOV Curvature", Range(-1, 1)) = 0
+        _HoAovUtility ("HoAOV Utility", Range(0, 1)) = 0
+        _HoAovCustomValues0 ("HoAOV Custom 0-3", Vector) = (0,0,0,0)
+        _HoAovCustomValues1 ("HoAOV Custom 4-7", Vector) = (0,0,0,0)
+        _HoAovCustomValues2 ("HoAOV Custom 8-11", Vector) = (0,0,0,0)
+        [LILFoldoutEnd]
+
         [LILFoldout(Screen Space Reflection)]
         [ToggleUI] _UseScreenSpaceReflection ("Screen Space Reflection", Int) = 0
         _SSRStrength ("SSR Strength", Range(0.0, 1.0)) = 1.0

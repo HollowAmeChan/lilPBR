@@ -1,20 +1,7 @@
 #ifndef INCLUDED_LILPBR_HOAOV
 #define INCLUDED_LILPBR_HOAOV
 
-float _HoAovMaskWeight;
 float _lilHoAovSystemChannelMask;
-float _HoAovSystemWriteMask;
-float _HoAovCustomWriteMask;
-float _HoAovGroupId;
-float _HoAovObjectId;
-float _HoAovMaterialClass;
-float _HoAovFlags;
-float _HoAovThickness;
-float _HoAovCurvature;
-float _HoAovUtility;
-float4 _HoAovCustomValues0;
-float4 _HoAovCustomValues1;
-float4 _HoAovCustomValues2;
 
 struct HoAovOutput
 {
@@ -88,7 +75,6 @@ half3 HoAovGetNormal(v2f i, bool isFront, out half3 normalTS)
 HoAovOutput HoAovFrag(v2f i, bool isFront, inout float depth)
 {
     UnpackAndShadingAlpha(i, i.normal, i.tangent, i.binormal, i.color, i.V, i.uv01, i.uv23, isFront, depth);
-
     float maskEnabled = HoAovHasSystemChannel(1.0);
     float idEnabled = HoAovHasSystemChannel(2.0);
     float flagsEnabled = HoAovHasSystemChannel(4.0);

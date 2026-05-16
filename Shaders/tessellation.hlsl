@@ -18,11 +18,6 @@ appdata hull(InputPatch<appdata, 3> input, uint id : SV_OutputControlPointID)
     return input[id];
 }
 
-float _TessEdge;
-float _TessFactorMax;
-float _TessShrink;
-float _TessStrength;
-
 float CalcEdgeTessFactor(float3 wpos0, float3 wpos1)
 {
     float3 temp = 0.5 * (wpos0+wpos1) - _WorldSpaceCameraPos.xyz;

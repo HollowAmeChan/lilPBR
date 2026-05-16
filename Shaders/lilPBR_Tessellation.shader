@@ -302,6 +302,7 @@ Shader "lilPBR Tessellation"
             "RenderPipeline" = "UniversalPipeline"
             "UniversalMaterialType" = "Lit"
             "IgnoreProjector" = "True"
+            "DisableBatching" = "True"
         }
 
         Stencil
@@ -1133,7 +1134,7 @@ Shader "lilPBR Tessellation"
 
     SubShader
     {
-        Tags { "RenderType" = "Opaque" "LTCGI" = "_LTCGI" }
+        Tags { "RenderType" = "Opaque" "LTCGI" = "_LTCGI" "DisableBatching" = "True" }
 
         Stencil
         {

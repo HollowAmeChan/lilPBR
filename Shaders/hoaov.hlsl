@@ -83,10 +83,19 @@ half3 HoAovGetNormal(v2f i, bool isFront, out half3 normalTS)
 
 void HoAovApplyAlpha(v2f i, bool isFront, inout float depth)
 {
-    #ifdef _CUTOUT
+    #if defined(_CUTOUT) || defined(_DITHER)
         float2 uv_MainTex = i.uv01.xy * _MainTex_ST.xy + _MainTex_ST.zw;
         half alpha = _MainTex.Sample(sampler_trilinear_repeat, uv_MainTex).a * _Color.a;
-        clip(alpha - _Cutoff);
+        if(_VertexColorMode == 1)
+        {
+            alpha *= i.color.a;
+        }
+        #if defined(_DITHER)
+            if(_DitherRandomize && IsPerspective()) alpha = alpha + ibuki(i.pos) * 0.1 - 0.05;
+            clip(alpha - (_DitherTex[uint2(i.pos.xy)%4].r * 255 + 1) / (15 + 2));
+        #else
+            clip(alpha - _Cutoff);
+        #endif
     #endif
 }
 

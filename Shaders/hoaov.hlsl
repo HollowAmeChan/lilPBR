@@ -54,15 +54,6 @@ float4 HoAovSampleCustom0To3(float2 uv_MainTex)
         _HoAovCustom3Tex.Sample(sampler_trilinear_repeat, uv_MainTex).r * _HoAovCustom3Color.r);
 }
 
-float4 HoAovSampleCustom4(float2 uv_MainTex)
-{
-    return float4(
-        _HoAovCustom4Tex.Sample(sampler_trilinear_repeat, uv_MainTex).r * _HoAovCustom4Color.r,
-        0.0,
-        0.0,
-        0.0);
-}
-
 half3 HoAovGetNormal(v2f i, bool isFront, out half3 normalTS)
 {
     half3 tangent = normalize(i.tangent.xyz);
@@ -131,7 +122,7 @@ HoAovOutput HoAovFrag(v2f i, bool isFront, inout float depth)
         HoAovEncodeScalar(_HoAovMaterialClass) * materialEnabled,
         saturate(_HoAovUtility) * utilityEnabled);
     output.custom0 = half4(HoAovSampleCustom0To3(uv_MainTex));
-    output.custom1 = half4(HoAovSampleCustom4(uv_MainTex));
+    output.custom1 = half4(0.0, 0.0, 0.0, 0.0);
     output.custom2 = half4(0.0, 0.0, 0.0, 0.0);
     return output;
 }

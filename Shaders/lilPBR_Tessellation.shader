@@ -89,9 +89,6 @@ Shader "lilPBR Tessellation"
         [LILPropertyCache] _HoAovCustom3Color ("Custom 3", Color) = (0,0,0,0)
         [NoScaleOffset] _HoAovCustom3Tex ("Custom 3", 2D) = "white" {}
         [LILPropertyCacheClear]
-        [LILPropertyCache] _HoAovCustom4Color ("Custom 4", Color) = (0,0,0,0)
-        [NoScaleOffset] _HoAovCustom4Tex ("Custom 4", 2D) = "white" {}
-        [LILPropertyCacheClear]
         [LILFoldoutEnd]
 
         [LILFoldout(Screen Space Reflection)]

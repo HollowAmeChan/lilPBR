@@ -28,6 +28,7 @@ LILPBR_PROPERTY(float,_SSAOContrast)\
 LILPBR_PROPERTY(float,_HoAovMaskWeight)\
 LILPBR_PROPERTY(float,_HoAovSystemWriteMask)\
 LILPBR_PROPERTY(float,_HoAovCustomWriteMask)\
+LILPBR_PROPERTY(float4,_HoAovCustomValues0)\
 LILPBR_PROPERTY(float,_HoAovGroupId)\
 LILPBR_PROPERTY(float,_HoAovObjectId)\
 LILPBR_PROPERTY(float,_HoAovMaterialClass)\

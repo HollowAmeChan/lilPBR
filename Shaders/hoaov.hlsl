@@ -38,6 +38,11 @@ float HoAovGetObjectId()
 
 float4 HoAovApplyCustomWriteMask(float4 values, float startBit)
 {
+    if (_HoAovCustomWriteMask < 0.5)
+    {
+        return values;
+    }
+
     return float4(
         values.x * HoAovHasBit(_HoAovCustomWriteMask, exp2(startBit)),
         values.y * HoAovHasBit(_HoAovCustomWriteMask, exp2(startBit + 1.0)),
@@ -52,6 +57,16 @@ float4 HoAovSampleCustom0To3(float2 uv_MainTex)
         _HoAovCustom1Tex.Sample(sampler_trilinear_repeat, uv_MainTex).r * _HoAovCustom1Color.r,
         _HoAovCustom2Tex.Sample(sampler_trilinear_repeat, uv_MainTex).r * _HoAovCustom2Color.r,
         _HoAovCustom3Tex.Sample(sampler_trilinear_repeat, uv_MainTex).r * _HoAovCustom3Color.r);
+}
+
+float4 HoAovResolveCustom0To3(float2 uv_MainTex)
+{
+    if (_HoAovCustomWriteMask >= 0.5)
+    {
+        return HoAovApplyCustomWriteMask(_HoAovCustomValues0, 0.0);
+    }
+
+    return HoAovSampleCustom0To3(uv_MainTex);
 }
 
 half3 HoAovGetNormal(v2f i, bool isFront, out half3 normalTS)
@@ -81,15 +96,20 @@ half3 HoAovGetNormal(v2f i, bool isFront, out half3 normalTS)
     #endif
 }
 
-void HoAovApplyAlpha(v2f i, bool isFront, inout float depth)
+half HoAovResolveAlpha(v2f i)
+{
+    float2 uv_MainTex = i.uv01.xy * _MainTex_ST.xy + _MainTex_ST.zw;
+    half alpha = _MainTex.Sample(sampler_trilinear_repeat, uv_MainTex).a * _Color.a;
+    if(_VertexColorMode == 1)
+    {
+        alpha *= i.color.a;
+    }
+    return alpha;
+}
+
+void HoAovApplyAlpha(v2f i, bool isFront, inout float depth, half alpha)
 {
     #if defined(_CUTOUT) || defined(_DITHER)
-        float2 uv_MainTex = i.uv01.xy * _MainTex_ST.xy + _MainTex_ST.zw;
-        half alpha = _MainTex.Sample(sampler_trilinear_repeat, uv_MainTex).a * _Color.a;
-        if(_VertexColorMode == 1)
-        {
-            alpha *= i.color.a;
-        }
         #if defined(_DITHER)
             if(_DitherRandomize && IsPerspective()) alpha = alpha + ibuki(i.pos) * 0.1 - 0.05;
             clip(alpha - (_DitherTex[uint2(i.pos.xy)%4].r * 255 + 1) / (15 + 2));
@@ -101,16 +121,21 @@ void HoAovApplyAlpha(v2f i, bool isFront, inout float depth)
 
 HoAovOutput HoAovFrag(v2f i, bool isFront, inout float depth)
 {
-    HoAovApplyAlpha(i, isFront, depth);
+    half alpha = HoAovResolveAlpha(i);
+    HoAovApplyAlpha(i, isFront, depth, alpha);
+
     float maskEnabled = HoAovHasSystemChannel(1.0);
     float idEnabled = HoAovHasSystemChannel(2.0);
     float flagsEnabled = HoAovHasSystemChannel(4.0);
+    float linearDepthEnabled = HoAovHasSystemChannel(8.0);
     float worldNormalEnabled = HoAovHasSystemChannel(16.0);
     float tangentNormalEnabled = HoAovHasSystemChannel(64.0);
     float thicknessEnabled = HoAovHasSystemChannel(256.0);
     float curvatureEnabled = HoAovHasSystemChannel(512.0);
     float materialEnabled = HoAovHasSystemChannel(1024.0);
     float utilityEnabled = HoAovHasSystemChannel(2048.0);
+    float subjectCoverage = saturate(_HoAovMaskWeight);
+    float subjectValid = step(0.0001, subjectCoverage);
 
     float linearDepth = LinearEyeDepth(i.pos.z, _ZBufferParams);
     float2 uv_MainTex = i.uv01.xy * _MainTex_ST.xy + _MainTex_ST.zw;
@@ -119,18 +144,18 @@ HoAovOutput HoAovFrag(v2f i, bool isFront, inout float depth)
 
     HoAovOutput output;
     output.maskId = half4(
-        saturate(_HoAovMaskWeight) * maskEnabled,
-        HoAovEncodeScalar(_HoAovGroupId) * idEnabled,
-        HoAovEncodeScalar(HoAovGetObjectId()) * idEnabled,
-        HoAovEncodeScalar(_HoAovFlags) * flagsEnabled);
-    output.normalDepth = half4((normalize(normalWS) * 0.5 + 0.5) * worldNormalEnabled, linearDepth);
-    output.tangentNormal = half4((normalize(normalTS) * 0.5 + 0.5) * tangentNormalEnabled, tangentNormalEnabled);
+        subjectCoverage * maskEnabled,
+        HoAovEncodeScalar(_HoAovGroupId) * idEnabled * subjectValid,
+        HoAovEncodeScalar(HoAovGetObjectId()) * idEnabled * subjectValid,
+        HoAovEncodeScalar(_HoAovFlags) * flagsEnabled * subjectValid);
+    output.normalDepth = half4((normalize(normalWS) * 0.5 + 0.5) * worldNormalEnabled * subjectValid, linearDepth * linearDepthEnabled * subjectValid);
+    output.tangentNormal = half4((normalize(normalTS) * 0.5 + 0.5) * tangentNormalEnabled * subjectValid, tangentNormalEnabled * subjectValid);
     output.surfaceData = half4(
-        saturate(_HoAovThickness) * thicknessEnabled,
-        saturate(abs(_HoAovCurvature)) * curvatureEnabled,
-        HoAovEncodeScalar(_HoAovMaterialClass) * materialEnabled,
-        saturate(_HoAovUtility) * utilityEnabled);
-    output.custom0 = half4(HoAovSampleCustom0To3(uv_MainTex));
+        saturate(_HoAovThickness) * thicknessEnabled * subjectValid,
+        saturate(abs(_HoAovCurvature)) * curvatureEnabled * subjectValid,
+        HoAovEncodeScalar(_HoAovMaterialClass) * materialEnabled * subjectValid,
+        saturate(_HoAovUtility) * utilityEnabled * subjectValid);
+    output.custom0 = half4(HoAovResolveCustom0To3(uv_MainTex) * subjectValid);
     output.custom1 = half4(0.0, 0.0, 0.0, 0.0);
     output.custom2 = half4(0.0, 0.0, 0.0, 0.0);
     return output;

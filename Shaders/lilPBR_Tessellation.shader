@@ -70,6 +70,7 @@ Shader "lilPBR Tessellation"
         [HideInInspector] _HoAovMaskWeight ("HoAOV Mask Weight", Range(0, 1)) = 1
         [HideInInspector] _HoAovSystemWriteMask ("HoAOV System Write Mask", Float) = 3935
         [HideInInspector] _HoAovCustomWriteMask ("HoAOV Custom Write Mask", Float) = 0
+        [HideInInspector] _HoAovCustomValues0 ("HoAOV Custom 0-3", Vector) = (0,0,0,0)
         [HideInInspector] _HoAovGroupId ("HoAOV Group ID", Float) = 0
         [HideInInspector] _HoAovObjectId ("HoAOV Object ID", Float) = 0
         [HideInInspector] _HoAovMaterialClass ("HoAOV Material Class", Float) = 0

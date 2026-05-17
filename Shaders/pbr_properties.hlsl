@@ -36,6 +36,7 @@ LILPBR_PROPERTY(float,_HoAovFlags)\
 LILPBR_PROPERTY(float,_HoAovThickness)\
 LILPBR_PROPERTY(float,_HoAovCurvature)\
 LILPBR_PROPERTY(float,_HoAovUtility)\
+LILPBR_PROPERTY(float,_HoAovObjectCustomMask)\
 LILPBR_PROPERTY(float4,_HoAovCustom0Color)\
 LILPBR_PROPERTY(float4,_HoAovCustom1Color)\
 LILPBR_PROPERTY(float4,_HoAovCustom2Color)\

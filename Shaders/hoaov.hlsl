@@ -10,8 +10,8 @@ struct HoAovOutput
     half4 tangentNormal : SV_Target2;
     half4 surfaceData : SV_Target3;
     half4 custom0 : SV_Target4;
-    half4 custom1 : SV_Target5;
-    half4 custom2 : SV_Target6;
+    half4 objectCustom0 : SV_Target5;
+    half4 objectCustom1 : SV_Target6;
 };
 
 float HoAovHasBit(float value, float bitValue)
@@ -31,9 +31,7 @@ float HoAovEncodeScalar(float value)
 
 float HoAovGetObjectId()
 {
-    float3 objectPositionWS = TransformObjectToWorld(float3(0.0, 0.0, 0.0));
-    float objectSeed = dot(objectPositionWS, float3(0.13, 0.31, 0.73)) * 1000.0;
-    return lerp(objectSeed, _HoAovObjectId, step(0.5, abs(_HoAovObjectId)));
+    return _HoAovObjectId;
 }
 
 float4 HoAovApplyCustomWriteMask(float4 values, float startBit)
@@ -48,6 +46,34 @@ float4 HoAovApplyCustomWriteMask(float4 values, float startBit)
         values.y * HoAovHasBit(_HoAovCustomWriteMask, exp2(startBit + 1.0)),
         values.z * HoAovHasBit(_HoAovCustomWriteMask, exp2(startBit + 2.0)),
         values.w * HoAovHasBit(_HoAovCustomWriteMask, exp2(startBit + 3.0)));
+}
+
+float HoAovByteToFloat(uint value, uint shift)
+{
+    return (float)((value >> shift) & 255u);
+}
+
+float HoAovHasObjectCustomBit(uint mask, uint bitIndex)
+{
+    return (float)((mask >> bitIndex) & 1u);
+}
+
+float4 HoAovDecodeObjectCustom0(uint mask)
+{
+    return float4(
+        HoAovHasObjectCustomBit(mask, 0u),
+        HoAovHasObjectCustomBit(mask, 1u),
+        HoAovHasObjectCustomBit(mask, 2u),
+        HoAovHasObjectCustomBit(mask, 3u));
+}
+
+float4 HoAovDecodeObjectCustom1(uint mask)
+{
+    return float4(
+        HoAovHasObjectCustomBit(mask, 4u),
+        HoAovHasObjectCustomBit(mask, 5u),
+        HoAovHasObjectCustomBit(mask, 6u),
+        HoAovHasObjectCustomBit(mask, 7u));
 }
 
 float4 HoAovSampleCustom0To3(float2 uv_MainTex)
@@ -141,13 +167,19 @@ HoAovOutput HoAovFrag(v2f i, bool isFront, inout float depth)
     float2 uv_MainTex = i.uv01.xy * _MainTex_ST.xy + _MainTex_ST.zw;
     half3 normalTS;
     half3 normalWS = HoAovGetNormal(i, isFront, normalTS);
+    uint rendererUserValue = unity_RendererUserValue;
+    bool hasRendererUserValue = rendererUserValue != 0u;
+    uint objectCustomMask = hasRendererUserValue ? (rendererUserValue & 255u) : (uint)round(saturate(_HoAovObjectCustomMask / 255.0) * 255.0);
+    float effectiveGroupId = hasRendererUserValue ? HoAovByteToFloat(rendererUserValue, 8u) : _HoAovGroupId;
+    float effectiveObjectId = hasRendererUserValue ? HoAovByteToFloat(rendererUserValue, 16u) : HoAovGetObjectId();
+    float effectiveFlags = hasRendererUserValue ? HoAovByteToFloat(rendererUserValue, 24u) : _HoAovFlags;
 
     HoAovOutput output;
     output.maskId = half4(
         subjectCoverage * maskEnabled,
-        HoAovEncodeScalar(_HoAovGroupId) * idEnabled * subjectValid,
-        HoAovEncodeScalar(HoAovGetObjectId()) * idEnabled * subjectValid,
-        HoAovEncodeScalar(_HoAovFlags) * flagsEnabled * subjectValid);
+        HoAovEncodeScalar(effectiveGroupId) * idEnabled * subjectValid,
+        HoAovEncodeScalar(effectiveObjectId) * idEnabled * subjectValid,
+        HoAovEncodeScalar(effectiveFlags) * flagsEnabled * subjectValid);
     output.normalDepth = half4((normalize(normalWS) * 0.5 + 0.5) * worldNormalEnabled * subjectValid, linearDepth * linearDepthEnabled * subjectValid);
     output.tangentNormal = half4((normalize(normalTS) * 0.5 + 0.5) * tangentNormalEnabled * subjectValid, tangentNormalEnabled * subjectValid);
     output.surfaceData = half4(
@@ -156,8 +188,8 @@ HoAovOutput HoAovFrag(v2f i, bool isFront, inout float depth)
         HoAovEncodeScalar(_HoAovMaterialClass) * materialEnabled * subjectValid,
         saturate(_HoAovUtility) * utilityEnabled * subjectValid);
     output.custom0 = half4(HoAovResolveCustom0To3(uv_MainTex) * subjectValid);
-    output.custom1 = half4(0.0, 0.0, 0.0, 0.0);
-    output.custom2 = half4(0.0, 0.0, 0.0, 0.0);
+    output.objectCustom0 = half4(HoAovDecodeObjectCustom0(objectCustomMask) * subjectValid);
+    output.objectCustom1 = half4(HoAovDecodeObjectCustom1(objectCustomMask) * subjectValid);
     return output;
 }
 

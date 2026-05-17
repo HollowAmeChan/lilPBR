@@ -74,10 +74,11 @@ Shader "lilPBR"
         [HideInInspector] _HoAovGroupId ("HoAOV Group ID", Float) = 0
         [HideInInspector] _HoAovObjectId ("HoAOV Object ID", Float) = 0
         [HideInInspector] _HoAovMaterialClass ("HoAOV Material Class", Float) = 0
-        [HideInInspector] _HoAovFlags ("HoAOV Flags", Float) = 1
+        [HideInInspector] _HoAovFlags ("HoAOV Flags", Float) = 0
         [HideInInspector] _HoAovThickness ("HoAOV Thickness", Range(0, 1)) = 0
         [HideInInspector] _HoAovCurvature ("HoAOV Curvature", Range(-1, 1)) = 0
         [HideInInspector] _HoAovUtility ("HoAOV Utility", Range(0, 1)) = 0
+        [HideInInspector] _HoAovObjectCustomMask ("HoAOV Object Custom Mask", Float) = 0
         [LILPropertyCache] _HoAovCustom0Color ("Custom 0", Color) = (0,0,0,0)
         [NoScaleOffset] _HoAovCustom0Tex ("Custom 0", 2D) = "white" {}
         [LILPropertyCacheClear]

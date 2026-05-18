@@ -41,6 +41,7 @@ LILPBR_PROPERTY(float4,_HoAovCustom0Color)\
 LILPBR_PROPERTY(float4,_HoAovCustom1Color)\
 LILPBR_PROPERTY(float4,_HoAovCustom2Color)\
 LILPBR_PROPERTY(float4,_HoAovCustom3Color)\
+LILPBR_PROPERTY(float,_HoCharacterCaptureOpacity)\
 LILPBR_PROPERTY(uint,_UseScreenSpaceReflection)\
 LILPBR_PROPERTY(float,_SSRStrength)\
 LILPBR_PROPERTY(float,_SSRMaxDistance)\

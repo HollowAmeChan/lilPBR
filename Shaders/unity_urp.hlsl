@@ -6,6 +6,8 @@ SamplerState sampler_linear_clamp;
 SamplerState sampler_point_clamp;
 SamplerState sampler_trilinear_repeat;
 
+#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ShadowCast/Shaders/HoShadowCastSampling.hlsl"
+
 float3 O2W(float4 vertex)
 {
     return TransformObjectToWorld(vertex.xyz);
@@ -469,10 +471,15 @@ void DoLight(inout half3 diff, inout half3 spec, ShadingParams p, Light light)
     DoLight(diff, spec, p, light.direction, light.color * (light.distanceAttenuation * light.shadowAttenuation));
 }
 
-half GetSubsurfaceShadowAttenuation(Light light)
+void DoAdditionalLight(inout half3 diff, inout half3 spec, ShadingParams p, Light light, half brighteningAttenuation)
 {
-    half shadowAttenuation = _SubsurfaceReceiveShadow != 0 ? light.shadowAttenuation : 1.0;
-    return light.distanceAttenuation * shadowAttenuation;
+    DoLight(diff, spec, p, light.direction, light.color * (light.distanceAttenuation * brighteningAttenuation));
+}
+
+half GetSubsurfaceShadowAttenuation(Light light, bool useUrpShadow, half brighteningAttenuation)
+{
+    half shadowAttenuation = useUrpShadow && _SubsurfaceReceiveShadow != 0 ? light.shadowAttenuation : 1.0;
+    return light.distanceAttenuation * shadowAttenuation * brighteningAttenuation;
 }
 
 void ComputeLights(out half3 diff, out half3 spec, out half3 reflectionStrength, ShadingParams p, v2f i)
@@ -483,6 +490,7 @@ void ComputeLights(out half3 diff, out half3 spec, out half3 reflectionStrength,
     AmbientOcclusionFactor aoFactor = CreateLILPBRAmbientOcclusionFactor(inputData, surfaceData, p.ssaoMask);
     diff = 0;
     spec = 0;
+    half hoShadowCastAttenuation = HoShadowCastAttenuation(p.posWorld);
 
     // Environment Light
     if (IsLightingFeatureEnabled(DEBUGLIGHTINGFEATUREFLAGS_GLOBAL_ILLUMINATION)) {
@@ -497,6 +505,7 @@ void ComputeLights(out half3 diff, out half3 spec, out half3 reflectionStrength,
     // Main Light
     if (IsLightingFeatureEnabled(DEBUGLIGHTINGFEATUREFLAGS_MAIN_LIGHT)) {
         Light mainLight = GetMainLight(inputData, inputData.shadowMask, aoFactor);
+        mainLight.shadowAttenuation *= hoShadowCastAttenuation;
         MixRealtimeAndBakedGI(mainLight, inputData.normalWS, diff);
         #ifdef _LIGHT_LAYERS
         if (IsMatchingLightLayer(mainLight.layerMask, meshRenderingLayers))
@@ -522,7 +531,7 @@ void ComputeLights(out half3 diff, out half3 spec, out half3 reflectionStrength,
             #ifdef _LIGHT_LAYERS
             if (IsMatchingLightLayer(light.layerMask, meshRenderingLayers))
             #endif
-            DoLight(diff, spec, p, light);
+            DoAdditionalLight(diff, spec, p, light, hoShadowCastAttenuation);
         }
         #endif
 
@@ -531,7 +540,7 @@ void ComputeLights(out half3 diff, out half3 spec, out half3 reflectionStrength,
             #ifdef _LIGHT_LAYERS
             if (IsMatchingLightLayer(light.layerMask, meshRenderingLayers))
             #endif
-            DoLight(diff, spec, p, light);
+            DoAdditionalLight(diff, spec, p, light, hoShadowCastAttenuation);
         LIGHT_LOOP_END
     }
     #endif
@@ -552,6 +561,7 @@ void ComputeSubsurface(out half3 diff, ShadingParams p, v2f i)
     SurfaceData surfaceData = GetSurfaceData(p, i);
     AmbientOcclusionFactor aoFactor = CreateLILPBRAmbientOcclusionFactor(inputData, surfaceData, p.ssaoMask);
     diff = 0;
+    half hoShadowCastAttenuation = HoShadowCastAttenuation(p.posWorld);
 
     half roughness = p.subsurfaceThickness * 0.5;
     half lightpow = rcp(max(roughness * roughness, 0.002));
@@ -564,11 +574,12 @@ void ComputeSubsurface(out half3 diff, ShadingParams p, v2f i)
     // Main Light
     if (IsLightingFeatureEnabled(DEBUGLIGHTINGFEATUREFLAGS_MAIN_LIGHT)) {
         Light mainLight = GetMainLight(inputData, inputData.shadowMask, aoFactor);
+        mainLight.shadowAttenuation *= hoShadowCastAttenuation;
         MixRealtimeAndBakedGI(mainLight, inputData.normalWS, diff);
         #ifdef _LIGHT_LAYERS
         if (IsMatchingLightLayer(mainLight.layerMask, meshRenderingLayers))
         #endif
-        diff += pow(saturate(dot(mainLight.direction,-p.V)), lightpow) * GetSubsurfaceShadowAttenuation(mainLight) * mainLight.color;
+        diff += pow(saturate(dot(mainLight.direction,-p.V)), lightpow) * GetSubsurfaceShadowAttenuation(mainLight, true, 1.0) * mainLight.color;
     }
 
     diff = GlossyEnvironmentReflection(-p.V, p.posWorld, roughness, 1.0, GetNormalizedScreenSpaceUV(i.pos)) * aoFactor.indirectAmbientOcclusion;
@@ -591,7 +602,7 @@ void ComputeSubsurface(out half3 diff, ShadingParams p, v2f i)
             #ifdef _LIGHT_LAYERS
             if (IsMatchingLightLayer(light.layerMask, meshRenderingLayers))
             #endif
-            diff += pow(saturate(dot(light.direction,-p.V)), lightpow) * GetSubsurfaceShadowAttenuation(light) * light.color;
+            diff += pow(saturate(dot(light.direction,-p.V)), lightpow) * GetSubsurfaceShadowAttenuation(light, false, hoShadowCastAttenuation) * light.color;
         }
         #endif
 
@@ -600,7 +611,7 @@ void ComputeSubsurface(out half3 diff, ShadingParams p, v2f i)
             #ifdef _LIGHT_LAYERS
             if (IsMatchingLightLayer(light.layerMask, meshRenderingLayers))
             #endif
-            diff += pow(saturate(dot(light.direction,-p.V)), lightpow) * GetSubsurfaceShadowAttenuation(light) * light.color;
+            diff += pow(saturate(dot(light.direction,-p.V)), lightpow) * GetSubsurfaceShadowAttenuation(light, false, hoShadowCastAttenuation) * light.color;
         LIGHT_LOOP_END
     }
     #endif

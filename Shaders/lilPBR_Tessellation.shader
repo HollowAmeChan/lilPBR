@@ -104,16 +104,16 @@ Shader "lilPBR Tessellation"
         _SSREdgeFade ("Edge Fade", Range(0.0, 32.0)) = 8.0
         [LILFoldoutEnd]
 
-        [LILFoldout(Planar Reflection)]
-        [ToggleUI] _UsePlanarReflection ("Planar Reflection", Int) = 0
-        _PlanarReflectionStrength ("Strength", Range(0.0, 1.0)) = 1.0
-        _PlanarReflectionMinSmoothness ("Min Smoothness", Range(0.0, 1.0)) = 0.75
-        _PlanarReflectionEdgeFade ("Edge Fade", Range(0.0, 32.0)) = 4.0
-        _PlanarReflectionFadeStart ("Fade Start", Float) = 0.0
-        _PlanarReflectionFadeEnd ("Fade End", Float) = 0.0
-        _PlanarReflectionTint ("Tint", Color) = (1,1,1,1)
-        [ToggleUI] _PlanarReflectionFlipY ("Flip Y", Int) = 0
-        [HideInInspector][NoScaleOffset] _LILPBRPlanarReflectionTexture ("Planar Reflection Texture", 2D) = "black" {}
+        [LILFoldout(平面反射)]
+        [ToggleUI] _UsePlanarReflection ("平面反射", Int) = 0
+        _PlanarReflectionStrength ("强度", Range(0.0, 1.0)) = 1.0
+        _PlanarReflectionMinSmoothness ("最小光滑度", Range(0.0, 1.0)) = 0.75
+        _PlanarReflectionEdgeFade ("边缘淡出", Range(0.0, 32.0)) = 0.0
+        _PlanarReflectionFadeStart ("距离淡出开始", Float) = 0.0
+        _PlanarReflectionFadeEnd ("距离淡出结束", Float) = 0.0
+        _PlanarReflectionTint ("颜色", Color) = (1,1,1,1)
+        [ToggleUI] _PlanarReflectionFlipY ("垂直翻转", Int) = 0
+        [HideInInspector][NoScaleOffset] _LILPBRPlanarReflectionTexture ("平面反射纹理", 2D) = "black" {}
         [LILFoldoutEnd]
 
         [LILFoldout(Emission)]

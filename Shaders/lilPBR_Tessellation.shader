@@ -104,7 +104,7 @@ Shader "lilPBR Tessellation"
         _SSREdgeFade ("Edge Fade", Range(0.0, 32.0)) = 8.0
         [LILFoldoutEnd]
 
-        [LILFoldout(平面反射)]
+        [LILFoldout(Planar Reflection)]
         [ToggleUI] _UsePlanarReflection ("平面反射", Int) = 0
         _PlanarReflectionStrength ("强度", Range(0.0, 1.0)) = 1.0
         _PlanarReflectionMinSmoothness ("最小光滑度", Range(0.0, 1.0)) = 0.75

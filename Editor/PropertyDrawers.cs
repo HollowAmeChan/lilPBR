@@ -62,9 +62,9 @@ namespace jp.lilxyzw.lilpbr
 
     internal class LILRenderModeDrawer : EzDrawer
     {
-        private static GUIContent[] options = { L10n.G("Opaque"), L10n.G("Cutout"), L10n.G("Dither"), L10n.G("Transparent") };
         protected override void OnGUIEz(Rect position, MaterialProperty prop, GUIContent label, MaterialEditor editor)
         {
+            GUIContent[] options = { L10n.G("Opaque"), L10n.G("Cutout"), L10n.G("Dither"), L10n.G("Transparent") };
             var value = EditorGUI.Popup(position, label, (int)prop.floatValue, options);
             if (EditorGUI.EndChangeCheck())
             {
@@ -122,7 +122,7 @@ namespace jp.lilxyzw.lilpbr
         {
             var value = EditorGUI.Popup(position, label, (int)prop.floatValue, Settings4Project.DisplayLayerContents);
             if (EditorGUI.EndChangeCheck()) prop.floatValue = value;
-            if (GUILayout.Button("Open Shader Layer Setting")) SettingsService.OpenProjectSettings("Project/lilPBR");
+            if (GUILayout.Button(L10n.L("Open Shader Layer Setting"))) SettingsService.OpenProjectSettings("Project/lilPBR");
         }
     }
 
@@ -146,7 +146,7 @@ namespace jp.lilxyzw.lilpbr
             if (EditorGUI.EndChangeCheck()) property.intValue = value;
             EditorGUI.EndProperty();
 
-            if (GUILayout.Button("Open Shader Layer Setting")) SettingsService.OpenProjectSettings("Project/lilPBR");
+            if (GUILayout.Button(L10n.L("Open Shader Layer Setting"))) SettingsService.OpenProjectSettings("Project/lilPBR");
         }
     }
 }

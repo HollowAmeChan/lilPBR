@@ -46,7 +46,7 @@ namespace jp.lilxyzw.lilpbr
                 if (iterator.name == "layerNames")
                 {
                     if (iterator.arraySize != 32) iterator.arraySize = 32;
-                    EditorGUILayout.LabelField("Layer Names");
+                    EditorGUILayout.LabelField(L10n.G("Layer Names"));
                     iterator.NextVisible(true);
                     iterator.NextVisible(true);
                     depth = iterator.depth;

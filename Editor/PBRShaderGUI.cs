@@ -60,7 +60,7 @@ namespace jp.lilxyzw.lilpbr
             var langs = L10n.GetLanguages();
             var names = L10n.GetLanguageNames();
             EditorGUI.BeginChangeCheck();
-            var ind = EditorGUILayout.Popup("Language", Array.IndexOf(langs, Settings.instance.language), names);
+            var ind = EditorGUILayout.Popup(L10n.G("Language"), Mathf.Max(0, Array.IndexOf(langs, L10n.CurrentLanguage)), names);
             if (EditorGUI.EndChangeCheck())
             {
                 Settings.instance.language = langs[ind];
@@ -140,7 +140,7 @@ namespace jp.lilxyzw.lilpbr
                             // コピペボタンの描画
                             if (GUI.Button(new Rect(positionIndent) { xMin = positionIndent.xMax - 20f }, EditorGUIUtility.IconContent("_Popup"), EditorStyles.label))
                             {
-                                EditorUtility.DisplayCustomMenu(new Rect(Event.current.mousePosition, Vector2.one), new GUIContent[] { new("Copy"), new("Paste"), new("Reset") }, -1, (userdata, _, selected) =>
+                                EditorUtility.DisplayCustomMenu(new Rect(Event.current.mousePosition, Vector2.one), new GUIContent[] { L10n.G("Copy"), L10n.G("Paste"), L10n.G("Reset") }, -1, (userdata, _, selected) =>
                                 {
                                     processType = (ProcessType)selected;
                                     processAttr = userdata as LILFoldoutDecorator;
@@ -316,7 +316,7 @@ namespace jp.lilxyzw.lilpbr
 
                     if (prop.name == "_ScreenSpaceAOSource")
                     {
-                        EditorGUILayout.HelpBox("HTraceAO writes _ScreenSpaceOcclusionTexture. Insert HTraceAO before opaque/lit materials so this shader can read the AO result.", MessageType.Info);
+                        EditorGUILayout.HelpBox(L10n.L("HTraceAO writes _ScreenSpaceOcclusionTexture. Insert HTraceAO before opaque/lit materials so this shader can read the AO result."), MessageType.Info);
                     }
 
                     propertyCache.Clear();

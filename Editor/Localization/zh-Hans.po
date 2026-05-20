@@ -1,0 +1,587 @@
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: zh-Hans\n"
+
+#: Editor
+
+msgid "Language"
+msgstr "语言"
+
+msgid "Copy"
+msgstr "复制"
+
+msgid "Paste"
+msgstr "粘贴"
+
+msgid "Reset"
+msgstr "重置"
+
+msgid "Layer Names"
+msgstr "层名称"
+
+msgid "Open Shader Layer Setting"
+msgstr "打开 Shader Layer 设置"
+
+msgid "HTraceAO writes _ScreenSpaceOcclusionTexture. Insert HTraceAO before opaque/lit materials so this shader can read the AO result."
+msgstr "HTraceAO 会写入 _ScreenSpaceOcclusionTexture。请把 HTraceAO 插入到不透明/受光材质之前，这样该着色器才能读取 AO 结果。"
+
+
+
+#: Common
+
+msgid "Rendering Mode"
+msgstr "渲染模式"
+
+msgid "Opaque"
+msgstr "不透明"
+
+msgid "Cutout"
+msgstr "镂空"
+
+msgid "Dither"
+msgstr "抖动"
+
+msgid "Transparent"
+msgstr "透明"
+
+msgid "Cutoff"
+msgstr "裁剪阈值"
+
+msgid "Cull"
+msgstr "剔除"
+
+msgid "Dither Randomize"
+msgstr "抖动随机化"
+
+msgid "Shader Layer"
+msgstr "Shader 层"
+
+msgid "Strength"
+msgstr "强度"
+
+msgid "Scale"
+msgstr "缩放"
+
+msgid "Channel"
+msgstr "通道"
+
+msgid "Mask"
+msgstr "蒙版"
+
+msgid "Color"
+msgstr "颜色"
+
+msgid "Tint"
+msgstr "染色"
+
+msgid "Power"
+msgstr "幂"
+
+msgid "Distance"
+msgstr "距离"
+
+
+
+#: Base
+
+msgid "Base"
+msgstr "基础"
+
+msgid "Albedo"
+msgstr "反照率"
+
+msgid "Vertex Color Mode"
+msgstr "顶点色模式"
+
+msgid "UV Mode"
+msgstr "UV 模式"
+
+msgid "UV Randomize"
+msgstr "UV 随机化"
+
+msgid "Atras Mask"
+msgstr "图集蒙版"
+
+msgid "Normal Map"
+msgstr "法线贴图"
+
+msgid "Backface Override"
+msgstr "背面覆盖"
+
+
+
+#: PBR
+
+msgid "PBR"
+msgstr "PBR"
+
+msgid "Texture Mode"
+msgstr "贴图模式"
+
+msgid "PBR Map"
+msgstr "PBR 贴图"
+
+msgid "Metallic"
+msgstr "金属度"
+
+msgid "Occlusion"
+msgstr "遮蔽"
+
+msgid "Height"
+msgstr "高度"
+
+msgid "Smoothness"
+msgstr "光滑度"
+
+msgid "Displacement Mode"
+msgstr "位移模式"
+
+msgid "Displacement Quality"
+msgstr "位移质量"
+
+msgid "Displacement Randomize"
+msgstr "位移随机化"
+
+msgid "Reflectance"
+msgstr "反射率"
+
+msgid "GSAA"
+msgstr "GSAA"
+
+
+
+#: Screen Space AO
+
+msgid "Screen Space AO"
+msgstr "屏幕空间 AO"
+
+msgid "AO RT"
+msgstr "AO 渲染目标"
+
+msgid "AO Strength"
+msgstr "AO 强度"
+
+msgid "Direct AO Strength"
+msgstr "直接光 AO 强度"
+
+msgid "Indirect AO Strength"
+msgstr "间接光 AO 强度"
+
+msgid "AO Remap Min Max"
+msgstr "AO 重映射最小/最大"
+
+msgid "AO Contrast"
+msgstr "AO 对比度"
+
+msgid "AO Mask"
+msgstr "AO 蒙版"
+
+
+
+#: HoAOV
+
+msgid "HoAOV"
+msgstr "HoAOV"
+
+msgid "HoAOV Mask Weight"
+msgstr "HoAOV 蒙版权重"
+
+msgid "HoAOV System Write Mask"
+msgstr "HoAOV 系统写入蒙版"
+
+msgid "HoAOV Custom Write Mask"
+msgstr "HoAOV 自定义写入蒙版"
+
+msgid "HoAOV Custom 0-3"
+msgstr "HoAOV 自定义 0-3"
+
+msgid "HoAOV Group ID"
+msgstr "HoAOV 组 ID"
+
+msgid "HoAOV Object ID"
+msgstr "HoAOV 对象 ID"
+
+msgid "HoAOV Material Class"
+msgstr "HoAOV 材质分类"
+
+msgid "HoAOV Flags"
+msgstr "HoAOV 标记"
+
+msgid "HoAOV Thickness"
+msgstr "HoAOV 厚度"
+
+msgid "HoAOV Curvature"
+msgstr "HoAOV 曲率"
+
+msgid "HoAOV Utility"
+msgstr "HoAOV 辅助值"
+
+msgid "HoAOV Object Custom Mask"
+msgstr "HoAOV 对象自定义蒙版"
+
+msgid "Custom 0"
+msgstr "自定义 0"
+
+msgid "Custom 1"
+msgstr "自定义 1"
+
+msgid "Custom 2"
+msgstr "自定义 2"
+
+msgid "Custom 3"
+msgstr "自定义 3"
+
+msgid "Character Capture Opacity"
+msgstr "角色捕获不透明度"
+
+
+
+#: Reflection
+
+msgid "Screen Space Reflection"
+msgstr "屏幕空间反射"
+
+msgid "SSR Strength"
+msgstr "SSR 强度"
+
+msgid "Max Distance"
+msgstr "最大距离"
+
+msgid "Thickness"
+msgstr "厚度"
+
+msgid "Steps"
+msgstr "步数"
+
+msgid "Min Smoothness"
+msgstr "最小光滑度"
+
+msgid "Edge Fade"
+msgstr "边缘淡出"
+
+msgid "Planar Reflection"
+msgstr "平面反射"
+
+msgid "Fade Start"
+msgstr "淡出开始"
+
+msgid "Fade End"
+msgstr "淡出结束"
+
+msgid "Flip Y"
+msgstr "垂直翻转"
+
+msgid "Planar Reflection Texture"
+msgstr "平面反射纹理"
+
+
+
+#: Emission
+
+msgid "Emission"
+msgstr "自发光"
+
+msgid "Subpixel Pattern"
+msgstr "子像素图案"
+
+
+
+#: Anisotropy
+
+msgid "Anisotropy Direction"
+msgstr "各向异性方向"
+
+msgid "Anisotropy"
+msgstr "各向异性"
+
+
+
+#: Clear Coat
+
+msgid "Clear Coat"
+msgstr "清漆层"
+
+msgid "Clear Coat Map"
+msgstr "清漆层贴图"
+
+msgid "Base Normal Map"
+msgstr "基础法线贴图"
+
+
+
+#: Cloth
+
+msgid "Cloth"
+msgstr "布料"
+
+msgid "Albedo Blend"
+msgstr "反照率混合"
+
+msgid "Fuzz"
+msgstr "绒毛"
+
+msgid "Dark"
+msgstr "暗部"
+
+
+
+#: Fake Translucent
+
+msgid "Fake Translucent"
+msgstr "伪半透"
+
+msgid "Translucent"
+msgstr "半透"
+
+msgid "Roughness"
+msgstr "粗糙度"
+
+msgid "Roughness Blend"
+msgstr "粗糙度混合"
+
+
+
+#: Subsurface Scattering
+
+msgid "Subsurface Scattering"
+msgstr "次表面散射"
+
+msgid "Invert Strength"
+msgstr "反转强度"
+
+msgid "Rim"
+msgstr "边缘光"
+
+msgid "Receive Shadow"
+msgstr "接收阴影"
+
+
+
+#: Screening
+
+msgid "Screening"
+msgstr "网屏"
+
+msgid "Screening Mode"
+msgstr "网屏模式"
+
+msgid "Scale X"
+msgstr "X 缩放"
+
+msgid "Scale Y"
+msgstr "Y 缩放"
+
+msgid "Noise"
+msgstr "噪声"
+
+
+
+#: Details
+
+msgid "Details"
+msgstr "细节"
+
+msgid "Detail Mask (RGBA)"
+msgstr "细节蒙版 (RGBA)"
+
+msgid "Detail"
+msgstr "细节"
+
+msgid "Detail 1"
+msgstr "细节 1"
+
+msgid "Detail 2"
+msgstr "细节 2"
+
+msgid "Detail 3"
+msgstr "细节 3"
+
+msgid "Detail 4"
+msgstr "细节 4"
+
+msgid "Normal Map Blend"
+msgstr "法线贴图混合"
+
+msgid "Projection"
+msgstr "投射"
+
+msgid "Projection Sharpness"
+msgstr "投射锐度"
+
+msgid "Projection Threshold"
+msgstr "投射阈值"
+
+
+
+#: Wetness
+
+msgid "Wetness"
+msgstr "湿润"
+
+msgid "Wetness Mode"
+msgstr "湿润模式"
+
+msgid "Normal Scroll"
+msgstr "法线滚动"
+
+msgid "Depth"
+msgstr "深度"
+
+msgid "Rain Scale"
+msgstr "雨滴缩放"
+
+msgid "Rain Speed"
+msgstr "雨滴速度"
+
+msgid "Rain Loop"
+msgstr "雨滴循环"
+
+
+
+#: Tessellation
+
+msgid "Tessellation"
+msgstr "曲面细分"
+
+msgid "Edge"
+msgstr "边长"
+
+msgid "Maximum Division"
+msgstr "最大细分"
+
+msgid "Shrink"
+msgstr "收缩"
+
+msgid "Smoothing"
+msgstr "平滑"
+
+
+
+#: Wind
+
+msgid "Wind"
+msgstr "风"
+
+msgid "Wind Mode"
+msgstr "风模式"
+
+msgid "Direction"
+msgstr "方向"
+
+msgid "Mask Mode"
+msgstr "蒙版模式"
+
+msgid "Branch Softness"
+msgstr "树枝柔软度"
+
+msgid "Leaf Softness"
+msgstr "叶片柔软度"
+
+
+
+#: Distance Fade
+
+msgid "Distance Fade"
+msgstr "距离淡出"
+
+msgid "Start Distance"
+msgstr "开始距离"
+
+msgid "End Distance"
+msgstr "结束距离"
+
+
+
+#: VRChat
+
+msgid "VRChat"
+msgstr "VRChat"
+
+msgid "Hide In Desktop"
+msgstr "桌面模式隐藏"
+
+msgid "Hide In VR"
+msgstr "VR 模式隐藏"
+
+msgid "Hide In Camera"
+msgstr "相机中隐藏"
+
+msgid "Hide In Screenshot"
+msgstr "截图中隐藏"
+
+msgid "Hide In Mirror"
+msgstr "镜子中隐藏"
+
+msgid "Hide In Not Mirror"
+msgstr "非镜子中隐藏"
+
+
+
+#: Advanced
+
+msgid "Advanced"
+msgstr "高级"
+
+msgid "ZWrite"
+msgstr "写入深度"
+
+msgid "SrcBlend"
+msgstr "源混合"
+
+msgid "DstBlend"
+msgstr "目标混合"
+
+msgid "AlphaToMask"
+msgstr "Alpha 转蒙版"
+
+msgid "Dither (R)"
+msgstr "抖动 (R)"
+
+msgid "Transmissive Texture"
+msgstr "透射纹理"
+
+msgid "Ref"
+msgstr "参考值"
+
+msgid "ReadMask"
+msgstr "读取蒙版"
+
+msgid "WriteMask"
+msgstr "写入蒙版"
+
+msgid "Comp"
+msgstr "比较"
+
+msgid "Pass"
+msgstr "通过"
+
+msgid "Fail"
+msgstr "失败"
+
+msgid "ZFail"
+msgstr "深度失败"
+
+
+
+#: Water
+
+msgid "Water"
+msgstr "水"
+
+msgid "Tiling"
+msgstr "平铺"
+
+msgid "Foam"
+msgstr "泡沫"
+
+msgid "Caustics"
+msgstr "焦散"
+
+msgid "Fog"
+msgstr "雾"
+
+msgid "Volumetric Fog"
+msgstr "体积雾"

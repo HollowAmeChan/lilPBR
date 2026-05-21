@@ -491,6 +491,13 @@ half GetSubsurfaceShadowAttenuation(Light light, bool useUrpShadow, half brighte
     return light.distanceAttenuation * shadowAttenuation * brighteningAttenuation;
 }
 
+half GetSubsurfaceForwardScatter(half3 lightDirection, ShadingParams p, half lightpow)
+{
+    half forwardScatter = pow(saturate(dot(lightDirection, -p.V)), lightpow);
+    half wrappedDiffuse = saturate((dot(p.N, lightDirection) + _SubsurfaceWrap) / (1.0 + _SubsurfaceWrap));
+    return lerp(forwardScatter, max(forwardScatter, wrappedDiffuse), _SubsurfaceWrap);
+}
+
 void ComputeLights(out half3 diff, out half3 spec, out half3 reflectionStrength, ShadingParams p, v2f i)
 {
     uint meshRenderingLayers = GetMeshRenderingLayer();
@@ -588,10 +595,10 @@ void ComputeSubsurface(out half3 diff, ShadingParams p, v2f i)
         #ifdef _LIGHT_LAYERS
         if (IsMatchingLightLayer(mainLight.layerMask, meshRenderingLayers))
         #endif
-        diff += pow(saturate(dot(mainLight.direction,-p.V)), lightpow) * GetSubsurfaceShadowAttenuation(mainLight, true, 1.0) * mainLight.color;
+        diff += GetSubsurfaceForwardScatter(mainLight.direction, p, lightpow) * GetSubsurfaceShadowAttenuation(mainLight, true, 1.0) * mainLight.color * _SubsurfaceDirectStrength;
     }
 
-    diff = GlossyEnvironmentReflection(-p.V, p.posWorld, roughness, 1.0, GetNormalizedScreenSpaceUV(i.pos)) * aoFactor.indirectAmbientOcclusion;
+    diff += GlossyEnvironmentReflection(-p.V, p.posWorld, roughness, 1.0, GetNormalizedScreenSpaceUV(i.pos)) * aoFactor.indirectAmbientOcclusion * _SubsurfaceEnvironmentStrength;
 
     // Other Lights
     #if defined(_ADDITIONAL_LIGHTS) || defined(_ADDITIONAL_LIGHTS_VERTEX)
@@ -611,7 +618,7 @@ void ComputeSubsurface(out half3 diff, ShadingParams p, v2f i)
             #ifdef _LIGHT_LAYERS
             if (IsMatchingLightLayer(light.layerMask, meshRenderingLayers))
             #endif
-            diff += pow(saturate(dot(light.direction,-p.V)), lightpow) * GetSubsurfaceShadowAttenuation(light, false, hoShadowCastAttenuation) * light.color;
+            diff += GetSubsurfaceForwardScatter(light.direction, p, lightpow) * GetSubsurfaceShadowAttenuation(light, false, hoShadowCastAttenuation) * light.color * _SubsurfaceDirectStrength;
         }
         #endif
 
@@ -620,7 +627,7 @@ void ComputeSubsurface(out half3 diff, ShadingParams p, v2f i)
             #ifdef _LIGHT_LAYERS
             if (IsMatchingLightLayer(light.layerMask, meshRenderingLayers))
             #endif
-            diff += pow(saturate(dot(light.direction,-p.V)), lightpow) * GetSubsurfaceShadowAttenuation(light, false, hoShadowCastAttenuation) * light.color;
+            diff += GetSubsurfaceForwardScatter(light.direction, p, lightpow) * GetSubsurfaceShadowAttenuation(light, false, hoShadowCastAttenuation) * light.color * _SubsurfaceDirectStrength;
         LIGHT_LOOP_END
     }
     #endif

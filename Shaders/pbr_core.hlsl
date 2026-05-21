@@ -908,6 +908,9 @@ half4 Shading(v2f i, float4 posSV, float3 posWorld, half3 V, half3 tangent, half
     half subsurfaceRim = lerp(1, abs(dot(p.N, p.V)), _SubsurfaceRim);
     p.subsurfaceThickness = lerp(1, _SubsurfaceThickness * subsurfaceRim, subsurface);
     p.subsurfaceColor = lerp(_SubsurfaceColor.rgb, _SubsurfaceColor.rgb * min(p.albedo, p.albedoback), _SubsurfaceAlbedoBlend);
+    half scatterDepth = saturate(1.0 - p.subsurfaceThickness);
+    half3 absorptionColor = pow(max(saturate(_SubsurfaceAbsorptionColor.rgb), 0.001), _SubsurfaceAbsorptionStrength * scatterDepth);
+    p.subsurfaceColor *= absorptionColor;
     half3 sdiff;
     ComputeSubsurface(sdiff, p, i);
     col.rgb = lerp(sdiff * p.subsurfaceColor, col.rgb, p.subsurfaceThickness);

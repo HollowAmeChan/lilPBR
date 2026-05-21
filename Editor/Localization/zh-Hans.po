@@ -379,6 +379,21 @@ msgstr "边缘光"
 msgid "Receive Shadow"
 msgstr "接收阴影"
 
+msgid "Direct Strength"
+msgstr "直射强度"
+
+msgid "Environment Strength"
+msgstr "环境强度"
+
+msgid "Wrap"
+msgstr "包裹"
+
+msgid "Absorption Color"
+msgstr "吸收颜色"
+
+msgid "Absorption Strength"
+msgstr "吸收强度"
+
 
 
 #: Screening

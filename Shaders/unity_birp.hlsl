@@ -423,11 +423,17 @@ half3 DoTranslucent(ShadingParams p, v2f i, half translucentRoughness)
     #endif
 }
 
+half GetSubsurfaceForwardScatter(half3 lightDirection, ShadingParams p, half lightpow)
+{
+    half forwardScatter = pow(saturate(dot(lightDirection, -p.V)), lightpow);
+    half wrappedDiffuse = saturate((dot(p.N, lightDirection) + _SubsurfaceWrap) / (1.0 + _SubsurfaceWrap));
+    return lerp(forwardScatter, max(forwardScatter, wrappedDiffuse), _SubsurfaceWrap);
+}
+
 void ComputeSubsurface(out half3 diff, ShadingParams p, v2f i)
 {
     half3 lightColor, L;
     diff = GetGI(p, i, 1, lightColor, L);
-    half3 H = normalize(p.V + L);
     half roughness = p.subsurfaceThickness * 0.5;
     half lightpow = rcp(max(roughness * roughness, 0.002));
 
@@ -452,11 +458,11 @@ void ComputeSubsurface(out half3 diff, ShadingParams p, v2f i)
         glossIn.roughness = roughness;
         glossIn.reflUVW   = -p.V;
 
-        diff = UnityGI_IndirectSpecular(data, 1.0, glossIn);
+        diff += UnityGI_IndirectSpecular(data, 1.0, glossIn) * _SubsurfaceEnvironmentStrength;
     #endif
 
     // Main Light
-    diff += pow(saturate(dot(L,-p.V)), lightpow) * lightColor;
+    diff += GetSubsurfaceForwardScatter(L, p, lightpow) * lightColor * _SubsurfaceDirectStrength;
 
     // Vertex Light
     #if !LIGHTMAP_ON && UNITY_SHOULD_SAMPLE_SH && VERTEXLIGHT_ON
@@ -474,7 +480,7 @@ void ComputeSubsurface(out half3 diff, ShadingParams p, v2f i)
     for(int i = 0; i < 4; i++)
     {
         half3 L = half3(toLightX[i], toLightY[i], toLightZ[i]) * rsqrt(lengthSq[i]);
-        diff += pow(saturate(dot(L,-p.V)), lightpow) * atten[i] * unity_LightColor[i].rgb;
+        diff += GetSubsurfaceForwardScatter(L, p, lightpow) * atten[i] * unity_LightColor[i].rgb * _SubsurfaceDirectStrength;
     }
     #endif
 }

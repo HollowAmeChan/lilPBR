@@ -93,8 +93,13 @@ LILPBR_PROPERTY(float,_SubsurfacePower)\
 LILPBR_PROPERTY(float,_SubsurfaceThickness)\
 LILPBR_PROPERTY(float,_SubsurfaceRim)\
 LILPBR_PROPERTY(uint,_SubsurfaceReceiveShadow)\
+LILPBR_PROPERTY(float,_SubsurfaceDirectStrength)\
+LILPBR_PROPERTY(float,_SubsurfaceEnvironmentStrength)\
+LILPBR_PROPERTY(float,_SubsurfaceWrap)\
 LILPBR_PROPERTY(float4,_SubsurfaceColor)\
 LILPBR_PROPERTY(float,_SubsurfaceAlbedoBlend)\
+LILPBR_PROPERTY(float4,_SubsurfaceAbsorptionColor)\
+LILPBR_PROPERTY(float,_SubsurfaceAbsorptionStrength)\
 LILPBR_PROPERTY(float,_ScreeningScaleX)\
 LILPBR_PROPERTY(float,_ScreeningScaleY)\
 LILPBR_PROPERTY(float,_ScreeningNoiseStrength)\

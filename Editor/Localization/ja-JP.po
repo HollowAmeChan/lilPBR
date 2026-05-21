@@ -209,6 +209,24 @@ msgstr "厚み"
 msgid "Rim"
 msgstr "リム"
 
+msgid "Receive Shadow"
+msgstr "影を受ける"
+
+msgid "Direct Strength"
+msgstr "直接光強度"
+
+msgid "Environment Strength"
+msgstr "環境強度"
+
+msgid "Wrap"
+msgstr "ラップ"
+
+msgid "Absorption Color"
+msgstr "吸収色"
+
+msgid "Absorption Strength"
+msgstr "吸収強度"
+
 
 
 #: Screening

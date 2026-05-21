@@ -178,8 +178,13 @@ Shader "lilPBR"
         _SubsurfaceThickness ("Thickness", Range(0.0, 1.0)) = 1.0
         _SubsurfaceRim ("Rim", Range(0.0, 1.0)) = 1.0
         [ToggleUI] _SubsurfaceReceiveShadow ("Receive Shadow", Int) = 1
+        _SubsurfaceDirectStrength ("Direct Strength", Range(0.0, 4.0)) = 1.0
+        _SubsurfaceEnvironmentStrength ("Environment Strength", Range(0.0, 4.0)) = 1.0
+        _SubsurfaceWrap ("Wrap", Range(0.0, 1.0)) = 0.0
         _SubsurfaceColor ("Color", Color) = (1,1,1,1)
         _SubsurfaceAlbedoBlend ("Albedo Blend", Range(0.0, 1.0)) = 1.0
+        _SubsurfaceAbsorptionColor ("Absorption Color", Color) = (1,1,1,1)
+        _SubsurfaceAbsorptionStrength ("Absorption Strength", Range(0.0, 8.0)) = 0.0
         [LILFoldoutEnd]
 
         [LILFoldout(Screening)]

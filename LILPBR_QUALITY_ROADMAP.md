@@ -29,7 +29,6 @@ lilPBR 当前不是 lilToon 的生成式架构。它直接维护：
 - `Shaders/pbr_core.hlsl`
 - `Shaders/pbr.hlsl`
 - `Shaders/unity_urp.hlsl`
-- `Shaders/unity_birp.hlsl`
 - `Editor/PBRShaderGUI.cs`
 
 因此后续新增功能不需要走 `.lilinternal/.lilblock` 生成链，适合快速做 PBR 和 URP Renderer Feature 实验。
@@ -38,7 +37,7 @@ lilPBR 当前不是 lilToon 的生成式架构。它直接维护：
 
 ## 2. 当前已有能力
 
-- URP + Built-in 双管线 SubShader。
+- URP-only SubShader。
 - Opaque / Cutout / Dither / Transparent。
 - Packed / Separate PBR Map。
 - Metallic、Occlusion、Height、Smoothness。

@@ -20,6 +20,7 @@ LILPBR_PROPERTY(float,_ParallaxRandomize)\
 LILPBR_PROPERTY(float,_Reflectance)\
 LILPBR_PROPERTY(float,_SpecularStrength)\
 LILPBR_PROPERTY(float,_GSAAStrength)\
+LILPBR_PROPERTY(uint,_EnvironmentReflectionMode)\
 LILPBR_PROPERTY(float,_SpecularHighlightStrength)\
 LILPBR_PROPERTY(float,_SpecularHighlightSmoothness)\
 LILPBR_PROPERTY(float,_SpecularHighlightReflectance)\

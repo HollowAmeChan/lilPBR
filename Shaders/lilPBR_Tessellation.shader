@@ -58,6 +58,7 @@ Shader "lilPBR Tessellation"
         _Reflectance ("Reflectance", Range(0.0, 1.0)) = 0.04
         _SpecularStrength ("Strength", Range(0.0, 4.0)) = 1.0
         _GSAAStrength ("GSAA", Range(0.0, 1.0)) = 0.5
+        [Enum(Probe And Skybox, 0, Skybox Only, 1, Off, 2)] _EnvironmentReflectionMode ("Environment Reflection Mode", Int) = 0
         _SpecularHighlightStrength ("Highlight Strength", Range(0.0, 16.0)) = 0.0
         _SpecularHighlightSmoothness ("Highlight Smoothness", Range(0.0, 1.0)) = 0.96
         _SpecularHighlightReflectance ("Highlight Reflectance", Range(0.0, 1.0)) = 0.35

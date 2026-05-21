@@ -110,6 +110,9 @@ msgstr "スペキュラー"
 msgid "GSAA"
 msgstr "GSAA"
 
+msgid "Environment Reflection Mode"
+msgstr "環境反射モード"
+
 msgid "Highlight Strength"
 msgstr "ハイライト強度"
 

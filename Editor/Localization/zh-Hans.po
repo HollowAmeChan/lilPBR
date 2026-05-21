@@ -157,6 +157,9 @@ msgstr "高光"
 msgid "GSAA"
 msgstr "GSAA"
 
+msgid "Environment Reflection Mode"
+msgstr "环境反射模式"
+
 msgid "Highlight Strength"
 msgstr "高光亮斑强度"
 

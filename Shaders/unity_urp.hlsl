@@ -376,7 +376,16 @@ half3 GetReflection(ShadingParams p, v2f i)
     InputData inputData = GetInputData(p, i);
     SurfaceData surfaceData = GetSurfaceData(p, i);
     AmbientOcclusionFactor aoFactor = CreateLILPBRAmbientOcclusionFactor(inputData, surfaceData, p.ssaoMask);
-    half3 environmentReflection = GlossyEnvironmentReflection(-reflect(p.V,p.refN), p.posWorld, p.perceptualRoughness, 1.0, GetNormalizedScreenSpaceUV(i.pos)) * aoFactor.indirectAmbientOcclusion;
+    half3 reflectionVector = -reflect(p.V,p.refN);
+    half3 environmentReflection = 0;
+    if(_EnvironmentReflectionMode == 0)
+    {
+        environmentReflection = GlossyEnvironmentReflection(reflectionVector, p.posWorld, p.perceptualRoughness, 1.0, GetNormalizedScreenSpaceUV(i.pos)) * aoFactor.indirectAmbientOcclusion;
+    }
+    else if(_EnvironmentReflectionMode == 1)
+    {
+        environmentReflection = GlossyEnvironmentReflection(reflectionVector, p.perceptualRoughness, 1.0) * aoFactor.indirectAmbientOcclusion;
+    }
     half3 reflection = environmentReflection;
 
     if(_UsePlanarReflection != 0 && _PlanarReflectionStrength > 0.0 && _LILPBRPlanarReflectionParams.x > 0.5)

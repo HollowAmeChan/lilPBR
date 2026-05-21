@@ -87,12 +87,13 @@ float4 HoAovSampleCustom0To3(float2 uv_MainTex)
 
 float4 HoAovResolveCustom0To3(float2 uv_MainTex)
 {
+    float4 values = HoAovSampleCustom0To3(uv_MainTex);
     if (_HoAovCustomWriteMask >= 0.5)
     {
-        return HoAovApplyCustomWriteMask(_HoAovCustomValues0, 0.0);
+        values = HoAovApplyCustomWriteMask(_HoAovCustomValues0, 0.0);
     }
 
-    return HoAovSampleCustom0To3(uv_MainTex);
+    return values;
 }
 
 half HoAovSelectChannel(half4 value, uint channel)
@@ -203,7 +204,7 @@ HoAovOutput HoAovFrag(v2f i, bool isFront, inout float depth)
     float effectiveObjectId = hasRendererUserValue ? HoAovByteToFloat(rendererUserValue, 16u) : HoAovGetObjectId();
     float effectiveFlags = hasRendererUserValue ? HoAovByteToFloat(rendererUserValue, 24u) : _HoAovFlags;
 
-    HoAovOutput output;
+    HoAovOutput output = (HoAovOutput)0;
     output.maskId = half4(
         subjectCoverage * maskEnabled,
         HoAovEncodeScalar(effectiveGroupId) * idEnabled * subjectValid,

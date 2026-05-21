@@ -45,6 +45,7 @@ Shader "lilPBR"
         [LILPropertyCache] _Glossiness ("Smoothness", Range(0.0, 1.0)) = 0.5
         [LILIf(_TextureMode, 1)][NoScaleOffset] _SmoothnessMap ("Smoothness", 2D) = "white" {}
         [LILIf(_TextureMode, 0)][Enum(R, 0, G, 1, B, 2, A, 3)] _SmoothnessChannel ("Smoothness", Int) = 3
+        [ToggleUI] _InvertSmoothness ("Invert Smoothness", Int) = 0
         [LILBoxEnd]
         [LILPropertyCacheClear]
 

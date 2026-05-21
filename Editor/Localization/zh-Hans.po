@@ -136,6 +136,9 @@ msgstr "高度"
 msgid "Smoothness"
 msgstr "光滑度"
 
+msgid "Invert Smoothness"
+msgstr "反转光滑度"
+
 msgid "Displacement Mode"
 msgstr "位移模式"
 

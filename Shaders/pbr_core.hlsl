@@ -687,6 +687,7 @@ half4 Shading(v2f i, float4 posSV, float3 posWorld, half3 V, half3 tangent, half
     p.occlusion = pbrmap[_OcclusionChannel];
     p.smoothness = pbrmap[_SmoothnessChannel];
     #endif
+    if(_InvertSmoothness != 0) p.smoothness = 1.0 - p.smoothness;
     p.metallic *= _Metallic;
     p.occlusion = lerp(1, p.occlusion, _OcclusionStrength);
     p.smoothness *= _Glossiness;
@@ -1026,6 +1027,7 @@ ShadingParams ShadingMeta(v2f i, float4 posSV, float2 uv[4])
     p.occlusion = pbrmap[_OcclusionChannel];
     p.smoothness = pbrmap[_SmoothnessChannel];
     #endif
+    if(_InvertSmoothness != 0) p.smoothness = 1.0 - p.smoothness;
     p.metallic *= _Metallic;
     p.occlusion = lerp(1, p.occlusion, _OcclusionStrength);
     p.smoothness *= _Glossiness;

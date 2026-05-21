@@ -89,6 +89,9 @@ msgstr "ハイト"
 msgid "Smoothness"
 msgstr "スムースネス"
 
+msgid "Invert Smoothness"
+msgstr "スムースネス反転"
+
 msgid "Displacement Mode"
 msgstr "ディスプレースメントモード"
 

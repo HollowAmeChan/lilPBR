@@ -14,6 +14,7 @@ LILPBR_PROPERTY(float,_Parallax)\
 LILPBR_PROPERTY(uint,_HeightChannel)\
 LILPBR_PROPERTY(float,_Glossiness)\
 LILPBR_PROPERTY(uint,_SmoothnessChannel)\
+LILPBR_PROPERTY(uint,_InvertSmoothness)\
 LILPBR_PROPERTY(float,_ParallaxQuality)\
 LILPBR_PROPERTY(float,_ParallaxRandomize)\
 LILPBR_PROPERTY(float,_Reflectance)\

@@ -95,6 +95,34 @@ float4 HoAovResolveCustom0To3(float2 uv_MainTex)
     return HoAovSampleCustom0To3(uv_MainTex);
 }
 
+half HoAovSelectChannel(half4 value, uint channel)
+{
+    if (channel == 1u) return value.g;
+    if (channel == 2u) return value.b;
+    if (channel == 3u) return value.a;
+    return value.r;
+}
+
+half HoAovResolveThickness(float2 uv_MainTex, float2 dx, float2 dy)
+{
+    half thickness = saturate(_HoAovThickness);
+
+    if (_SubsurfaceScattering > 0.0001)
+    {
+        half subsurfaceMask = HoAovSelectChannel(Sample(_SubsurfaceMap, sampler_trilinear_repeat, uv_MainTex, dx, dy), _SubsurfaceChannel);
+        if (_SubsurfaceInvert != 0)
+        {
+            subsurfaceMask = 1.0 - subsurfaceMask;
+        }
+
+        half subsurfaceThinness = pow(saturate(subsurfaceMask), _SubsurfacePower) * _SubsurfaceScattering;
+        half subsurfaceFloor = saturate(_SubsurfaceScattering) * 0.2;
+        thickness = max(thickness, max(subsurfaceFloor, saturate(subsurfaceThinness)));
+    }
+
+    return saturate(thickness);
+}
+
 half3 HoAovGetNormal(v2f i, bool isFront, out half3 normalTS)
 {
     half3 tangent = normalize(i.tangent.xyz);
@@ -167,6 +195,7 @@ HoAovOutput HoAovFrag(v2f i, bool isFront, inout float depth)
     float2 uv_MainTex = i.uv01.xy * _MainTex_ST.xy + _MainTex_ST.zw;
     half3 normalTS;
     half3 normalWS = HoAovGetNormal(i, isFront, normalTS);
+    half thickness = HoAovResolveThickness(uv_MainTex, ddx(uv_MainTex), ddy(uv_MainTex));
     uint rendererUserValue = unity_RendererUserValue;
     bool hasRendererUserValue = rendererUserValue != 0u;
     uint objectCustomMask = hasRendererUserValue ? (rendererUserValue & 255u) : (uint)round(saturate(_HoAovObjectCustomMask / 255.0) * 255.0);
@@ -183,7 +212,7 @@ HoAovOutput HoAovFrag(v2f i, bool isFront, inout float depth)
     output.normalDepth = half4((normalize(normalWS) * 0.5 + 0.5) * worldNormalEnabled * subjectValid, linearDepth * linearDepthEnabled * subjectValid);
     output.tangentNormal = half4((normalize(normalTS) * 0.5 + 0.5) * tangentNormalEnabled * subjectValid, tangentNormalEnabled * subjectValid);
     output.surfaceData = half4(
-        saturate(_HoAovThickness) * thicknessEnabled * subjectValid,
+        thickness * thicknessEnabled * subjectValid,
         saturate(abs(_HoAovCurvature)) * curvatureEnabled * subjectValid,
         HoAovEncodeScalar(_HoAovMaterialClass) * materialEnabled * subjectValid,
         saturate(_HoAovUtility) * utilityEnabled * subjectValid);

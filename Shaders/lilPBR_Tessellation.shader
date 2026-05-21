@@ -51,8 +51,16 @@ Shader "lilPBR Tessellation"
         [KeywordEnum(None, Vertex, Pixel)] _ParallaxMode ("Displacement Mode", Int) = 0
         [LILIf(_ParallaxMode, 2)][IntRange] _ParallaxQuality ("Displacement Quality", Range(1,32)) = 16
         [LILIf(_ParallaxMode, 2)] _ParallaxRandomize ("Displacement Randomize", Range(0,1)) = 1
+        [LILFoldoutEnd]
+
+        [LILFoldout(Specular)]
         _Reflectance ("Reflectance", Range(0.0, 1.0)) = 0.04
+        _SpecularStrength ("Strength", Range(0.0, 4.0)) = 1.0
         _GSAAStrength ("GSAA", Range(0.0, 1.0)) = 0.5
+        _SpecularHighlightStrength ("Highlight Strength", Range(0.0, 16.0)) = 0.0
+        _SpecularHighlightSmoothness ("Highlight Smoothness", Range(0.0, 1.0)) = 0.96
+        _SpecularHighlightReflectance ("Highlight Reflectance", Range(0.0, 1.0)) = 0.35
+        [HDR] _SpecularHighlightColor ("Highlight Color", Color) = (1,1,1,1)
         [LILFoldoutEnd]
 
         [LILFoldout(Screen Space AO)]
@@ -870,6 +878,7 @@ Shader "lilPBR Tessellation"
             #pragma shader_feature_local_vertex _PARALLAXMODE_VERTEX
             #pragma shader_feature_local_fragment _PARALLAXMODE_PIXEL
             #pragma shader_feature_local_fragment _NORMALMAP
+            #pragma shader_feature_local_fragment _SUBSURFACE
             #pragma shader_feature_local_fragment _TRANSLUCENT
             #pragma shader_feature_local_vertex _WINDMODE_NONE _WINDMODE_CLOTH _WINDMODE_TREE
             #pragma shader_feature_local_fragment _WINDMODE_POM

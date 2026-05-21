@@ -148,8 +148,23 @@ msgstr "位移随机化"
 msgid "Reflectance"
 msgstr "反射率"
 
+msgid "Specular"
+msgstr "高光"
+
 msgid "GSAA"
 msgstr "GSAA"
+
+msgid "Highlight Strength"
+msgstr "高光亮斑强度"
+
+msgid "Highlight Smoothness"
+msgstr "高光亮斑光滑度"
+
+msgid "Highlight Reflectance"
+msgstr "高光亮斑反射率"
+
+msgid "Highlight Color"
+msgstr "高光亮斑颜色"
 
 
 

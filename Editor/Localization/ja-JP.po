@@ -101,8 +101,23 @@ msgstr "ディスプレースメントランダマイズ"
 msgid "Reflectance"
 msgstr "反射率"
 
+msgid "Specular"
+msgstr "スペキュラー"
+
 msgid "GSAA"
 msgstr "GSAA"
+
+msgid "Highlight Strength"
+msgstr "ハイライト強度"
+
+msgid "Highlight Smoothness"
+msgstr "ハイライトスムースネス"
+
+msgid "Highlight Reflectance"
+msgstr "ハイライト反射率"
+
+msgid "Highlight Color"
+msgstr "ハイライト色"
 
 msgid "Bent Normal Map"
 msgstr "ベントノーマルマップ"

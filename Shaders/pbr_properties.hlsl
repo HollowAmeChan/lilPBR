@@ -17,7 +17,12 @@ LILPBR_PROPERTY(uint,_SmoothnessChannel)\
 LILPBR_PROPERTY(float,_ParallaxQuality)\
 LILPBR_PROPERTY(float,_ParallaxRandomize)\
 LILPBR_PROPERTY(float,_Reflectance)\
+LILPBR_PROPERTY(float,_SpecularStrength)\
 LILPBR_PROPERTY(float,_GSAAStrength)\
+LILPBR_PROPERTY(float,_SpecularHighlightStrength)\
+LILPBR_PROPERTY(float,_SpecularHighlightSmoothness)\
+LILPBR_PROPERTY(float,_SpecularHighlightReflectance)\
+LILPBR_PROPERTY(float4,_SpecularHighlightColor)\
 LILPBR_PROPERTY(uint,_UseScreenSpaceAO)\
 LILPBR_PROPERTY(uint,_ScreenSpaceAOSource)\
 LILPBR_PROPERTY(float,_SSAOStrength)\

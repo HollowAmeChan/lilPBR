@@ -864,6 +864,26 @@ half4 Shading(v2f i, float4 posSV, float3 posWorld, half3 V, half3 tangent, half
         p.N = normalize(p.N + wp.N * wblend * 4);
     #endif
 
+    half3 highlightSpec = 0;
+    if(_SpecularHighlightStrength > 0.0)
+    {
+        ShadingParams hp = p;
+        hp.albedo = 0;
+        hp.metallic = 0;
+        hp.reflectance = _SpecularHighlightReflectance;
+        hp.specular = _SpecularHighlightReflectance;
+        hp.isAnisotropy = false;
+        hp.anisotropy = 0;
+        hp.refN = hp.N;
+        hp.smoothness = saturate(_SpecularHighlightSmoothness);
+        hp.perceptualRoughness = 1.2 - hp.smoothness * 1.2;
+        hp.roughness = hp.perceptualRoughness * hp.perceptualRoughness;
+
+        half3 hdiff, hreflectionStrength = 0;
+        ComputeLights(hdiff, highlightSpec, hreflectionStrength, hp, i);
+        highlightSpec *= _SpecularHighlightStrength * _SpecularHighlightColor.rgb * _SpecularHighlightColor.a;
+    }
+
     #ifdef _CLOTH
     half clothFactor = pow(1-abs(dot(p.N,p.V)), rcp(_ClothFuzz * 2));
     half3 clothColor = lerp(_ClothColor.rgb, _ClothColor.rgb * p.albedo, _ClothAlbedoBlend);
@@ -904,7 +924,8 @@ half4 Shading(v2f i, float4 posSV, float3 posWorld, half3 V, half3 tangent, half
     col.rgb *= p.alpha;
     #endif
 
-    col.rgb += spec;
+    col.rgb += spec * _SpecularStrength;
+    col.rgb += highlightSpec;
 
     float distFade = saturate((distance(posWorld, GetHeadPos()) - _DistanceFadeStart) / (_DistanceFadeEnd - _DistanceFadeStart)) * _DistanceFade;
     col.rgb = col.rgb - col.rgb * distFade;

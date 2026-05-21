@@ -628,6 +628,7 @@ half4 Shading(v2f i, float4 posSV, float3 posWorld, half3 V, half3 tangent, half
     // Albedo
     half4 mainTex = Sample(_MainTex, sampler_MainTex, uv_MainTex, dx, dy) * _Color;
     p.albedo = mainTex.rgb;
+    p.albedoback = mainTex.rgb;
     p.alpha = mainTex.a;
 
     #ifdef _BACKFACE_COLOR
@@ -913,7 +914,8 @@ half4 Shading(v2f i, float4 posSV, float3 posWorld, half3 V, half3 tangent, half
     p.subsurfaceColor *= absorptionColor;
     half3 sdiff;
     ComputeSubsurface(sdiff, p, i);
-    col.rgb = lerp(sdiff * p.subsurfaceColor, col.rgb, p.subsurfaceThickness);
+    half3 subsurfaceColor = sdiff * p.subsurfaceColor;
+    col.rgb = lerp(max(col.rgb, subsurfaceColor), col.rgb, p.subsurfaceThickness);
     #endif
 
     #ifdef _CUTOUT

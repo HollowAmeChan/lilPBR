@@ -9,16 +9,23 @@ namespace jp.lilxyzw.lilpbr
         [InitializeOnLoadMethod]
         private static void Init()
         {
-            using var sw = new StreamWriter("Packages/jp.lilxyzw.lilpbr/Shaders/settings.hlsl", false, Encoding.UTF8);
+            var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(ShaderModifier).Assembly);
+            var path = packageInfo == null
+                ? "Packages/jp.lilxyzw.lilpbr/Shaders/settings.hlsl"
+                : Path.Combine(packageInfo.resolvedPath, "Shaders/settings.hlsl");
+            var sb = new StringBuilder();
 #if LIL_VRCLIGHTVOLUMES
-            sw.WriteLine("#define LIL_VRCLIGHTVOLUMES");
+            sb.AppendLine("#define LIL_VRCLIGHTVOLUMES");
 #endif
 #if LIL_LTCGI
-            sw.WriteLine("#define LIL_LTCGI");
+            sb.AppendLine("#define LIL_LTCGI");
 #endif
 #if LIL_VRCHAT
-            sw.WriteLine("#include \"platform_vrchat.hlsl\"");
+            sb.AppendLine("#include \"platform_vrchat.hlsl\"");
 #endif
+            var text = sb.ToString();
+            if (File.Exists(path) && File.ReadAllText(path, Encoding.UTF8) == text) return;
+            File.WriteAllText(path, text, Encoding.UTF8);
         }
     }
 }

@@ -14,9 +14,11 @@ Shader "lilPBR Tessellation"
         [Enum(Ignore, 0, Color, 1, Occlusion (A), 2)] _VertexColorMode ("Vertex Color Mode", Int) = 0
         [KeywordEnum(Default, Planar, Triplanar)] _UVMode ("UV Mode", Int) = 0
         [LILKeyword(_RANDOMIZE_UV)][ToggleUI] _RandomizeUV ("UV Randomize", Int) = 0
-        [LILKeyword(_ATRASMASK)][NoScaleOffset] _AtrasMask ("Atras Mask", 2D) = "white" {}
-        [LILPropertyCache] _BumpScale("Scale", Float) = 1.0
-        [LILKeyword(_NORMALMAP)][NoScaleOffset][Normal] _BumpMap ("Normal Map", 2D) = "bump" {}
+        [LILKeyword(_ATRASMASK)][ToggleUI] _UseAtrasMask ("Atras Mask", Int) = 0
+        [LILIf(_UseAtrasMask, 1)][NoScaleOffset] _AtrasMask ("Atras Mask", 2D) = "white" {}
+        [LILKeyword(_NORMALMAP)][ToggleUI] _UseBumpMap ("Normal Map", Int) = 0
+        [LILPropertyCache][LILIf(_UseBumpMap, 1)] _BumpScale("Scale", Float) = 1.0
+        [LILIf(_UseBumpMap, 1)][NoScaleOffset][Normal] _BumpMap ("Normal Map", 2D) = "bump" {}
         [LILBox]
         [LILKeyword(_BACKFACE_COLOR)][ToggleUI] _BackfaceOverride ("Backface Override", Int) = 0
         [LILPropertyCache] _BackfaceColor ("Color", Color) = (1,1,1,1)
@@ -38,7 +40,7 @@ Shader "lilPBR Tessellation"
         [LILIf(_TextureMode, 1)][NoScaleOffset] _OcclusionMap ("Occlusion", 2D) = "white" {}
         [LILIf(_TextureMode, 0)][Enum(R, 0, G, 1, B, 2, A, 3)] _OcclusionChannel ("Occlusion", Int) = 1
 
-        [LILPropertyCache][LILKeyword(_PARALLAX)] _Parallax ("Height", Range (0, 1.0)) = 0.0
+        [LILPropertyCache] _Parallax ("Height", Range (0, 1.0)) = 0.0
         [LILIf(_TextureMode, 1)][NoScaleOffset] _ParallaxMap ("Height", 2D) = "black" {}
         [LILIf(_TextureMode, 0)][Enum(R, 0, G, 1, B, 2, A, 3)] _HeightChannel ("Height", Int) = 2
 
@@ -65,15 +67,24 @@ Shader "lilPBR Tessellation"
         [HDR] _SpecularHighlightColor ("Highlight Color", Color) = (1,1,1,1)
         [LILFoldoutEnd]
 
+        [LILFoldout(Shadow)]
+        _ShadowStrength ("Shadow Strength", Range(0.0, 1.0)) = 1.0
+        _ShadowMinLight ("Shadow Min Light", Range(0.0, 1.0)) = 0.0
+        _ShadowContrast ("Shadow Contrast", Range(0.25, 4.0)) = 1.0
+        [HDR] _ShadowTint ("Shadow Tint", Color) = (1,0.55,0.45,1)
+        _ShadowTintStrength ("Shadow Tint Strength", Range(0.0, 1.0)) = 0.0
+        _HoShadowStrength ("HoShadow Strength", Range(0.0, 1.0)) = 1.0
+        [LILFoldoutEnd]
+
         [LILFoldout(Screen Space AO)]
         [ToggleUI] _UseScreenSpaceAO ("Screen Space AO", Int) = 1
-        [Enum(ScreenSpaceOcclusionTexture, 0, HTraceBufferAO, 1)] _ScreenSpaceAOSource ("AO RT", Int) = 0
-        _SSAOStrength ("AO Strength", Range(0.0, 1.0)) = 1.0
-        _SSAODirectStrength ("Direct AO Strength", Range(0.0, 1.0)) = 1.0
-        _SSAOIndirectStrength ("Indirect AO Strength", Range(0.0, 1.0)) = 0.5
-        [LILVector2] _SSAORemap ("AO Remap Min Max", Vector) = (0,1,0,0)
-        _SSAOContrast ("AO Contrast", Range(0.0, 4.0)) = 1.0
-        [NoScaleOffset] _SSAOMask ("AO Mask", 2D) = "white" {}
+        [LILIf(_UseScreenSpaceAO, 1)][Enum(ScreenSpaceOcclusionTexture, 0, HTraceBufferAO, 1)] _ScreenSpaceAOSource ("AO RT", Int) = 0
+        [LILIf(_UseScreenSpaceAO, 1)] _SSAOStrength ("AO Strength", Range(0.0, 1.0)) = 1.0
+        [LILIf(_UseScreenSpaceAO, 1)] _SSAODirectStrength ("Direct AO Strength", Range(0.0, 1.0)) = 1.0
+        [LILIf(_UseScreenSpaceAO, 1)] _SSAOIndirectStrength ("Indirect AO Strength", Range(0.0, 1.0)) = 0.5
+        [LILIf(_UseScreenSpaceAO, 1)][LILVector2] _SSAORemap ("AO Remap Min Max", Vector) = (0,1,0,0)
+        [LILIf(_UseScreenSpaceAO, 1)] _SSAOContrast ("AO Contrast", Range(0.0, 4.0)) = 1.0
+        [LILIf(_UseScreenSpaceAO, 1)][NoScaleOffset] _SSAOMask ("AO Mask", 2D) = "white" {}
         [LILFoldoutEnd]
 
         [LILFoldout(HoAOV)]
@@ -106,86 +117,97 @@ Shader "lilPBR Tessellation"
 
         [LILFoldout(Screen Space Reflection)]
         [ToggleUI] _UseScreenSpaceReflection ("Screen Space Reflection", Int) = 0
-        _SSRStrength ("SSR Strength", Range(0.0, 1.0)) = 1.0
-        _SSRMaxDistance ("Max Distance", Range(0.1, 50.0)) = 10.0
-        _SSRThickness ("Thickness", Range(0.001, 1.0)) = 0.15
-        [IntRange] _SSRStepCount ("Steps", Range(4, 64)) = 32
-        _SSRMinSmoothness ("Min Smoothness", Range(0.0, 1.0)) = 0.75
-        _SSREdgeFade ("Edge Fade", Range(0.0, 32.0)) = 8.0
+        [LILIf(_UseScreenSpaceReflection, 1)] _SSRStrength ("SSR Strength", Range(0.0, 1.0)) = 1.0
+        [LILIf(_UseScreenSpaceReflection, 1)] _SSRMaxDistance ("Max Distance", Range(0.1, 50.0)) = 10.0
+        [LILIf(_UseScreenSpaceReflection, 1)] _SSRThickness ("Thickness", Range(0.001, 1.0)) = 0.15
+        [LILIf(_UseScreenSpaceReflection, 1)][IntRange] _SSRStepCount ("Steps", Range(4, 64)) = 32
+        [LILIf(_UseScreenSpaceReflection, 1)] _SSRMinSmoothness ("Min Smoothness", Range(0.0, 1.0)) = 0.75
+        [LILIf(_UseScreenSpaceReflection, 1)] _SSREdgeFade ("Edge Fade", Range(0.0, 32.0)) = 8.0
         [LILFoldoutEnd]
 
         [LILFoldout(Planar Reflection)]
         [ToggleUI] _UsePlanarReflection ("Planar Reflection", Int) = 0
-        _PlanarReflectionStrength ("Strength", Range(0.0, 1.0)) = 1.0
-        _PlanarReflectionMinSmoothness ("Min Smoothness", Range(0.0, 1.0)) = 0.75
-        _PlanarReflectionEdgeFade ("Edge Fade", Range(0.0, 32.0)) = 0.0
-        _PlanarReflectionFadeStart ("Fade Start", Float) = 0.0
-        _PlanarReflectionFadeEnd ("Fade End", Float) = 0.0
-        _PlanarReflectionTint ("Tint", Color) = (1,1,1,1)
-        [ToggleUI] _PlanarReflectionFlipY ("Flip Y", Int) = 0
+        [LILIf(_UsePlanarReflection, 1)] _PlanarReflectionStrength ("Strength", Range(0.0, 1.0)) = 1.0
+        [LILIf(_UsePlanarReflection, 1)] _PlanarReflectionMinSmoothness ("Min Smoothness", Range(0.0, 1.0)) = 0.75
+        [LILIf(_UsePlanarReflection, 1)] _PlanarReflectionEdgeFade ("Edge Fade", Range(0.0, 32.0)) = 0.0
+        [LILIf(_UsePlanarReflection, 1)] _PlanarReflectionFadeStart ("Fade Start", Float) = 0.0
+        [LILIf(_UsePlanarReflection, 1)] _PlanarReflectionFadeEnd ("Fade End", Float) = 0.0
+        [LILIf(_UsePlanarReflection, 1)] _PlanarReflectionTint ("Tint", Color) = (1,1,1,1)
+        [LILIf(_UsePlanarReflection, 1)][ToggleUI] _PlanarReflectionFlipY ("Flip Y", Int) = 0
         [HideInInspector][NoScaleOffset] _LILPBRPlanarReflectionTexture ("Planar Reflection Texture", 2D) = "black" {}
         [LILFoldoutEnd]
 
         [LILFoldout(Emission)]
-        [LILKeyword(_EMISSION)][LILPropertyCache][LILHDR] _EmissionColor ("Emission", Color) = (0,0,0)
-        [NoScaleOffset] _EmissionMap ("Emission", 2D) = "white" {}
-        [LILKeyword(_EMISSION_SUBPIXEL)] _EmissionSubpixel ("Subpixel Pattern", 2D) = "white" {}
+        [LILKeyword(_EMISSION)][ToggleUI] _UseEmission ("Emission", Int) = 0
+        [LILIf(_UseEmission, 1)][LILPropertyCache][LILHDR] _EmissionColor ("Emission", Color) = (0,0,0)
+        [LILIf(_UseEmission, 1)][NoScaleOffset] _EmissionMap ("Emission", 2D) = "white" {}
+        [LILIf(_UseEmission, 1)][LILKeyword(_EMISSION_SUBPIXEL)][ToggleUI] _UseEmissionSubpixel ("Subpixel Pattern", Int) = 0
+        [LILIf(_UseEmission, 1)][LILIf(_UseEmissionSubpixel, 1)] _EmissionSubpixel ("Subpixel Pattern", 2D) = "white" {}
         [LILFoldoutEnd]
 
         [LILFoldout(Anisotropy)]
-        [LILKeyword(_ANISOTROPY)][NoScaleOffset] _AnisotropyDirection ("Anisotropy", 2D) = "bump" {}
-        [LILPropertyCache] _Anisotropy ("Strength", Range(-1.0, 1.0)) = 1
-        [NoScaleOffset] _AnisotropyMask ("Strength", 2D) = "white" {}
-        [Enum(R, 0, G, 1, B, 2, A, 3)] _AnisotropyChannel ("Channel", Int) = 0
+        [LILKeyword(_ANISOTROPY)][ToggleUI] _UseAnisotropy ("Anisotropy", Int) = 0
+        [LILIf(_UseAnisotropy, 1)][NoScaleOffset] _AnisotropyDirection ("Anisotropy", 2D) = "bump" {}
+        [LILIf(_UseAnisotropy, 1)][LILPropertyCache] _Anisotropy ("Strength", Range(-1.0, 1.0)) = 1
+        [LILIf(_UseAnisotropy, 1)][NoScaleOffset] _AnisotropyMask ("Strength", 2D) = "white" {}
+        [LILIf(_UseAnisotropy, 1)][Enum(R, 0, G, 1, B, 2, A, 3)] _AnisotropyChannel ("Channel", Int) = 0
         [LILFoldoutEnd]
 
         [LILFoldout(Clear Coat)]
-        [LILBox]
-        [NoScaleOffset] _ClearCoatMask ("Clear Coat Map", 2D) = "white" {}
-        [LILKeyword(_CLEARCOAT)][LILPropertyCache] _ClearCoat ("Smoothness", Range(0.0, 1.0)) = 0.0
-        [Enum(R, 0, G, 1, B, 2, A, 3)] _ClearCoatChannel ("Clear Coat", Int) = 0
-        [LILPropertyCache] _ClearCoatSmoothness ("Smoothness", Range(0.0, 1.0)) = 1.0
-        [Enum(R, 0, G, 1, B, 2, A, 3)] _ClearCoatSmoothnessChannel ("Smoothness", Int) = 3
+        [LILKeyword(_CLEARCOAT)][ToggleUI] _UseClearCoat ("Clear Coat", Int) = 0
+        [LILIf(_UseClearCoat, 1)][LILBox]
+        [LILIf(_UseClearCoat, 1)][NoScaleOffset] _ClearCoatMask ("Clear Coat Map", 2D) = "white" {}
+        [LILIf(_UseClearCoat, 1)][LILPropertyCache] _ClearCoat ("Smoothness", Range(0.0, 1.0)) = 0.0
+        [LILIf(_UseClearCoat, 1)][Enum(R, 0, G, 1, B, 2, A, 3)] _ClearCoatChannel ("Clear Coat", Int) = 0
+        [LILIf(_UseClearCoat, 1)][LILPropertyCache] _ClearCoatSmoothness ("Smoothness", Range(0.0, 1.0)) = 1.0
+        [LILIf(_UseClearCoat, 1)][Enum(R, 0, G, 1, B, 2, A, 3)] _ClearCoatSmoothnessChannel ("Smoothness", Int) = 3
         [LILBoxEnd]
-        _ClearCoatReflectance ("Reflectance", Range(0.0, 1.0)) = 0.04
-        [LILPropertyCache] _ClearCoatBumpScale ("Scale", Float) = 1.0
-        [LILKeyword(_CLEARCOAT_NORMALMAP)][NoScaleOffset][Normal] _ClearCoatBumpMap ("Normal Map", 2D) = "bump" {}
-        _ClearCoatBaseBumpScale ("Base Normal Map", Range(0.0, 1.0)) = 0.0
+        [LILIf(_UseClearCoat, 1)] _ClearCoatReflectance ("Reflectance", Range(0.0, 1.0)) = 0.04
+        [LILIf(_UseClearCoat, 1)][LILKeyword(_CLEARCOAT_NORMALMAP)][ToggleUI] _UseClearCoatBumpMap ("Normal Map", Int) = 0
+        [LILIf(_UseClearCoat, 1)][LILIf(_UseClearCoatBumpMap, 1)][LILPropertyCache] _ClearCoatBumpScale ("Scale", Float) = 1.0
+        [LILIf(_UseClearCoat, 1)][LILIf(_UseClearCoatBumpMap, 1)][NoScaleOffset][Normal] _ClearCoatBumpMap ("Normal Map", 2D) = "bump" {}
+        [LILIf(_UseClearCoat, 1)][LILIf(_UseClearCoatBumpMap, 1)] _ClearCoatBaseBumpScale ("Base Normal Map", Range(0.0, 1.0)) = 0.0
         [LILFoldoutEnd]
 
         [LILFoldout(Cloth)]
-        [LILKeyword(_CLOTH)][LILPropertyCache] _Cloth ("Strength", Range(0.0, 1.0)) = 0.0
-        _ClothColor ("Color", Color) = (1,1,1,1)
-        _ClothAlbedoBlend ("Albedo Blend", Range(0.0, 1.0)) = 0.0
-        _ClothFuzz ("Fuzz", Range(0.0, 1.0)) = 0.5
-        _ClothDark ("Dark", Range(0.0, 1.0)) = 0.9
+        [LILKeyword(_CLOTH)][ToggleUI] _UseCloth ("Cloth", Int) = 0
+        [LILIf(_UseCloth, 1)][LILPropertyCache] _Cloth ("Strength", Range(0.0, 1.0)) = 0.0
+        [LILIf(_UseCloth, 1)] _ClothColor ("Color", Color) = (1,1,1,1)
+        [LILIf(_UseCloth, 1)] _ClothAlbedoBlend ("Albedo Blend", Range(0.0, 1.0)) = 0.0
+        [LILIf(_UseCloth, 1)] _ClothFuzz ("Fuzz", Range(0.0, 1.0)) = 0.5
+        [LILIf(_UseCloth, 1)] _ClothDark ("Dark", Range(0.0, 1.0)) = 0.9
         [LILFoldoutEnd]
 
         [LILFoldout(Fake Translucent)]
-        [LILKeyword(_TRANSLUCENT)] _Translucent ("Translucent", Range(0.0, 1.0)) = 0.0
-        _TranslucentColor ("Color", Color) = (1,1,1,1)
-        _TranslucentAlbedoBlend ("Albedo Blend", Range(0.0, 1.0)) = 1.0
-        _TranslucentRoughness ("Roughness", Range(0.0, 1.0)) = 1.0
-        _TranslucentRoughnessBlend ("Roughness Blend", Range(0.0, 1.0)) = 1.0
+        [LILKeyword(_TRANSLUCENT)][ToggleUI] _UseTranslucent ("Fake Translucent", Int) = 0
+        [LILIf(_UseTranslucent, 1)] _Translucent ("Translucent", Range(0.0, 1.0)) = 0.0
+        [LILIf(_UseTranslucent, 1)] _TranslucentColor ("Color", Color) = (1,1,1,1)
+        [LILIf(_UseTranslucent, 1)] _TranslucentAlbedoBlend ("Albedo Blend", Range(0.0, 1.0)) = 1.0
+        [LILIf(_UseTranslucent, 1)] _TranslucentRoughness ("Roughness", Range(0.0, 1.0)) = 1.0
+        [LILIf(_UseTranslucent, 1)] _TranslucentRoughnessBlend ("Roughness Blend", Range(0.0, 1.0)) = 1.0
         [LILFoldoutEnd]
 
         [LILFoldout(Subsurface Scattering)]
-        [LILKeyword(_SUBSURFACE)][LILPropertyCache] _SubsurfaceScattering ("Strength", Range(0.0, 1.0)) = 0.0
-        _HoSSSProfileId ("HoSSS Profile ID", Range(0, 255)) = 1
-        [NoScaleOffset] _SubsurfaceMap ("Strength", 2D) = "white" {}
-        [Enum(R, 0, G, 1, B, 2, A, 3)] _SubsurfaceChannel ("Channel", Int) = 0
-        [ToggleUI] _SubsurfaceInvert ("Invert Strength", Int) = 0
-        _SubsurfacePower ("Power", Range(0.1, 8.0)) = 1.0
-        _SubsurfaceThickness ("Thickness", Range(0.0, 1.0)) = 1.0
-        _SubsurfaceRim ("Rim", Range(0.0, 1.0)) = 1.0
-        [ToggleUI] _SubsurfaceReceiveShadow ("Receive Shadow", Int) = 1
-        _SubsurfaceDirectStrength ("Direct Strength", Range(0.0, 4.0)) = 1.0
-        _SubsurfaceEnvironmentStrength ("Environment Strength", Range(0.0, 4.0)) = 1.0
-        _SubsurfaceWrap ("Wrap", Range(0.0, 1.0)) = 0.0
-        _SubsurfaceColor ("Color", Color) = (1,1,1,1)
-        _SubsurfaceAlbedoBlend ("Albedo Blend", Range(0.0, 1.0)) = 1.0
-        _SubsurfaceAbsorptionColor ("Absorption Color", Color) = (1,1,1,1)
-        _SubsurfaceAbsorptionStrength ("Absorption Strength", Range(0.0, 8.0)) = 0.0
+        [LILKeyword(_SUBSURFACE)][ToggleUI] _UseSubsurfaceScattering ("Subsurface Scattering", Int) = 0
+        [LILIf(_UseSubsurfaceScattering, 1)][LILPropertyCache] _SubsurfaceScattering ("Strength", Range(0.0, 1.0)) = 0.0
+        [LILIf(_UseSubsurfaceScattering, 1)] _HoSSSProfileId ("HoSSS Profile ID", Range(0, 255)) = 1
+        [LILIf(_UseSubsurfaceScattering, 1)] _HoSSSThicknessScale ("HoSSS Thickness Scale", Range(0, 4)) = 1
+        [LILIf(_UseSubsurfaceScattering, 1)] _HoSSSTransmissionStrength ("HoSSS Transmission Strength", Range(0, 2)) = 1
+        [LILIf(_UseSubsurfaceScattering, 1)] _HoSSSTransmissionRadius ("HoSSS Transmission Radius", Range(0, 2)) = 1
+        [LILIf(_UseSubsurfaceScattering, 1)][NoScaleOffset] _SubsurfaceMap ("Strength", 2D) = "white" {}
+        [LILIf(_UseSubsurfaceScattering, 1)][Enum(R, 0, G, 1, B, 2, A, 3)] _SubsurfaceChannel ("Channel", Int) = 0
+        [LILIf(_UseSubsurfaceScattering, 1)][ToggleUI] _SubsurfaceInvert ("Invert Strength", Int) = 0
+        [LILIf(_UseSubsurfaceScattering, 1)] _SubsurfacePower ("Power", Range(0.1, 8.0)) = 1.0
+        [LILIf(_UseSubsurfaceScattering, 1)] _SubsurfaceThickness ("Thickness", Range(0.0, 1.0)) = 1.0
+        [LILIf(_UseSubsurfaceScattering, 1)] _SubsurfaceRim ("Rim", Range(0.0, 1.0)) = 1.0
+        [LILIf(_UseSubsurfaceScattering, 1)][ToggleUI] _SubsurfaceReceiveShadow ("Receive Shadow", Int) = 1
+        [LILIf(_UseSubsurfaceScattering, 1)] _SubsurfaceDirectStrength ("Direct Strength", Range(0.0, 4.0)) = 1.0
+        [LILIf(_UseSubsurfaceScattering, 1)] _SubsurfaceEnvironmentStrength ("Environment Strength", Range(0.0, 4.0)) = 1.0
+        [LILIf(_UseSubsurfaceScattering, 1)] _SubsurfaceWrap ("Wrap", Range(0.0, 1.0)) = 0.0
+        [LILIf(_UseSubsurfaceScattering, 1)] _SubsurfaceColor ("Color", Color) = (1,1,1,1)
+        [LILIf(_UseSubsurfaceScattering, 1)] _SubsurfaceAlbedoBlend ("Albedo Blend", Range(0.0, 1.0)) = 1.0
+        [LILIf(_UseSubsurfaceScattering, 1)] _SubsurfaceAbsorptionColor ("Absorption Color", Color) = (1,1,1,1)
+        [LILIf(_UseSubsurfaceScattering, 1)] _SubsurfaceAbsorptionStrength ("Absorption Strength", Range(0.0, 8.0)) = 0.0
         [LILFoldoutEnd]
 
         [LILFoldout(Screening)]
@@ -198,52 +220,64 @@ Shader "lilPBR Tessellation"
         [LILFoldout(Details)]
         [NoScaleOffset] _DetailMask ("Detail Mask (RGBA)", 2D) = "white" {}
 
-        [LILFoldout(Detail 1, _DETAIL1)]
-        [Enum(UV0, 0, UV1, 1, UV2, 2, UV3, 3)] _DetailUVMode1 ("UV Mode", Int) = 0
-        [LILPropertyCache] [Enum(Normal, 0, Add, 1, Screen, 2, Multiply, 3)] _DetailAlbedoBlend1 ("Albedo", Int) = 3
-        _DetailTex1 ("Albedo", 2D) = "white" {}
-        [LILPropertyCache] _DetailBumpScale1("Scale", Float) = 1.0
-        [NoScaleOffset][Normal] _DetailBumpMap1 ("Normal Map", 2D) = "bump" {}
-        [Enum(Add, 0, Override, 1)] _DetailBumpMapBlend1 ("Normal Map Blend", Int) = 0
-        [LILVector3] _DetailProjection1 ("Projection", Vector) = (0,0,0,0)
-        _DetailProjectionSharpness1 ("Projection Sharpness", Range(1,20)) = 10
-        _DetailProjectionThreshold1 ("Projection Threshold", Range(-1,1)) = 0.6
+        [LILFoldout(Detail 1)]
+        [LILKeyword(_DETAIL1)][ToggleUI] _UseDetail1 ("Detail 1", Int) = 0
+        [LILIf(_UseDetail1, 1)][Enum(UV0, 0, UV1, 1, UV2, 2, UV3, 3)] _DetailUVMode1 ("UV Mode", Int) = 0
+        [LILIf(_UseDetail1, 1)][LILPropertyCache] [Enum(Normal, 0, Add, 1, Screen, 2, Multiply, 3)] _DetailAlbedoBlend1 ("Albedo", Int) = 3
+        [LILIf(_UseDetail1, 1)] _DetailTex1 ("Albedo", 2D) = "white" {}
+        [LILIf(_UseDetail1, 1)][LILPropertyCache] _DetailBumpScale1("Scale", Float) = 1.0
+        [LILIf(_UseDetail1, 1)][NoScaleOffset][Normal] _DetailBumpMap1 ("Normal Map", 2D) = "bump" {}
+        [LILIf(_UseDetail1, 1)][Enum(Add, 0, Override, 1)] _DetailBumpMapBlend1 ("Normal Map Blend", Int) = 0
+        [LILIf(_UseDetail1, 1)][LILBox]
+        [LILIf(_UseDetail1, 1)][LILVector3] _DetailProjection1 ("Projection", Vector) = (0,0,0,0)
+        [LILIf(_UseDetail1, 1)] _DetailProjectionSharpness1 ("Projection Sharpness", Range(1,20)) = 10
+        [LILIf(_UseDetail1, 1)] _DetailProjectionThreshold1 ("Projection Threshold", Range(-1,1)) = 0.6
+        [LILBoxEnd]
         [LILFoldoutEnd]
 
-        [LILFoldout(Detail 2, _DETAIL2)]
-        [Enum(UV0, 0, UV1, 1, UV2, 2, UV3, 3)] _DetailUVMode2 ("UV Mode", Int) = 0
-        [LILPropertyCache] [Enum(Normal, 0, Add, 1, Screen, 2, Multiply, 3)] _DetailAlbedoBlend2 ("Albedo", Int) = 3
-        _DetailTex2 ("Albedo", 2D) = "white" {}
-        [LILPropertyCache] _DetailBumpScale2("Scale", Float) = 1.0
-        [NoScaleOffset][Normal] _DetailBumpMap2 ("Normal Map", 2D) = "bump" {}
-        [Enum(Add, 0, Override, 1)] _DetailBumpMapBlend2 ("Normal Map Blend", Int) = 0
-        [LILVector3] _DetailProjection2 ("Projection", Vector) = (0,0,0,0)
-        _DetailProjectionSharpness2 ("Projection Sharpness", Range(1,20)) = 10
-        _DetailProjectionThreshold2 ("Projection Threshold", Range(-1,1)) = 0.6
+        [LILFoldout(Detail 2)]
+        [LILKeyword(_DETAIL2)][ToggleUI] _UseDetail2 ("Detail 2", Int) = 0
+        [LILIf(_UseDetail2, 1)][Enum(UV0, 0, UV1, 1, UV2, 2, UV3, 3)] _DetailUVMode2 ("UV Mode", Int) = 0
+        [LILIf(_UseDetail2, 1)][LILPropertyCache] [Enum(Normal, 0, Add, 1, Screen, 2, Multiply, 3)] _DetailAlbedoBlend2 ("Albedo", Int) = 3
+        [LILIf(_UseDetail2, 1)] _DetailTex2 ("Albedo", 2D) = "white" {}
+        [LILIf(_UseDetail2, 1)][LILPropertyCache] _DetailBumpScale2("Scale", Float) = 1.0
+        [LILIf(_UseDetail2, 1)][NoScaleOffset][Normal] _DetailBumpMap2 ("Normal Map", 2D) = "bump" {}
+        [LILIf(_UseDetail2, 1)][Enum(Add, 0, Override, 1)] _DetailBumpMapBlend2 ("Normal Map Blend", Int) = 0
+        [LILIf(_UseDetail2, 1)][LILBox]
+        [LILIf(_UseDetail2, 1)][LILVector3] _DetailProjection2 ("Projection", Vector) = (0,0,0,0)
+        [LILIf(_UseDetail2, 1)] _DetailProjectionSharpness2 ("Projection Sharpness", Range(1,20)) = 10
+        [LILIf(_UseDetail2, 1)] _DetailProjectionThreshold2 ("Projection Threshold", Range(-1,1)) = 0.6
+        [LILBoxEnd]
         [LILFoldoutEnd]
 
-        [LILFoldout(Detail 3, _DETAIL3)]
-        [Enum(UV0, 0, UV1, 1, UV2, 2, UV3, 3)] _DetailUVMode3 ("UV Mode", Int) = 0
-        [LILPropertyCache] [Enum(Normal, 0, Add, 1, Screen, 2, Multiply, 3)] _DetailAlbedoBlend3 ("Albedo", Int) = 3
-        _DetailTex3 ("Albedo", 2D) = "white" {}
-        [LILPropertyCache] _DetailBumpScale3("Scale", Float) = 1.0
-        [NoScaleOffset][Normal] _DetailBumpMap3 ("Normal Map", 2D) = "bump" {}
-        [Enum(Add, 0, Override, 1)] _DetailBumpMapBlend3 ("Normal Map Blend", Int) = 0
-        [LILVector3] _DetailProjection3 ("Projection", Vector) = (0,0,0,0)
-        _DetailProjectionSharpness3 ("Projection Sharpness", Range(1,20)) = 10
-        _DetailProjectionThreshold3 ("Projection Threshold", Range(-1,1)) = 0.6
+        [LILFoldout(Detail 3)]
+        [LILKeyword(_DETAIL3)][ToggleUI] _UseDetail3 ("Detail 3", Int) = 0
+        [LILIf(_UseDetail3, 1)][Enum(UV0, 0, UV1, 1, UV2, 2, UV3, 3)] _DetailUVMode3 ("UV Mode", Int) = 0
+        [LILIf(_UseDetail3, 1)][LILPropertyCache] [Enum(Normal, 0, Add, 1, Screen, 2, Multiply, 3)] _DetailAlbedoBlend3 ("Albedo", Int) = 3
+        [LILIf(_UseDetail3, 1)] _DetailTex3 ("Albedo", 2D) = "white" {}
+        [LILIf(_UseDetail3, 1)][LILPropertyCache] _DetailBumpScale3("Scale", Float) = 1.0
+        [LILIf(_UseDetail3, 1)][NoScaleOffset][Normal] _DetailBumpMap3 ("Normal Map", 2D) = "bump" {}
+        [LILIf(_UseDetail3, 1)][Enum(Add, 0, Override, 1)] _DetailBumpMapBlend3 ("Normal Map Blend", Int) = 0
+        [LILIf(_UseDetail3, 1)][LILBox]
+        [LILIf(_UseDetail3, 1)][LILVector3] _DetailProjection3 ("Projection", Vector) = (0,0,0,0)
+        [LILIf(_UseDetail3, 1)] _DetailProjectionSharpness3 ("Projection Sharpness", Range(1,20)) = 10
+        [LILIf(_UseDetail3, 1)] _DetailProjectionThreshold3 ("Projection Threshold", Range(-1,1)) = 0.6
+        [LILBoxEnd]
         [LILFoldoutEnd]
 
-        [LILFoldout(Detail 4, _DETAIL4)]
-        [Enum(UV0, 0, UV1, 1, UV2, 2, UV3, 3)] _DetailUVMode4 ("UV Mode", Int) = 0
-        [LILPropertyCache] [Enum(Normal, 0, Add, 1, Screen, 2, Multiply, 3)] _DetailAlbedoBlend4 ("Albedo", Int) = 3
-        _DetailTex4 ("Albedo", 2D) = "white" {}
-        [LILPropertyCache] _DetailBumpScale4("Scale", Float) = 1.0
-        [NoScaleOffset][Normal] _DetailBumpMap4 ("Normal Map", 2D) = "bump" {}
-        [Enum(Add, 0, Override, 1)] _DetailBumpMapBlend4 ("Normal Map Blend", Int) = 0
-        [LILVector3] _DetailProjection4 ("Projection", Vector) = (0,0,0,0)
-        _DetailProjectionSharpness4 ("Projection Sharpness", Range(1,20)) = 10
-        _DetailProjectionThreshold4 ("Projection Threshold", Range(-1,1)) = 0.6
+        [LILFoldout(Detail 4)]
+        [LILKeyword(_DETAIL4)][ToggleUI] _UseDetail4 ("Detail 4", Int) = 0
+        [LILIf(_UseDetail4, 1)][Enum(UV0, 0, UV1, 1, UV2, 2, UV3, 3)] _DetailUVMode4 ("UV Mode", Int) = 0
+        [LILIf(_UseDetail4, 1)][LILPropertyCache] [Enum(Normal, 0, Add, 1, Screen, 2, Multiply, 3)] _DetailAlbedoBlend4 ("Albedo", Int) = 3
+        [LILIf(_UseDetail4, 1)] _DetailTex4 ("Albedo", 2D) = "white" {}
+        [LILIf(_UseDetail4, 1)][LILPropertyCache] _DetailBumpScale4("Scale", Float) = 1.0
+        [LILIf(_UseDetail4, 1)][NoScaleOffset][Normal] _DetailBumpMap4 ("Normal Map", 2D) = "bump" {}
+        [LILIf(_UseDetail4, 1)][Enum(Add, 0, Override, 1)] _DetailBumpMapBlend4 ("Normal Map Blend", Int) = 0
+        [LILIf(_UseDetail4, 1)][LILBox]
+        [LILIf(_UseDetail4, 1)][LILVector3] _DetailProjection4 ("Projection", Vector) = (0,0,0,0)
+        [LILIf(_UseDetail4, 1)] _DetailProjectionSharpness4 ("Projection Sharpness", Range(1,20)) = 10
+        [LILIf(_UseDetail4, 1)] _DetailProjectionThreshold4 ("Projection Threshold", Range(-1,1)) = 0.6
+        [LILBoxEnd]
         [LILFoldoutEnd]
         [LILFoldoutEnd]
 

@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
-using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -10,26 +11,30 @@ namespace jp.lilxyzw.lilpbr
 {
     internal class PBRShaderGUI : ShaderGUI
     {
-        private static Dictionary<string, List<LILFoldoutDecorator>> foldoutStarts;
-        private static Dictionary<string, List<LILFoldoutEndDecorator>> foldoutEnds;
-        private static Dictionary<string, List<LILIfDecorator>> ifs;
-        private static Dictionary<string, int> boxStarts;
-        private static Dictionary<string, int> boxEnds;
-        private static Dictionary<string, string> keywords;
-        private static HashSet<string> needToCache;
-        private static HashSet<string> clearCache;
-        void InitializeLists()
+        private static readonly Dictionary<Shader, ShaderGuiCache> shaderGuiCaches = new();
+        private const long CacheBuildTimeoutMilliseconds = 250;
+        private Dictionary<string, List<LILFoldoutDecorator>> foldoutStarts;
+        private Dictionary<string, List<LILFoldoutEndDecorator>> foldoutEnds;
+        private Dictionary<string, List<LILIfDecorator>> ifs;
+        private Dictionary<string, int> boxStarts;
+        private Dictionary<string, int> boxEnds;
+        private Dictionary<string, string> keywords;
+        private HashSet<string> needToCache;
+        private HashSet<string> clearCache;
+        private string cacheError;
+
+        void UseCache(ShaderGuiCache cache)
         {
-            foldoutStarts = new();
-            foldoutEnds = new();
-            ifs = new();
-            boxStarts = new();
-            boxEnds = new();
-            keywords = new();
-            needToCache = new();
-            clearCache = new();
+            foldoutStarts = cache.foldoutStarts;
+            foldoutEnds = cache.foldoutEnds;
+            ifs = cache.ifs;
+            boxStarts = cache.boxStarts;
+            boxEnds = cache.boxEnds;
+            keywords = cache.keywords;
+            needToCache = cache.needToCache;
+            clearCache = cache.clearCache;
+            shaderImporter = cache.shaderImporter;
         }
-        private static readonly MethodInfo M_GetShaderPropertyDrawer = typeof(Editor).Assembly.GetType("UnityEditor.MaterialPropertyHandler").GetMethod("GetShaderPropertyDrawer", BindingFlags.NonPublic | BindingFlags.Static);
         private int closedDepth = int.MaxValue;
         private int copyDepth = int.MaxValue;
         private int pasteDepth = int.MaxValue;
@@ -49,7 +54,37 @@ namespace jp.lilxyzw.lilpbr
 
         public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
         {
-            Initialize(materialEditor);
+            if (Settings.instance.useSafeMaterialGui)
+            {
+                EditorGUILayout.HelpBox("lilPBR is using Unity's default material GUI to avoid slow custom GUI initialization.", MessageType.Info);
+                if (GUILayout.Button("Enable lilPBR Custom GUI"))
+                {
+                    Settings.instance.useSafeMaterialGui = false;
+                    Settings.instance.Save();
+                    GUIUtility.ExitGUI();
+                }
+                base.OnGUI(materialEditor, properties);
+                return;
+            }
+
+            if (!Initialize(materialEditor))
+            {
+                base.OnGUI(materialEditor, properties);
+                return;
+            }
+            if (Settings.instance.useSafeMaterialGui)
+            {
+                EditorGUILayout.HelpBox(cacheError ?? "lilPBR custom GUI initialization was too slow. Reverted to Unity's default material GUI.", MessageType.Warning);
+                base.OnGUI(materialEditor, properties);
+                return;
+            }
+
+            if (GUILayout.Button("Use Safe Material GUI"))
+            {
+                Settings.instance.useSafeMaterialGui = true;
+                Settings.instance.Save();
+                GUIUtility.ExitGUI();
+            }
 
             var wideMode = EditorGUIUtility.wideMode;
             EditorGUIUtility.wideMode = true;
@@ -179,8 +214,8 @@ namespace jp.lilxyzw.lilpbr
                                 prop.propertyType() == ShaderPropertyType.Range && prop.floatValue != 0 ||
                                 prop.propertyType() == ShaderPropertyType.Int && prop.intValue != 0 ||
                                 prop.propertyType() == ShaderPropertyType.Color && prop.colorValue.maxColorComponent != 0 ||
-                                prop.propertyType() == ShaderPropertyType.Texture && prop.textureValue) mat.EnableKeyword(keyword);
-                            else mat.DisableKeyword(keyword);
+                                prop.propertyType() == ShaderPropertyType.Texture && prop.textureValue) SetKeywordIfChanged(mat, keyword, true);
+                            else SetKeywordIfChanged(mat, keyword, false);
                         }
                     }
                 }
@@ -234,6 +269,16 @@ namespace jp.lilxyzw.lilpbr
                 // プロパティの描画
                 if (EditorGUI.indentLevel < closedDepth && !prop.propertyFlags().HasFlag(ShaderPropertyFlags.HideInInspector))
                 {
+                    // If処理
+                    if (ifs.TryGetValue(prop.name, out var ifList))
+                    {
+                        if (ifList.Any(i => i.values.All(v => ((Material)materialEditor.targets[0]).GetInt(i.target) != v)))
+                        {
+                            if (clearCache.Contains(prop.name)) propertyCache.Clear();
+                            continue;
+                        }
+                    }
+
                     // キャッシュ
                     if (needToCache.Contains(prop.name))
                     {
@@ -244,12 +289,6 @@ namespace jp.lilxyzw.lilpbr
                     if (clearCache.Contains(prop.name))
                     {
                         propertyCache.Clear();
-                    }
-
-                    // If処理
-                    if (ifs.TryGetValue(prop.name, out var ifList))
-                    {
-                        if (ifList.Any(i => i.values.All(v => ((Material)materialEditor.targets[0]).GetInt(i.target) != v))) continue;
                     }
 
                     // プロパティの描画
@@ -340,65 +379,36 @@ namespace jp.lilxyzw.lilpbr
             materialEditor.DoubleSidedGIField();
         }
 
-        private void Initialize(MaterialEditor materialEditor)
+        private bool Initialize(MaterialEditor materialEditor)
         {
-            if (shader != (materialEditor.target as Material).shader)
-            {
-                shader = (materialEditor.target as Material).shader;
-                shaderImporter = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(shader)) as ShaderImporter;
-                InitializeLists();
+            var targetMaterial = materialEditor.target as Material;
+            if (!targetMaterial || !targetMaterial.shader) return false;
 
-                var count = shader.GetPropertyCount();
-                for (int i = 0; i < count; i++)
+            if (shader != targetMaterial.shader)
+            {
+                shader = targetMaterial.shader;
+                if (!shaderGuiCaches.TryGetValue(shader, out var cache))
                 {
-                    var name = shader.GetPropertyName(i);
-                    var attributes = shader.GetPropertyAttributes(i);
-                    foreach (var attr in attributes)
+                    cache = new ShaderGuiCache(shader);
+                    if (cache.buildMilliseconds > CacheBuildTimeoutMilliseconds)
                     {
-                        if (M_GetShaderPropertyDrawer.Invoke(null, new object[] { attr, null }) is not MaterialPropertyDrawer drawer) continue;
-                        if (drawer is LILFoldoutDecorator start)
-                        {
-                            if (!foldoutStarts.TryGetValue(name, out var list)) list = new();
-                            list.Add(start);
-                            foldoutStarts[name] = list;
-                        }
-                        if (drawer is LILFoldoutEndDecorator end)
-                        {
-                            if (!foldoutEnds.TryGetValue(name, out var list)) list = new();
-                            list.Add(end);
-                            foldoutEnds[name] = list;
-                        }
-                        if (drawer is LILIfDecorator ifdeco)
-                        {
-                            if (!ifs.TryGetValue(name, out var list)) list = new();
-                            list.Add(ifdeco);
-                            ifs[name] = list;
-                        }
-                        if (drawer is LILBoxDecorator)
-                        {
-                            if (!boxStarts.TryGetValue(name, out var a)) a = 0;
-                            boxStarts[name] = a + 1;
-                        }
-                        if (drawer is LILBoxEndDecorator)
-                        {
-                            if (!boxEnds.TryGetValue(name, out var a)) a = 0;
-                            boxEnds[name] = a + 1;
-                        }
-                        if (drawer is LILKeywordDecorator keyword)
-                        {
-                            keywords[name] = keyword.keyword;
-                        }
-                        if (drawer is LILPropertyCacheDecorator)
-                        {
-                            needToCache.Add(name);
-                        }
-                        if (drawer is LILPropertyCacheClearDecorator)
-                        {
-                            clearCache.Add(name);
-                        }
+                        Settings.instance.useSafeMaterialGui = true;
+                        Settings.instance.Save();
+                        cacheError = $"lilPBR custom GUI cache took {cache.buildMilliseconds} ms to build.";
+                        return false;
                     }
+                    shaderGuiCaches.Add(shader, cache);
                 }
+                UseCache(cache);
             }
+            return foldoutStarts != null;
+        }
+
+        private static void SetKeywordIfChanged(Material mat, string keyword, bool enable)
+        {
+            if (mat.IsKeywordEnabled(keyword) == enable) return;
+            if (enable) mat.EnableKeyword(keyword);
+            else mat.DisableKeyword(keyword);
         }
 
         private class PropertyClipboard : ScriptableSingleton<PropertyClipboard>
@@ -454,6 +464,127 @@ namespace jp.lilxyzw.lilpbr
             Copy,
             Paste,
             Reset
+        }
+
+        private sealed class ShaderGuiCache
+        {
+            public readonly Dictionary<string, List<LILFoldoutDecorator>> foldoutStarts = new();
+            public readonly Dictionary<string, List<LILFoldoutEndDecorator>> foldoutEnds = new();
+            public readonly Dictionary<string, List<LILIfDecorator>> ifs = new();
+            public readonly Dictionary<string, int> boxStarts = new();
+            public readonly Dictionary<string, int> boxEnds = new();
+            public readonly Dictionary<string, string> keywords = new();
+            public readonly HashSet<string> needToCache = new();
+            public readonly HashSet<string> clearCache = new();
+            public readonly ShaderImporter shaderImporter;
+            public readonly long buildMilliseconds;
+
+            public ShaderGuiCache(Shader shader)
+            {
+                var stopwatch = Stopwatch.StartNew();
+                shaderImporter = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(shader)) as ShaderImporter;
+
+                var count = shader.GetPropertyCount();
+                for (int i = 0; i < count; i++)
+                {
+                    var name = shader.GetPropertyName(i);
+                    var attributes = shader.GetPropertyAttributes(i);
+                    foreach (var attr in attributes)
+                    {
+                        AddAttribute(name, attr);
+                    }
+                }
+                stopwatch.Stop();
+                buildMilliseconds = stopwatch.ElapsedMilliseconds;
+            }
+
+            private void AddAttribute(string name, string attr)
+            {
+                if (TryGetAttributeArguments(attr, "LILFoldout", out var foldoutArgs))
+                {
+                    var args = SplitArguments(foldoutArgs);
+                    var drawer = args.Count > 1 ? new LILFoldoutDecorator(args[0], args[1]) : new LILFoldoutDecorator(args.Count > 0 ? args[0] : name);
+                    if (!foldoutStarts.TryGetValue(name, out var list)) list = new();
+                    list.Add(drawer);
+                    foldoutStarts[name] = list;
+                    return;
+                }
+
+                if (attr == "LILFoldoutEnd")
+                {
+                    if (!foldoutEnds.TryGetValue(name, out var list)) list = new();
+                    list.Add(new LILFoldoutEndDecorator());
+                    foldoutEnds[name] = list;
+                    return;
+                }
+
+                if (TryGetAttributeArguments(attr, "LILIf", out var ifArgs))
+                {
+                    var args = SplitArguments(ifArgs);
+                    if (args.Count > 0)
+                    {
+                        var values = args.Skip(1).Select(ParseFloat).ToArray();
+                        if (!ifs.TryGetValue(name, out var list)) list = new();
+                        list.Add(new LILIfDecorator(args[0], values));
+                        ifs[name] = list;
+                    }
+                    return;
+                }
+
+                if (attr == "LILBox")
+                {
+                    if (!boxStarts.TryGetValue(name, out var a)) a = 0;
+                    boxStarts[name] = a + 1;
+                    return;
+                }
+
+                if (attr == "LILBoxEnd")
+                {
+                    if (!boxEnds.TryGetValue(name, out var a)) a = 0;
+                    boxEnds[name] = a + 1;
+                    return;
+                }
+
+                if (TryGetAttributeArguments(attr, "LILKeyword", out var keywordArgs))
+                {
+                    var args = SplitArguments(keywordArgs);
+                    if (args.Count > 0) keywords[name] = args[0];
+                    return;
+                }
+
+                if (attr == "LILPropertyCache")
+                {
+                    needToCache.Add(name);
+                    return;
+                }
+
+                if (attr == "LILPropertyCacheClear")
+                {
+                    clearCache.Add(name);
+                }
+            }
+
+            private static bool TryGetAttributeArguments(string attr, string attributeName, out string args)
+            {
+                args = null;
+                var prefix = attributeName + "(";
+                if (!attr.StartsWith(prefix, StringComparison.Ordinal) || !attr.EndsWith(")", StringComparison.Ordinal)) return false;
+                args = attr.Substring(prefix.Length, attr.Length - prefix.Length - 1);
+                return true;
+            }
+
+            private static List<string> SplitArguments(string args)
+            {
+                return args.Split(',')
+                    .Select(a => a.Trim())
+                    .Where(a => a.Length > 0)
+                    .ToList();
+            }
+
+            private static float ParseFloat(string value)
+            {
+                return float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var result) ? result : 0f;
+            }
         }
     }
 

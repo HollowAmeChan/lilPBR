@@ -25,6 +25,12 @@ LILPBR_PROPERTY(float,_SpecularHighlightStrength)\
 LILPBR_PROPERTY(float,_SpecularHighlightSmoothness)\
 LILPBR_PROPERTY(float,_SpecularHighlightReflectance)\
 LILPBR_PROPERTY(float4,_SpecularHighlightColor)\
+LILPBR_PROPERTY(float,_ShadowStrength)\
+LILPBR_PROPERTY(float,_ShadowMinLight)\
+LILPBR_PROPERTY(float,_ShadowContrast)\
+LILPBR_PROPERTY(float4,_ShadowTint)\
+LILPBR_PROPERTY(float,_ShadowTintStrength)\
+LILPBR_PROPERTY(float,_HoShadowStrength)\
 LILPBR_PROPERTY(uint,_UseScreenSpaceAO)\
 LILPBR_PROPERTY(uint,_ScreenSpaceAOSource)\
 LILPBR_PROPERTY(float,_SSAOStrength)\
@@ -40,6 +46,9 @@ LILPBR_PROPERTY(float,_HoAovGroupId)\
 LILPBR_PROPERTY(float,_HoAovObjectId)\
 LILPBR_PROPERTY(float,_HoAovMaterialClass)\
 LILPBR_PROPERTY(float,_HoSSSProfileId)\
+LILPBR_PROPERTY(float,_HoSSSThicknessScale)\
+LILPBR_PROPERTY(float,_HoSSSTransmissionStrength)\
+LILPBR_PROPERTY(float,_HoSSSTransmissionRadius)\
 LILPBR_PROPERTY(float,_HoAovFlags)\
 LILPBR_PROPERTY(float,_HoAovThickness)\
 LILPBR_PROPERTY(float,_HoAovCurvature)\

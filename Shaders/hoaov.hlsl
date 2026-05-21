@@ -146,7 +146,7 @@ half HoAovResolveThickness(float2 uv_MainTex, float2 dx, float2 dy)
 
         half subsurfaceThinness = pow(saturate(subsurfaceMask), _SubsurfacePower) * _SubsurfaceScattering;
         half subsurfaceFloor = saturate(_SubsurfaceScattering) * 0.2;
-        thickness = max(thickness, max(subsurfaceFloor, saturate(subsurfaceThinness)));
+        thickness = max(thickness, max(subsurfaceFloor, saturate(subsurfaceThinness)) * max(_HoSSSThicknessScale, 0.0));
     }
 
     return saturate(thickness);
@@ -192,6 +192,8 @@ half HoAovResolveAlpha(v2f i)
 
 void HoAovApplyAlpha(v2f i, bool isFront, inout float depth, half alpha)
 {
+    depth = i.pos.z;
+
     #if defined(_CUTOUT) || defined(_DITHER)
         #if defined(_DITHER)
             if(_DitherRandomize && IsPerspective()) alpha = alpha + ibuki(i.pos) * 0.1 - 0.05;
@@ -242,11 +244,14 @@ HoAovOutput HoAovFrag(v2f i, bool isFront, inout float depth)
         HoAovEncodeScalar(effectiveFlags) * flagsEnabled * subjectValid);
     output.normalDepth = half4((normalize(normalWS) * 0.5 + 0.5) * worldNormalEnabled * subjectValid, linearDepth * linearDepthEnabled * subjectValid);
     output.tangentNormal = half4((normalize(normalTS) * 0.5 + 0.5) * tangentNormalEnabled * subjectValid, tangentNormalEnabled * subjectValid);
+    half hoSssEnabled = step(0.0001, _SubsurfaceScattering);
+    half hoSssTransmissionStrength = saturate(_HoSSSTransmissionStrength - 1.0);
+    half hoSssTransmissionRadius = saturate((_HoSSSTransmissionRadius - 0.5) / 1.5);
     output.surfaceData = half4(
         thickness * thicknessEnabled * subjectValid,
-        saturate(abs(_HoAovCurvature)) * curvatureEnabled * subjectValid,
+        max(saturate(abs(_HoAovCurvature)), hoSssTransmissionStrength * hoSssEnabled) * curvatureEnabled * subjectValid,
         HoAovResolveMaterialProfile() * materialEnabled * subjectValid,
-        saturate(_HoAovUtility) * utilityEnabled * subjectValid);
+        max(saturate(_HoAovUtility), hoSssTransmissionRadius * hoSssEnabled) * utilityEnabled * subjectValid);
     output.custom0 = half4(HoAovResolveCustom0To3(uv_MainTex) * subjectValid);
     output.objectCustom0 = half4(HoAovDecodeObjectCustom0(objectCustomMask) * subjectValid);
     output.objectCustom1 = half4(HoAovDecodeObjectCustom1(objectCustomMask) * subjectValid);

@@ -29,9 +29,24 @@ float HoAovEncodeScalar(float value)
     return frac(abs(value) * 0.61803398875);
 }
 
+float HoAovEncodeByte(float value)
+{
+    return saturate(round(clamp(value, 0.0, 255.0)) / 255.0);
+}
+
 float HoAovGetObjectId()
 {
     return _HoAovObjectId;
+}
+
+float HoAovResolveMaterialProfile()
+{
+    if (_SubsurfaceScattering > 0.0001)
+    {
+        return HoAovEncodeByte(_HoSSSProfileId);
+    }
+
+    return HoAovEncodeScalar(_HoAovMaterialClass);
 }
 
 float4 HoAovApplyCustomWriteMask(float4 values, float startBit)
@@ -94,6 +109,19 @@ float4 HoAovResolveCustom0To3(float2 uv_MainTex)
     }
 
     return values;
+}
+
+float4 HoAovResolveSssSource(float2 uv_MainTex, float2 dx, float2 dy)
+{
+    if (_SubsurfaceScattering > 0.0001)
+    {
+        half3 albedo = Sample(_MainTex, sampler_trilinear_repeat, uv_MainTex, dx, dy).rgb * _Color.rgb;
+        half sourceWeight = saturate(_SubsurfaceScattering);
+        half3 sourceColor = lerp(_SubsurfaceColor.rgb, _SubsurfaceColor.rgb * albedo, saturate(_SubsurfaceAlbedoBlend));
+        return float4(sourceColor, sourceWeight);
+    }
+
+    return 0.0;
 }
 
 half HoAovSelectChannel(half4 value, uint channel)
@@ -195,8 +223,10 @@ HoAovOutput HoAovFrag(v2f i, bool isFront, inout float depth)
     float linearDepth = LinearEyeDepth(i.pos.z, _ZBufferParams);
     float2 uv_MainTex = i.uv01.xy * _MainTex_ST.xy + _MainTex_ST.zw;
     half3 normalTS;
+    float2 uvDx = ddx(uv_MainTex);
+    float2 uvDy = ddy(uv_MainTex);
     half3 normalWS = HoAovGetNormal(i, isFront, normalTS);
-    half thickness = HoAovResolveThickness(uv_MainTex, ddx(uv_MainTex), ddy(uv_MainTex));
+    half thickness = HoAovResolveThickness(uv_MainTex, uvDx, uvDy);
     uint rendererUserValue = unity_RendererUserValue;
     bool hasRendererUserValue = rendererUserValue != 0u;
     uint objectCustomMask = hasRendererUserValue ? (rendererUserValue & 255u) : (uint)round(saturate(_HoAovObjectCustomMask / 255.0) * 255.0);
@@ -215,12 +245,25 @@ HoAovOutput HoAovFrag(v2f i, bool isFront, inout float depth)
     output.surfaceData = half4(
         thickness * thicknessEnabled * subjectValid,
         saturate(abs(_HoAovCurvature)) * curvatureEnabled * subjectValid,
-        HoAovEncodeScalar(_HoAovMaterialClass) * materialEnabled * subjectValid,
+        HoAovResolveMaterialProfile() * materialEnabled * subjectValid,
         saturate(_HoAovUtility) * utilityEnabled * subjectValid);
     output.custom0 = half4(HoAovResolveCustom0To3(uv_MainTex) * subjectValid);
     output.objectCustom0 = half4(HoAovDecodeObjectCustom0(objectCustomMask) * subjectValid);
     output.objectCustom1 = half4(HoAovDecodeObjectCustom1(objectCustomMask) * subjectValid);
     return output;
+}
+
+half4 HoAovSssFrag(v2f i, bool isFront, inout float depth)
+{
+    half alpha = HoAovResolveAlpha(i);
+    HoAovApplyAlpha(i, isFront, depth, alpha);
+
+    float subjectCoverage = saturate(_HoAovMaskWeight);
+    float subjectValid = step(0.0001, subjectCoverage);
+    float2 uv_MainTex = i.uv01.xy * _MainTex_ST.xy + _MainTex_ST.zw;
+    float2 uvDx = ddx(uv_MainTex);
+    float2 uvDy = ddy(uv_MainTex);
+    return half4(HoAovResolveSssSource(uv_MainTex, uvDx, uvDy) * subjectValid);
 }
 
 #endif

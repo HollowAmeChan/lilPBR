@@ -39,6 +39,7 @@ LILPBR_PROPERTY(float4,_HoAovCustomValues0)\
 LILPBR_PROPERTY(float,_HoAovGroupId)\
 LILPBR_PROPERTY(float,_HoAovObjectId)\
 LILPBR_PROPERTY(float,_HoAovMaterialClass)\
+LILPBR_PROPERTY(float,_HoSSSProfileId)\
 LILPBR_PROPERTY(float,_HoAovFlags)\
 LILPBR_PROPERTY(float,_HoAovThickness)\
 LILPBR_PROPERTY(float,_HoAovCurvature)\

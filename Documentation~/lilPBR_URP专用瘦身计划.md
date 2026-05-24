@@ -8,8 +8,8 @@
 
 执行顺序：
 
-1. 裁掉或确认已经裁掉非 URP 支持。
-2. 裁掉 VRChat 特殊支持。
+1. 非 URP 支持已完成清理。
+2. VRChat 特殊支持已完成清理。
 3. 优化 `multi_compile`。
 
 ## 当前快照
@@ -18,102 +18,51 @@
 - 当前 shader 入口只保留 `Shaders/lilPBR.shader`。
 - `Shaders/lilPBR_Tessellation.shader`、`.meta`、`Shaders/tessellation.hlsl` 和 `.meta` 已删除。该曲面细分分支不再作为项目 RP 流程的一部分。
 - `Shaders/lilPBR.shader` 使用 `RenderPipeline = UniversalPipeline`，并包含 `UniversalForward`、`UniversalGBuffer`、`ShadowCaster`、`DepthOnly`、`DepthNormals`、`Meta`、`MotionVectors`、`XRMotionVectors`、`HoAOV`、`HoCharacterCapture` 等 URP pass。
-- VRChat 相关残留还在：
-  - `Editor/jp.lilxyzw.lilpbr.asmdef`
-  - `Scripts/jp.lilxyzw.lilpbr.runtime.asmdef`
-  - `Editor/ShaderModifier.cs`
-  - `Scripts/ShaderLayerSetter.cs`
-  - `Scripts/VolumetricFog.cs`
-  - `Shaders/platform_vrchat.hlsl`
-  - `Shaders/pbr_core.hlsl`
-  - `Shaders/lilPBR.shader`
-  - `Editor/Localization/` 下的本地化字符串
+- VRChat、Udon、VRCLightVolumes、LTCGI 相关支持已删除。
 - 编译压力主要来自 Forward pass 中完整的 URP `multi_compile` 组合，以及部分 pass 中重复出现但实际不需要的 Unity pass 级 `multi_compile`。
 - `LILPBR_SHADER_COMPILE_OPTIMIZATION_PLAN.md` 里已有一份偏技术细节的 pass-by-pass 编译优化计划。本文档作为这条瘦身分支的总执行顺序。
 
-## 第一阶段：裁掉非 URP 支持
+## 第一阶段：非 URP 支持清理
 
-### 目的
+### 状态
 
-让 URP 成为唯一支持的渲染管线。这个阶段结束后，除 Unity 必须保留的无害 fallback 以外，不应该再有 Built-in Render Pipeline、HDRP、通用管线或历史平台兼容分支。
+已完成。
 
-### 任务
+当前代码状态：
 
-1. 审计所有 shader 文件中的非 URP 入口。
-   - 搜索：`BuiltIn`、`builtin`、`HDRP`、`HDRenderPipeline`、`RenderPipeline`、`LightMode`、`Fallback`、`UsePass`。
-   - 确认所有有效 `SubShader` 都带有 `RenderPipeline = UniversalPipeline`。
-   - 确认当前 URP block 下方没有隐藏的 Built-in 或 HDRP `SubShader`。
-
-2. 删除非 URP include 和 define。
-   - 保留 `Shaders/unity_urp.hlsl` 作为唯一 Unity 管线集成层。
-   - 只有确认没有引用后再删除死 include。
-   - 不要因为 `pbr_core.hlsl` 是管线无关文件就删除它，它仍然是材质核心逻辑。
-
-3. 简化文档和包元数据。
-   - 更新 `README.md`，明确这个 fork 是项目 URP-only 包，不追求上游 lilPBR 通用兼容。
-   - 删除暗示 Built-in/HDRP 支持的安装或兼容说明。
-   - 保留 `lilToon-URP-Extensions` 和本地 URP fork 的依赖说明。
-
-4. 删除 Tessellation 分支。
-   - 已删除 `Shaders/lilPBR_Tessellation.shader` 和 `.meta`。
-   - 已删除 `Shaders/tessellation.hlsl` 和 `.meta`。
-   - 已从 `Shaders/pbr_properties.hlsl` 删除 `_Tess*` uniform。
-   - 已删除 README、路线图、阴影模块说明和本地化中的 Tessellation 引用。
-   - 项目层仍需检查是否有材质引用旧 shader；如有，迁移到 `lilPBR.shader`，并把 displacement/tessellation 参数作为废弃数据处理。
+- `Shaders/lilPBR.shader` 是唯一 shader 入口。
+- 唯一有效 `SubShader` 带有 `RenderPipeline = UniversalPipeline`。
+- 所有 pass 都是 URP pass 或项目自定义 URP pass：`UniversalForward`、`UniversalGBuffer`、`ShadowCaster`、`DepthOnly`、`DepthNormals`、`Meta`、`MotionVectors`、`XRMotionVectors`、`HoAOV`、`HoAOVSSS`、`HoCharacterCapture`。
+- 没有 Built-in/HDRP/LWRP include、Surface Shader、`CGPROGRAM`、`UsePass` 或非 `UniversalPipeline` 的 `SubShader`。
+- `Shaders/unity_urp.hlsl` 是唯一 Unity 管线集成层。
+- README 已改为项目专用 URP-only 说明。
+- `Shaders/lilPBR_Tessellation.shader`、`.meta`、`Shaders/tessellation.hlsl` 和 `.meta` 已删除。
+- `Shaders/pbr_properties.hlsl` 中的 `_Tess*` uniform 已删除。
 
 ### 验收
 
-- `rg -n "BuiltIn|builtin|HDRP|HDRenderPipeline" Shaders Editor Scripts README.md package.json` 不再命中有效支持路径。
+- `rg -n "BuiltIn|builtin|HDRP|HDRenderPipeline|LightweightPipeline|LWRP" Shaders Editor Scripts package.json` 不再命中有效支持路径。
 - `Shaders/lilPBR.shader` 在 URP 下仍能编译。
 - 项目中不再有材质引用 `lilPBR_Tessellation.shader`。
 - 项目材质不会静默 fallback 到 missing shader。
 
-## 第二阶段：裁掉 VRChat 特殊支持
+## 第二阶段：VRChat 特殊支持清理
 
-### 目的
+### 状态
 
-删除 VRChat、Udon、VRCLightVolumes、LTCGI 相关行为。这个 fork 后续只使用普通 Unity/URP 属性名和项目自有 RendererFeature。
+已完成。这个 fork 后续只使用普通 Unity/URP 属性名和项目自有 RendererFeature。
 
-### 任务
+当前代码状态：
 
-1. 删除 asmdef 里的 version define。
-   - 从 `Editor/jp.lilxyzw.lilpbr.asmdef` 删除 `LIL_VRCHAT`。
-   - 从 `Editor/jp.lilxyzw.lilpbr.asmdef` 删除 `LIL_VRCLIGHTVOLUMES`，除非项目明确还使用 `red.sim.lightvolumes`。
-   - 从 `Editor/jp.lilxyzw.lilpbr.asmdef` 删除 `LIL_LTCGI`，除非项目明确还使用 `at.pimaker.ltcgi`。
-   - 从 `Scripts/jp.lilxyzw.lilpbr.runtime.asmdef` 删除 `LIL_VRCHAT`。
-
-2. 移除 VRChat shader 设置生成。
-   - 简化 `Editor/ShaderModifier.cs`，不再写入 `#include "platform_vrchat.hlsl"`。
-   - 如果没有其他可选包 define 需要生成：
-     - 要么让 `settings.hlsl` 成为静态空 include；
-     - 要么删除 `ShaderModifier.cs`，保留稳定的 include 文件。
-   - 优先选择不会在 Unity domain reload 时写文件的方案。
-
-3. 删除 VRChat 平台 include。
-   - 删除 `Shaders/platform_vrchat.hlsl` 和 `.meta`。
-   - 删除 `Shaders/pbr_core.hlsl` 中的 `#ifdef LIL_VRCHAT` 路径。
-   - VRChat camera/mirror 判断要么替换成项目普通相机行为，要么直接删除对应功能。
-
-4. 统一 runtime 属性名。
-   - `Scripts/ShaderLayerSetter.cs` 永远使用 `_HideShaderLayer`。
-   - `Scripts/VolumetricFog.cs` 永远使用：
-     - `_VFogNoise`
-     - `_VFogDensity`
-     - `_VFogScrollX`
-     - `_VFogScrollZ`
-     - `_VFogHeightScale`
-     - `_VFogHeightOffset`
-     - `_VFogHeightSharpness`
-   - 删除 runtime 脚本里的所有 `#if LIL_VRCHAT` 分支。
-
-5. 删除材质面板里的 VRChat 暴露项。
-   - 从 `Shaders/lilPBR.shader` 删除 `VRChat` foldout 和相关属性。
-   - 如果属性不再被采样，从 `Shaders/pbr_properties.hlsl` 删除对应字段。
-   - 从 `Editor/Localization/*.po` 删除 `VRChat` 字符串。
-
-6. 重新扫描。
-   - 执行：`rg -n "VRChat|VRC|Udon|LIL_VRCHAT|LIL_VRCLIGHTVOLUMES|LIL_LTCGI|platform_vrchat" .`
-   - 任何剩余命中都必须是历史说明或明确保留项。
+- `Editor/jp.lilxyzw.lilpbr.asmdef` 的 `versionDefines` 已清空。
+- `Scripts/jp.lilxyzw.lilpbr.runtime.asmdef` 的 `versionDefines` 已清空。
+- `Editor/ShaderModifier.cs` 和 `.meta` 已删除，`settings.hlsl` 变成静态空 include。
+- `Shaders/platform_vrchat.hlsl` 和 `.meta` 已删除。
+- `Shaders/pbr_core.hlsl` 中的 `LIL_VRCHAT` camera/mirror 显隐分支已删除。
+- `Scripts/ShaderLayerSetter.cs` 固定使用 `_HideShaderLayer`。
+- `Scripts/VolumetricFog.cs` 固定使用 `_VFog*` 全局属性。
+- `Shaders/lilPBR.shader` 中的 `VRChat` foldout 和 `_LTCGI` 占位属性已删除。
+- 中文本地化中的 `VRChat` 字符串已删除。
 
 ### 验收
 
@@ -146,7 +95,7 @@
 ### Phase 1：停止不必要的 reimport 触发
 
 1. 确认没有 editor 脚本在内容不变时写 shader 文件。
-2. VRC 删除后，优先让 `settings.hlsl` 静态化。
+2. `settings.hlsl` 已静态化。
 3. 搜索 editor 代码中的：
    - `[InitializeOnLoadMethod]`
    - `AssetDatabase.Refresh`
@@ -246,7 +195,7 @@ lilToon 风格的 container/importer 系统长期更干净，但侵入性很高�
 
 不要把它作为第一刀。只有满足以下条件后再考虑：
 
-- 非 URP 和 VRC 删除完成；
+- VRC 删除已完成；
 - `multi_compile` 裁剪已经有可测收益；
 - 项目专用 feature set 稳定。
 
@@ -288,18 +237,18 @@ lilToon 风格的 container/importer 系统长期更干净，但侵入性很高�
 
 ### Milestone 1：URP-only 声明完成
 
-- 完成非 URP 审计。
-- 更新文档，明确这是项目 URP-only fork。
-- 删除 Tessellation shader 分支，并迁移或确认不存在旧材质引用。
+- 已完成非 URP 审计。
+- 已更新文档，明确这是项目 URP-only fork。
+- 已删除 Tessellation shader 分支；项目层仍需确认不存在旧材质引用。
 - 记录 deferred、XR motion vectors、Meta pass 是否继续支持。
 
 ### Milestone 2：VRC-free 包
 
-- 删除 asmdef version define。
-- 删除 `platform_vrchat.hlsl`。
-- 删除 VRC shader 属性和本地化。
-- 删除 C# `LIL_VRCHAT` 分支。
-- 让 `settings.hlsl` 稳定不重写。
+- 已删除 asmdef version define。
+- 已删除 `platform_vrchat.hlsl`。
+- 已删除 VRC shader 属性和本地化。
+- 已删除 C# `LIL_VRCHAT` 分支。
+- `settings.hlsl` 已稳定不重写。
 
 ### Milestone 3：第一轮 multi_compile 降量
 

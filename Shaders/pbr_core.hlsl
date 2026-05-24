@@ -559,11 +559,7 @@ void DoVertex(inout appdata i, out float4 pos, out float4 uv01, out float4 uv23,
     i.vertex.xyz = W2O(posWorld);
     #endif
 
-    if(!IsShowLayer()
-    #ifdef LIL_VRCHAT
-    || !IsShow(abs(UNITY_MATRIX_P._m02) > 0.000001)
-    #endif
-    )
+    if(!IsShowLayer())
     {
         i.vertex = 0.0/0.0;
         posWorld = 0.0/0.0;

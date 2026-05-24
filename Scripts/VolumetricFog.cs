@@ -22,15 +22,6 @@ namespace jp.lilxyzw.lilpbr.runtime
 
         void OnEnable()
         {
-#if LIL_VRCHAT
-            _ID_VFogNoise = Shader.PropertyToID("_UdonVFogNoise");
-            _ID_VFogDensity = Shader.PropertyToID("_UdonVFogDensity");
-            _ID_VFogScrollX = Shader.PropertyToID("_UdonVFogScrollX");
-            _ID_VFogScrollZ = Shader.PropertyToID("_UdonVFogScrollZ");
-            _ID_VFogHeightScale = Shader.PropertyToID("_UdonVFogHeightScale");
-            _ID_VFogHeightOffset = Shader.PropertyToID("_UdonVFogHeightOffset");
-            _ID_VFogHeightSharpness = Shader.PropertyToID("_UdonVFogHeightSharpness");
-#else
             _ID_VFogNoise = Shader.PropertyToID("_VFogNoise");
             _ID_VFogDensity = Shader.PropertyToID("_VFogDensity");
             _ID_VFogScrollX = Shader.PropertyToID("_VFogScrollX");
@@ -38,7 +29,6 @@ namespace jp.lilxyzw.lilpbr.runtime
             _ID_VFogHeightScale = Shader.PropertyToID("_VFogHeightScale");
             _ID_VFogHeightOffset = Shader.PropertyToID("_VFogHeightOffset");
             _ID_VFogHeightSharpness = Shader.PropertyToID("_VFogHeightSharpness");
-#endif
             SetVariables();
         }
 

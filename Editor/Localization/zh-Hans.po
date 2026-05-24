@@ -512,31 +512,6 @@ msgstr "结束距离"
 
 
 
-#: VRChat
-
-msgid "VRChat"
-msgstr "VRChat"
-
-msgid "Hide In Desktop"
-msgstr "桌面模式隐藏"
-
-msgid "Hide In VR"
-msgstr "VR 模式隐藏"
-
-msgid "Hide In Camera"
-msgstr "相机中隐藏"
-
-msgid "Hide In Screenshot"
-msgstr "截图中隐藏"
-
-msgid "Hide In Mirror"
-msgstr "镜子中隐藏"
-
-msgid "Hide In Not Mirror"
-msgstr "非镜子中隐藏"
-
-
-
 #: Advanced
 
 msgid "Advanced"

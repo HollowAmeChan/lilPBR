@@ -45,7 +45,7 @@ lilPBR 当前不是 lilToon 的生成式架构。它直接维护：
 - Anisotropy、Clear Coat、Cloth。
 - Fake Translucent、Subsurface Scattering。
 - Screening、4 层 Detail、Wetness / Rain。
-- Wind、Distance Fade、VRChat 显隐。
+- Wind、Distance Fade。
 - ShadowCaster、DepthOnly、DepthNormals、Meta、MotionVectors、XRMotionVectors。
 - Water shader。
 

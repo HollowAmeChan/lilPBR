@@ -13,22 +13,6 @@
     "precompiledReferences": [],
     "autoReferenced": false,
     "defineConstraints": [],
-    "versionDefines": [
-        {
-            "name": "com.vrchat.base",
-            "expression": "",
-            "define": "LIL_VRCHAT"
-        },
-        {
-            "name": "red.sim.lightvolumes",
-            "expression": "",
-            "define": "LIL_VRCLIGHTVOLUMES"
-        },
-        {
-            "name": "at.pimaker.ltcgi",
-            "expression": "",
-            "define": "LIL_LTCGI"
-        }
-    ],
+    "versionDefines": [],
     "noEngineReferences": false
 }

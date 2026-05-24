@@ -312,15 +312,6 @@ Shader "lilPBR"
         _DistanceFadeEnd ("End Distance", Float) = 0.01
         [LILFoldoutEnd]
 
-        [LILFoldout(VRChat)]
-        [ToggleUI] _HideInDesktop ("Hide In Desktop", Int) = 0
-        [ToggleUI] _HideInVR ("Hide In VR", Int) = 0
-        [ToggleUI] _HideInCamera ("Hide In Camera", Int) = 0
-        [ToggleUI] _HideInScreenshot ("Hide In Screenshot", Int) = 0
-        [ToggleUI] _HideInMirror ("Hide In Mirror", Int) = 0
-        [ToggleUI] _HideInNotMirror ("Hide In Not Mirror", Int) = 0
-        [LILFoldoutEnd]
-
         [LILFoldout(Advanced)]
         [ToggleUI] _ZWrite ("ZWrite", Int) = 1
         [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend ("SrcBlend", Int) = 1
@@ -340,8 +331,6 @@ Shader "lilPBR"
         [Enum(UnityEngine.Rendering.StencilOp)]         _StencilFail        ("Fail", Float) = 0
         [Enum(UnityEngine.Rendering.StencilOp)]         _StencilZFail       ("ZFail", Float) = 0
         [LILBoxEnd]
-
-        [HideInInspector]_LTCGI("",Int) = 0
     }
 
     HLSLINCLUDE

@@ -9,12 +9,6 @@
     "precompiledReferences": [],
     "autoReferenced": false,
     "defineConstraints": [],
-    "versionDefines": [
-        {
-            "name": "com.vrchat.base",
-            "expression": "",
-            "define": "LIL_VRCHAT"
-        }
-    ],
+    "versionDefines": [],
     "noEngineReferences": false
 }

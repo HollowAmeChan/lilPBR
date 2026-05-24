@@ -25,10 +25,6 @@ namespace jp.lilxyzw.lilpbr.runtime
 
         public void SetHiddenLayers(int id, int hiddenLayers) => Shader.SetGlobalInteger(id, hiddenLayers);
 
-#if LIL_VRCHAT
-        public int GetPropertyID() => Shader.PropertyToID("_UdonHideShaderLayer");
-#else
         public int GetPropertyID() => Shader.PropertyToID("_HideShaderLayer");
-#endif
     }
 }

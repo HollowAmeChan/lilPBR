@@ -13,14 +13,14 @@
 
 ## 主要功能
 
-- URP-only SubShader。
+- 项目专用 URP-only shader。
 - `lilPBR.shader`。
 - Packed / Separate PBR Map，支持 metallic、occlusion、height、smoothness。
 - 默认、平面和三平面 UV 模式。
 - Normal、Parallax/Height 和顶点位移。
 - Emission、Subpixel Emission、Anisotropy、Clear Coat、Cloth、Fake Translucent、SSS、Detail、Wetness/Rain、Wind、Distance Fade。
 - URP `ForwardLit`、`GBuffer`、`ShadowCaster`、`DepthOnly`、`DepthNormals`、`Meta`、`MotionVectors`、`XRMotionVectors`、`HoAOV`、`HoCharacterCapture` pass。
-- Built-in Render Pipeline / BIRP 路径已移除。
+- 不支持 Built-in Render Pipeline、HDRP 或 LWRP。
 - `Scripts/VolumetricFog.cs` 提供全局体积雾 shader 参数。
 
 ## 重要目录

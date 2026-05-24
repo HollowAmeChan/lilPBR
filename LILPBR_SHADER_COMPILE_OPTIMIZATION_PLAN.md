@@ -10,7 +10,8 @@ The immediate safe-mode GUI change prevents custom material GUI initialization f
 
 ### lilPBR
 
-- `lilPBR.shader` and `lilPBR_Tessellation.shader` are large handwritten shaders.
+- `lilPBR.shader` is a large handwritten shader.
+- `lilPBR_Tessellation.shader` has been removed from this fork, so subsequent optimization work only targets the main shader.
 - Multiple passes repeat the same material feature keywords:
   - `_UVMODE_DEFAULT/_UVMODE_PLANAR/_UVMODE_TRIPLANAR`
   - `_ATRASMASK`
@@ -34,7 +35,7 @@ The immediate safe-mode GUI change prevents custom material GUI initialization f
   - clustered light loop
   - lightmaps
   - debug display
-- Shared includes such as `pbr_core.hlsl`, `unity_urp.hlsl`, `hoaov.hlsl`, and `settings.hlsl` are referenced by many passes. Changing one of them can invalidate many variants across both normal and tessellation shaders.
+- Shared includes such as `pbr_core.hlsl`, `unity_urp.hlsl`, `hoaov.hlsl`, and `settings.hlsl` are referenced by many passes. Changing one of them can invalidate many variants in the main shader.
 
 ### lilToon
 
@@ -270,13 +271,13 @@ Exact keyword lists must be verified against the Unity and URP version used by t
 
 ### Objective
 
-Reduce duplicated pass text across normal and tessellation shaders.
+Reduce duplicated pass text inside the main shader.
 
 ### Approach
 
 - Create hidden shared pass shaders for stable non-material-specific passes.
 - Use `UsePass` from user-facing lilPBR shaders where safe.
-- Start with passes that are least coupled to tessellation:
+- Start with stable non-Forward passes:
   - `ShadowCaster`
   - `DepthOnly`
   - `DepthNormals`
@@ -289,7 +290,7 @@ Reduce duplicated pass text across normal and tessellation shaders.
 ### Risks
 
 - Unity `UsePass` can have edge cases with property dependencies.
-- Tessellation and non-tessellation variants may need separate shared pass sources.
+- Shared pass shaders may still need separate sources if pass-local defines do not transfer cleanly.
 - Some pass-local defines may not transfer cleanly.
 
 This phase should only start after Phase 2 and Phase 3 are stable.

@@ -25,7 +25,6 @@ HTrace AO 与 HTrace SSGI 已进入实际项目后，lilPBR 的近期重点需�
 lilPBR 当前不是 lilToon 的生成式架构。它直接维护：
 
 - `Shaders/lilPBR.shader`
-- `Shaders/lilPBR_Tessellation.shader`
 - `Shaders/pbr_core.hlsl`
 - `Shaders/pbr.hlsl`
 - `Shaders/unity_urp.hlsl`
@@ -48,7 +47,7 @@ lilPBR 当前不是 lilToon 的生成式架构。它直接维护：
 - Screening、4 层 Detail、Wetness / Rain。
 - Wind、Distance Fade、VRChat 显隐。
 - ShadowCaster、DepthOnly、DepthNormals、Meta、MotionVectors、XRMotionVectors。
-- Tessellation 版本和 Water shader。
+- Water shader。
 
 ---
 

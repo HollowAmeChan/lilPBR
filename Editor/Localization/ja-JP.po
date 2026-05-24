@@ -313,25 +313,6 @@ msgstr "雨のループ数"
 
 
 
-#: Tessellation
-
-msgid "Tessellation"
-msgstr "テッセレーション"
-
-msgid "Edge"
-msgstr "辺の長さ"
-
-msgid "Maximum Division"
-msgstr "最大分割数"
-
-msgid "Shrink"
-msgstr "縮小"
-
-msgid "Smoothing"
-msgstr "平滑化"
-
-
-
 #: Wind
 
 msgid "Wind"

@@ -477,25 +477,6 @@ msgstr "雨滴循环"
 
 
 
-#: Tessellation
-
-msgid "Tessellation"
-msgstr "曲面细分"
-
-msgid "Edge"
-msgstr "边长"
-
-msgid "Maximum Division"
-msgstr "最大细分"
-
-msgid "Shrink"
-msgstr "收缩"
-
-msgid "Smoothing"
-msgstr "平滑"
-
-
-
 #: Wind
 
 msgid "Wind"

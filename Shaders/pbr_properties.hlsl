@@ -159,10 +159,6 @@ LILPBR_PROPERTY(uint,_WindClothMode)\
 LILPBR_PROPERTY(uint,_WindTreeMode)\
 LILPBR_PROPERTY(float,_WindBranchSoftness)\
 LILPBR_PROPERTY(float,_WindLeafSoftness)\
-LILPBR_PROPERTY(float,_TessEdge)\
-LILPBR_PROPERTY(float,_TessFactorMax)\
-LILPBR_PROPERTY(float,_TessShrink)\
-LILPBR_PROPERTY(float,_TessStrength)\
 LILPBR_PROPERTY(float,_DistanceFade)\
 LILPBR_PROPERTY(float,_DistanceFadeStart)\
 LILPBR_PROPERTY(float,_DistanceFadeEnd)\

@@ -68,7 +68,7 @@ If shadows still look dirty, reduce `Screen Space AO > Direct AO Strength` befor
 
 ## Implementation Notes
 
-- Properties are declared in `lilPBR.shader` and `lilPBR_Tessellation.shader` under the `Shadow` foldout.
+- Properties are declared in `lilPBR.shader` under the `Shadow` foldout.
 - Uniform declarations live in `Shaders/pbr_properties.hlsl`.
 - URP lighting integration lives in `Shaders/unity_urp.hlsl`.
 - The module does not add shader keywords or variants.

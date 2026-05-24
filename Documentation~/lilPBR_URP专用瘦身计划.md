@@ -15,11 +15,9 @@
 ## 当前快照
 
 - `README.md` 已经声明包是 URP-only。
-- 当前遗留的 shader 入口是：
-  - `Shaders/lilPBR.shader`
-  - `Shaders/lilPBR_Tessellation.shader`
-- `Shaders/lilPBR_Tessellation.shader` 主要是额外曲面细分版本。当前决策是整支删除，不再作为项目 RP 流程的保留目标。
-- 目标状态只保留 `Shaders/lilPBR.shader`。它使用 `RenderPipeline = UniversalPipeline`，并包含 `UniversalForward`、`UniversalGBuffer`、`ShadowCaster`、`DepthOnly`、`DepthNormals`、`Meta`、`MotionVectors`、`XRMotionVectors`、`HoAOV`、`HoCharacterCapture` 等 URP pass。
+- 当前 shader 入口只保留 `Shaders/lilPBR.shader`。
+- `Shaders/lilPBR_Tessellation.shader`、`.meta`、`Shaders/tessellation.hlsl` 和 `.meta` 已删除。该曲面细分分支不再作为项目 RP 流程的一部分。
+- `Shaders/lilPBR.shader` 使用 `RenderPipeline = UniversalPipeline`，并包含 `UniversalForward`、`UniversalGBuffer`、`ShadowCaster`、`DepthOnly`、`DepthNormals`、`Meta`、`MotionVectors`、`XRMotionVectors`、`HoAOV`、`HoCharacterCapture` 等 URP pass。
 - VRChat 相关残留还在：
   - `Editor/jp.lilxyzw.lilpbr.asmdef`
   - `Scripts/jp.lilxyzw.lilpbr.runtime.asmdef`
@@ -29,7 +27,6 @@
   - `Shaders/platform_vrchat.hlsl`
   - `Shaders/pbr_core.hlsl`
   - `Shaders/lilPBR.shader`
-  - `Shaders/lilPBR_Tessellation.shader`
   - `Editor/Localization/` 下的本地化字符串
 - 编译压力主要来自 Forward pass 中完整的 URP `multi_compile` 组合，以及部分 pass 中重复出现但实际不需要的 Unity pass 级 `multi_compile`。
 - `LILPBR_SHADER_COMPILE_OPTIMIZATION_PLAN.md` 里已有一份偏技术细节的 pass-by-pass 编译优化计划。本文档作为这条瘦身分支的总执行顺序。
@@ -58,12 +55,11 @@
    - 保留 `lilToon-URP-Extensions` 和本地 URP fork 的依赖说明。
 
 4. 删除 Tessellation 分支。
-   - `lilPBR_Tessellation.shader` 本身是 URP-tagged，不属于非 URP 支持。
-   - 但它基本是 `lilPBR.shader` 的曲面细分变体，会重复一整套 pass 和 `multi_compile` 成本。
-   - 从本 fork 删除 `Shaders/lilPBR_Tessellation.shader` 和 `.meta`。
-   - 删除 README、文档、菜单或材质创建入口中对 Tessellation shader 的引用。
-   - 检查项目现有材质是否引用 `lilPBR_Tessellation.shader`；如有，迁移到 `lilPBR.shader`，并把 displacement/tessellation 参数作为废弃数据处理。
-   - 清理只服务 tessellation 的 include 或属性，例如确认 `Shaders/tessellation.hlsl` 是否仍有引用，没有引用就删除。
+   - 已删除 `Shaders/lilPBR_Tessellation.shader` 和 `.meta`。
+   - 已删除 `Shaders/tessellation.hlsl` 和 `.meta`。
+   - 已从 `Shaders/pbr_properties.hlsl` 删除 `_Tess*` uniform。
+   - 已删除 README、路线图、阴影模块说明和本地化中的 Tessellation 引用。
+   - 项目层仍需检查是否有材质引用旧 shader；如有，迁移到 `lilPBR.shader`，并把 displacement/tessellation 参数作为废弃数据处理。
 
 ### 验收
 
@@ -112,7 +108,6 @@
 
 5. 删除材质面板里的 VRChat 暴露项。
    - 从 `Shaders/lilPBR.shader` 删除 `VRChat` foldout 和相关属性。
-   - 如果 Tessellation 删除尚未执行，再从 `Shaders/lilPBR_Tessellation.shader` 做同样处理；推荐先删除 Tessellation，避免重复清理。
    - 如果属性不再被采样，从 `Shaders/pbr_properties.hlsl` 删除对应字段。
    - 从 `Editor/Localization/*.po` 删除 `VRChat` 字符串。
 
@@ -322,7 +317,7 @@ lilToon 风格的 container/importer 系统长期更干净，但侵入性很高�
 
 - 删除 `pbr_properties.hlsl` 里的死属性。
 - 删除未使用的 texture/include。
-- 删除 `Shaders/tessellation.hlsl` 等 Tessellation 专用残留，如果确认没有引用。
+- 已删除 Tessellation 专用 shader/include 残留。
 - 更新 README 和 package notes。
 - 决定是否把旧的 `LILPBR_SHADER_COMPILE_OPTIMIZATION_PLAN.md` 合并进本文档。
 

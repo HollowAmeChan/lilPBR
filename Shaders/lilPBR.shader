@@ -1,4 +1,4 @@
-Shader "lilPBR"
+Shader "lilPBR/lilPBR"
 {
     Properties
     {
@@ -331,6 +331,8 @@ Shader "lilPBR"
         [Enum(UnityEngine.Rendering.StencilOp)]         _StencilFail        ("Fail", Float) = 0
         [Enum(UnityEngine.Rendering.StencilOp)]         _StencilZFail       ("ZFail", Float) = 0
         [LILBoxEnd]
+        [LILFoldoutEnd]
+        [HideInInspector] _LilPbrAdvancedEnd ("Advanced End", Float) = 0
     }
 
     HLSLINCLUDE

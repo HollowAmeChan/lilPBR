@@ -949,8 +949,8 @@ Shader "lilPBR/lilPBR"
 
         Pass
         {
-            Name "HoAOVSSS"
-            Tags { "LightMode" = "HoAOVSSS" }
+            Name "HoMetadataBufferSurfaceColor"
+            Tags { "LightMode" = "HoMetadataBufferSurfaceColor" }
             ZWrite Off
             ZTest LEqual
             Cull [_Cull]
@@ -964,11 +964,10 @@ Shader "lilPBR/lilPBR"
             #pragma shader_feature_local_fragment _ _CUTOUT _DITHER _TRANSPARENT
             #pragma shader_feature_local _RANDOMIZE_UV
             #pragma shader_feature_local _TEXTUREMODE_SEPARATE
+            #pragma shader_feature_local_fragment _BACKFACE_COLOR
+            #pragma shader_feature_local_fragment _SCREENINGMODE_AM
             #pragma shader_feature_local_vertex _PARALLAXMODE_VERTEX
             #pragma shader_feature_local_fragment _PARALLAXMODE_PIXEL
-            #pragma shader_feature_local_fragment _NORMALMAP
-            #pragma shader_feature_local_fragment _SUBSURFACE
-            #pragma shader_feature_local_fragment _TRANSLUCENT
             #pragma shader_feature_local_vertex _WINDMODE_NONE _WINDMODE_CLOTH _WINDMODE_TREE
             #pragma shader_feature_local_fragment _WINDMODE_POM
 
@@ -1015,7 +1014,7 @@ Shader "lilPBR/lilPBR"
                 #ifdef LOD_FADE_CROSSFADE
                 LODFadeCrossFade(i.pos);
                 #endif
-                return HoAovSssFrag(i, isFront, depth);
+                return HoAovSurfaceColorFrag(i, isFront, depth);
             }
             ENDHLSL
         }

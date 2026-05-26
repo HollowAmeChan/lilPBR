@@ -32,7 +32,7 @@
 
 - `Shaders/lilPBR.shader` 是唯一 shader 入口。
 - 唯一有效 `SubShader` 带有 `RenderPipeline = UniversalPipeline`。
-- 所有 pass 都是 URP pass 或项目自定义 URP pass：`UniversalForward`、`UniversalGBuffer`、`ShadowCaster`、`DepthOnly`、`DepthNormals`、`Meta`、`MotionVectors`、`XRMotionVectors`、`HoAOV`、`HoAOVSSS`、`HoCharacterCapture`。
+- 所有 pass 都是 URP pass 或项目自定义 URP pass：`UniversalForward`、`UniversalGBuffer`、`ShadowCaster`、`DepthOnly`、`DepthNormals`、`Meta`、`MotionVectors`、`XRMotionVectors`、`HoAOV`、`HoMetadataBufferSurfaceColor`、`HoCharacterCapture`。
 - 没有 Built-in/HDRP/LWRP include、Surface Shader、`CGPROGRAM`、`UsePass` 或非 `UniversalPipeline` 的 `SubShader`。
 - `Shaders/unity_urp.hlsl` 是唯一 Unity 管线集成层。
 - README 已改为项目专用 URP-only 说明。
@@ -118,7 +118,7 @@
 3. `MotionVectors`
 4. `DepthNormals`
 5. `HoAOV`
-6. `HoAOVSSS`
+6. `HoMetadataBufferSurfaceColor`
 7. `HoCharacterCapture`
 8. `GBuffer`
 9. `UniversalForward`
@@ -129,7 +129,7 @@
 - `DepthOnly` 只保留深度写入需要的 `multi_compile`，例如 instancing、LOD crossfade。
 - `MotionVectors` 只保留 motion vector 需要的 `multi_compile`，例如 instancing、LOD crossfade、`_ADD_PRECOMPUTED_VELOCITY`。
 - `DepthNormals` 只保留 normal/depth 输出和 URP pass 需要的 `multi_compile`。
-- `HoAOV`、`HoAOVSSS`、`HoCharacterCapture` 不应该继承 Forward 的完整 lighting `multi_compile`。
+- `HoAOV`、`HoMetadataBufferSurfaceColor`、`HoCharacterCapture` 不应该继承 Forward 的完整 lighting `multi_compile`。
 - `GBuffer` 只保留 deferred path 真正消费的 `multi_compile`，例如 `_GBUFFER_NORMALS_OCT`、instancing、LOD crossfade。
 - `UniversalForward` 是最大头，但风险也最高；先用项目控制的 `skip_variants` 或条件化 `multi_compile`，不要一开始硬删主光阴影等核心路径。
 
@@ -230,7 +230,7 @@ lilToon 风格的 container/importer 系统长期更干净，但侵入性很高�
 - XRMotionVectors，如果 XR 仍在范围内
 - Meta，如果 baked lighting 仍在范围内
 - HoAOV
-- HoAOVSSS
+- HoMetadataBufferSurfaceColor
 - HoCharacterCapture
 
 ## 里程碑

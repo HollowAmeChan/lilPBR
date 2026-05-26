@@ -107,7 +107,7 @@ Cut variant count in passes that do not need full PBR shading.
 3. `MotionVectors`
 4. `DepthNormals`
 5. `HoAOV`
-6. `HoAOVSSS`
+6. `HoMetadataBufferSurfaceColor`
 7. `HoCharacterCapture`
 8. `GBuffer`
 
@@ -190,14 +190,14 @@ Likely removable after verification:
 - wetness
 - screen-space reflection/shading-only variants
 
-### HoAOV and HoAOVSSS
+### HoAOV and HoMetadataBufferSurfaceColor
 
 Likely required:
 
 - alpha rejection path
 - UV and texture sampling keywords used by `hoaov.hlsl`
-- normal map if AOV output uses it
-- subsurface/translucent keywords if SSS output uses them
+- normal map and subsurface keywords for `HoAOV`
+- base color, backface color, and screening keywords for `HoMetadataBufferSurfaceColor`
 - wind vertex keywords
 - LOD crossfade
 - instancing
@@ -341,7 +341,7 @@ For each optimized pass, test at least:
 - atlas mask
 - wind cloth/tree modes
 - normal map for DepthNormals and HoAOV
-- subsurface/translucent for HoAOVSSS
+- base color/backface/screening for HoMetadataBufferSurfaceColor
 - motion vectors if enabled in URP
 - deferred rendering if GBuffer is modified
 
@@ -362,7 +362,7 @@ Track before and after:
 3. Trim `DepthOnly`.
 4. Trim `MotionVectors`.
 5. Trim `DepthNormals`.
-6. Trim `HoAOV`, `HoAOVSSS`, and `HoCharacterCapture`.
+6. Trim `HoAOV`, `HoMetadataBufferSurfaceColor`, and `HoCharacterCapture`.
 7. Add first conservative skip variants.
 8. Re-measure editor open and shader reimport time.
 9. Decide whether shared pass shaders are worth the risk.

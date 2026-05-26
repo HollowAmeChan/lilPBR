@@ -111,17 +111,26 @@ float4 HoAovResolveCustom0To3(float2 uv_MainTex)
     return values;
 }
 
-float4 HoAovResolveSssSource(float2 uv_MainTex, float2 dx, float2 dy)
+float4 HoAovResolveSurfaceColor(v2f i, bool isFront, float2 uv_MainTex, float2 dx, float2 dy)
 {
-    if (_SubsurfaceScattering > 0.0001)
+    half4 mainTex = Sample(_MainTex, sampler_trilinear_repeat, uv_MainTex, dx, dy) * _Color;
+    half3 surfaceColor = mainTex.rgb;
+
+    #ifdef _BACKFACE_COLOR
+    half4 backfaceTex = Sample(_BackfaceTex, sampler_trilinear_repeat, uv_MainTex, dx, dy) * _BackfaceColor;
+    surfaceColor = isFront ? mainTex.rgb : backfaceTex.rgb;
+    #endif
+
+    #ifdef _SCREENINGMODE_AM
+    surfaceColor = AMScreening(surfaceColor, uv_MainTex, float2(_ScreeningScaleX, _ScreeningScaleY), 1, _ScreeningNoiseStrength);
+    #endif
+
+    if(_VertexColorMode == 1)
     {
-        half3 albedo = Sample(_MainTex, sampler_trilinear_repeat, uv_MainTex, dx, dy).rgb * _Color.rgb;
-        half sourceWeight = saturate(_SubsurfaceScattering);
-        half3 sourceColor = lerp(_SubsurfaceColor.rgb, _SubsurfaceColor.rgb * albedo, saturate(_SubsurfaceAlbedoBlend));
-        return float4(sourceColor, sourceWeight);
+        surfaceColor *= i.color.rgb;
     }
 
-    return 0.0;
+    return float4(saturate(surfaceColor), 1.0);
 }
 
 half HoAovSelectChannel(half4 value, uint channel)
@@ -258,7 +267,7 @@ HoAovOutput HoAovFrag(v2f i, bool isFront, inout float depth)
     return output;
 }
 
-half4 HoAovSssFrag(v2f i, bool isFront, inout float depth)
+half4 HoAovSurfaceColorFrag(v2f i, bool isFront, inout float depth)
 {
     half alpha = HoAovResolveAlpha(i);
     HoAovApplyAlpha(i, isFront, depth, alpha);
@@ -268,7 +277,7 @@ half4 HoAovSssFrag(v2f i, bool isFront, inout float depth)
     float2 uv_MainTex = i.uv01.xy * _MainTex_ST.xy + _MainTex_ST.zw;
     float2 uvDx = ddx(uv_MainTex);
     float2 uvDy = ddy(uv_MainTex);
-    return half4(HoAovResolveSssSource(uv_MainTex, uvDx, uvDy) * subjectValid);
+    return half4(HoAovResolveSurfaceColor(i, isFront, uv_MainTex, uvDx, uvDy) * subjectValid);
 }
 
 #endif

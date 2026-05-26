@@ -441,12 +441,26 @@ Shader "lilPBR/lilPBR"
             #pragma multi_compile _ USE_LEGACY_LIGHTMAPS
             #pragma multi_compile _ LOD_FADE_CROSSFADE
             #pragma multi_compile_fragment _ DEBUG_DISPLAY
+            #if defined(LILPBR_SKIP_ADDITIONAL_LIGHT_SHADOWS)
+                #pragma skip_variants _ADDITIONAL_LIGHT_SHADOWS
+            #endif
+            #if defined(LILPBR_SKIP_DECALS)
+                #pragma skip_variants _DBUFFER_MRT1 _DBUFFER_MRT2 _DBUFFER_MRT3
+            #endif
+            #if defined(LILPBR_SKIP_LIGHTMAPS)
+                #pragma skip_variants LIGHTMAP_SHADOW_MIXING SHADOWS_SHADOWMASK DIRLIGHTMAP_COMBINED LIGHTMAP_ON LIGHTMAP_BICUBIC_SAMPLING DYNAMICLIGHTMAP_ON USE_LEGACY_LIGHTMAPS
+            #endif
+            #if defined(LILPBR_SKIP_DEBUG_DISPLAY)
+                #pragma skip_variants DEBUG_DISPLAY
+            #endif
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Fog.hlsl"
             //--------------------------------------
             // GPU Instancing
             #pragma multi_compile_instancing
             #pragma instancing_options renderinglayer
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #if !defined(LILPBR_SKIP_DOTS)
+                #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #endif
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -543,7 +557,9 @@ Shader "lilPBR/lilPBR"
             #pragma multi_compile_instancing
             #pragma instancing_options renderinglayer
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #if !defined(LILPBR_SKIP_DOTS)
+                #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #endif
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -648,7 +664,9 @@ Shader "lilPBR/lilPBR"
             //--------------------------------------
             // GPU Instancing
             #pragma multi_compile_instancing
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #if !defined(LILPBR_SKIP_DOTS)
+                #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #endif
 
             // -------------------------------------
             // Universal Pipeline keywords
@@ -740,7 +758,9 @@ Shader "lilPBR/lilPBR"
             //--------------------------------------
             // GPU Instancing
             #pragma multi_compile_instancing
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #if !defined(LILPBR_SKIP_DOTS)
+                #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #endif
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -819,7 +839,9 @@ Shader "lilPBR/lilPBR"
             //--------------------------------------
             // GPU Instancing
             #pragma multi_compile_instancing
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #if !defined(LILPBR_SKIP_DOTS)
+                #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #endif
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -901,7 +923,9 @@ Shader "lilPBR/lilPBR"
 
             #pragma multi_compile _ LOD_FADE_CROSSFADE
             #pragma multi_compile_instancing
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #if !defined(LILPBR_SKIP_DOTS)
+                #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #endif
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -973,7 +997,9 @@ Shader "lilPBR/lilPBR"
 
             #pragma multi_compile _ LOD_FADE_CROSSFADE
             #pragma multi_compile_instancing
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #if !defined(LILPBR_SKIP_DOTS)
+                #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #endif
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -1045,7 +1071,9 @@ Shader "lilPBR/lilPBR"
 
             #pragma multi_compile _ LOD_FADE_CROSSFADE
             #pragma multi_compile_instancing
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #if !defined(LILPBR_SKIP_DOTS)
+                #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #endif
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -1193,7 +1221,9 @@ Shader "lilPBR/lilPBR"
             //--------------------------------------
             // GPU Instancing
             #pragma multi_compile_instancing
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #if !defined(LILPBR_SKIP_DOTS)
+                #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #endif
 
             //-------------------------------------
             // Other pragmas
@@ -1311,7 +1341,9 @@ Shader "lilPBR/lilPBR"
             //--------------------------------------
             // GPU Instancing
             #pragma multi_compile_instancing
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #if !defined(LILPBR_SKIP_DOTS)
+                #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #endif
 
             //-------------------------------------
             // Other pragmas

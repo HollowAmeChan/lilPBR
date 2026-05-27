@@ -33,13 +33,13 @@
 
 ## 平面反射
 
-shader 里有 `Planar Reflection` foldout，并采样 `_LILPBRPlanarReflectionTexture`。真正的反射运行时在：
+shader 里有 `Planar Reflection` foldout，用于写入后处理合成需要的 MetadataBuffer 参数。`ForwardLit` 不再直接采样 `_LILPBRPlanarReflectionTexture`；真正的反射运行时和 fullscreen composite 在：
 
 ```text
-D:/Unity_Fork/lilToon-URP-Extensions/Runtime/PlanarReflection/LILPlanarReflectionSurface.cs
+D:/Unity_Fork/lilToon-URP-Extensions/Runtime/PlanarReflection/HoPlanarReflectionSurface.cs
 ```
 
-把 `LILPlanarReflectionSurface` 加到镜面、抛光地面或水面 mesh 上，再在 lilPBR 材质里开启平面反射即可。
+把 `HoPlanarReflectionSurface` 加到镜面、抛光地面或水面 mesh 上，启用 URP Renderer Asset 里的 MetadataBuffer、GeometryBuffer 和 PlanarReflection composite，再在 lilPBR 材质里开启平面反射即可。
 
 ## HoAOV 与角色捕获
 

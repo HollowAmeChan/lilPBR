@@ -117,7 +117,6 @@ Shader "lilPBR/Water/Flowmap Water"
     TEXTURE2D(_NormalMap1); SAMPLER(sampler_NormalMap1);
     TEXTURE2D(_FoamMap); SAMPLER(sampler_FoamMap);
     TEXTURE2D(_FoamMask); SAMPLER(sampler_FoamMask);
-    TEXTURE2D(_LILPBRPlanarReflectionTexture); SAMPLER(sampler_LILPBRPlanarReflectionTexture);
     TEXTURE2D(_HoMetadataBufferCustom0Tex); SAMPLER(sampler_HoMetadataBufferCustom0Tex);
     TEXTURE2D(_HoMetadataBufferCustom1Tex); SAMPLER(sampler_HoMetadataBufferCustom1Tex);
     TEXTURE2D(_HoMetadataBufferCustom2Tex); SAMPLER(sampler_HoMetadataBufferCustom2Tex);
@@ -185,9 +184,6 @@ Shader "lilPBR/Water/Flowmap Water"
         float4 _HoMetadataBufferCustom2Color;
         float4 _HoMetadataBufferCustom3Color;
     CBUFFER_END
-
-    float4 _LILPBRPlanarReflectionParams;
-    float _HoPlanarReflectionSuppressMaterialSampling;
 
     struct Attributes
     {
@@ -449,37 +445,6 @@ Shader "lilPBR/Water/Flowmap Water"
         return half4(surface.smoothness, surface.wetness, saturate(_NormalStrength), saturate(_PlanarReflectionStrength) * planarReflectionEnabled);
     }
 
-    half3 ApplyPlanarReflection(Varyings input, WaterSurface surface, half3 litColor)
-    {
-        if (_HoPlanarReflectionSuppressMaterialSampling > 0.5 || _UsePlanarReflection == 0 || _PlanarReflectionStrength <= 0.0 || _LILPBRPlanarReflectionParams.x <= 0.5)
-        {
-            return litColor;
-        }
-
-        half smoothnessFade = saturate((surface.smoothness - _PlanarReflectionMinSmoothness) / max(1.0 - _PlanarReflectionMinSmoothness, 0.0001));
-        if (smoothnessFade <= 0.0)
-        {
-            return litColor;
-        }
-
-        float2 uv = GetNormalizedScreenSpaceUV(input.positionCS);
-        if (_PlanarReflectionFlipY != 0)
-        {
-            uv.y = 1.0 - uv.y;
-        }
-
-        uv += surface.normalTS.xy * _PlanarReflectionDistortion;
-        if (any(uv < 0.0) || any(uv > 1.0))
-        {
-            return litColor;
-        }
-
-        half fresnel = pow(1.0h - saturate(dot(surface.normalWS, surface.viewDirWS)), 5.0h);
-        half weight = saturate(_PlanarReflectionStrength * smoothnessFade * lerp(0.35h, 1.0h, fresnel) * _PlanarReflectionTint.a);
-        half3 reflection = SAMPLE_TEXTURE2D(_LILPBRPlanarReflectionTexture, sampler_LILPBRPlanarReflectionTexture, uv).rgb * _PlanarReflectionTint.rgb;
-        return lerp(litColor, reflection, weight);
-    }
-
     half3 ShadeWater(Varyings input, WaterSurface surface)
     {
         float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS);
@@ -514,7 +479,7 @@ Shader "lilPBR/Water/Flowmap Water"
         }
         #endif
 
-        return ApplyPlanarReflection(input, surface, color);
+        return color;
     }
     ENDHLSL
 

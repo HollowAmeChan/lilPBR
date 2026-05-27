@@ -2,8 +2,8 @@
 
 ## 0.1 2026-05-14 Planar Reflection
 
-- lilPBR shader adds a `Planar Reflection` material entry that samples `_LILPBRPlanarReflectionTexture` and blends it with environment reflection by smoothness, edge fade, and tint.
-- The rendering side lives in `lilToon-URP-Extensions/Runtime/PlanarReflection/LILPlanarReflectionSurface.cs`.
+- lilPBR shader keeps a `Planar Reflection` material entry, but it now writes MetadataBuffer / GeometryBuffer parameters for the shared fullscreen composite instead of sampling `_LILPBRPlanarReflectionTexture` inside ForwardLit.
+- The rendering side lives in `lilToon-URP-Extensions/Runtime/PlanarReflection/HoPlanarReflectionSurface.cs`.
 - SSR remains a cheap fallback; flat mirror floors, polished floors, and water sheets should use Planar Reflection first.
 - Pipeline code stays in the shared URP extensions package instead of the lilPBR material package.
 

@@ -291,4 +291,105 @@ half4 HoAovSurfaceColorFrag(v2f i, bool isFront, inout float depth)
     return half4(HoAovResolveSurfaceColor(i, isFront, uv_MainTex, uvDx, uvDy, subjectCoverage) * subjectValid);
 }
 
+struct HoMetadataBufferOutput
+{
+    half4 maskId : SV_Target0;
+    half4 surfaceData : SV_Target1;
+    half4 custom0 : SV_Target2;
+    half4 objectCustom0 : SV_Target3;
+    half4 objectCustom1 : SV_Target4;
+};
+
+float HoMetadataBufferHasSystemChannel(float bitValue)
+{
+    return HoAovHasBit(_HoMetadataBufferSystemWriteMask, bitValue);
+}
+
+float4 HoMetadataBufferApplyCustomWriteMask(float4 values, float startBit)
+{
+    if (_HoMetadataBufferCustomWriteMask < 0.5)
+    {
+        return values;
+    }
+
+    return float4(
+        values.x * HoAovHasBit(_HoMetadataBufferCustomWriteMask, exp2(startBit)),
+        values.y * HoAovHasBit(_HoMetadataBufferCustomWriteMask, exp2(startBit + 1.0)),
+        values.z * HoAovHasBit(_HoMetadataBufferCustomWriteMask, exp2(startBit + 2.0)),
+        values.w * HoAovHasBit(_HoMetadataBufferCustomWriteMask, exp2(startBit + 3.0)));
+}
+
+float4 HoMetadataBufferResolvePlanarCustom0(ShadingParams p)
+{
+    if (_HoMetadataBufferCustomWriteMask >= 0.5)
+    {
+        return HoMetadataBufferApplyCustomWriteMask(_HoMetadataBufferCustomValues0, 0.0);
+    }
+
+    float planarReflectionEnabled = _UsePlanarReflection != 0 ? 1.0 : 0.0;
+    return float4(
+        saturate(p.smoothness),
+        1.0,
+        0.0,
+        saturate(_PlanarReflectionStrength) * planarReflectionEnabled);
+}
+
+HoMetadataBufferOutput HoMetadataBufferFrag(v2f i, bool isFront, inout float depth)
+{
+    half alpha = HoAovResolveAlpha(i);
+    HoAovApplyAlpha(i, isFront, depth, alpha);
+    half coverage = HoAovResolveSurfaceColorCoverage(alpha);
+
+    float2 uv[4];
+    uv[0] = i.uv01.xy;
+    uv[1] = i.uv01.zw;
+    uv[2] = i.uv23.xy;
+    uv[3] = i.uv23.zw;
+    ShadingParams p = ShadingMeta(i, i.pos, uv);
+
+    float maskEnabled = HoMetadataBufferHasSystemChannel(1.0);
+    float idEnabled = HoMetadataBufferHasSystemChannel(2.0);
+    float flagsEnabled = HoMetadataBufferHasSystemChannel(4.0);
+    float thicknessEnabled = HoMetadataBufferHasSystemChannel(256.0);
+    float curvatureEnabled = HoMetadataBufferHasSystemChannel(512.0);
+    float materialEnabled = HoMetadataBufferHasSystemChannel(1024.0);
+    float transmittanceHintEnabled = HoMetadataBufferHasSystemChannel(2048.0);
+    float subjectCoverage = saturate(_HoMetadataBufferMaskWeight) * coverage;
+    float subjectValid = step(0.0001, subjectCoverage);
+
+    uint rendererUserValue = unity_RendererUserValue;
+    bool hasRendererUserValue = rendererUserValue != 0u;
+    uint objectCustomMask = hasRendererUserValue ? (rendererUserValue & 255u) : (uint)round(saturate(_HoMetadataBufferObjectCustomMask / 255.0) * 255.0);
+    float effectiveGroupId = hasRendererUserValue ? HoAovByteToFloat(rendererUserValue, 8u) : _HoMetadataBufferGroupId;
+    float effectiveObjectId = hasRendererUserValue ? HoAovByteToFloat(rendererUserValue, 16u) : _HoMetadataBufferObjectId;
+    float effectiveFlags = hasRendererUserValue ? HoAovByteToFloat(rendererUserValue, 24u) : _HoMetadataBufferFlags;
+
+    HoMetadataBufferOutput output = (HoMetadataBufferOutput)0;
+    output.maskId = half4(
+        subjectCoverage * maskEnabled,
+        HoAovEncodeByte(effectiveGroupId) * idEnabled * subjectValid,
+        HoAovEncodeByte(effectiveObjectId) * idEnabled * subjectValid,
+        HoAovEncodeByte(effectiveFlags) * flagsEnabled * subjectValid);
+    output.surfaceData = half4(
+        saturate(_HoMetadataBufferThickness) * thicknessEnabled * subjectValid,
+        saturate(abs(_HoMetadataBufferCurvature)) * curvatureEnabled * subjectValid,
+        HoAovEncodeScalar(_HoMetadataBufferMaterialClass) * materialEnabled * subjectValid,
+        saturate(_HoMetadataBufferTransmittanceHint) * transmittanceHintEnabled * subjectValid);
+    output.custom0 = half4(HoMetadataBufferResolvePlanarCustom0(p) * subjectValid);
+    output.objectCustom0 = half4(HoAovDecodeObjectCustom0(objectCustomMask) * subjectValid);
+    output.objectCustom1 = half4(HoAovDecodeObjectCustom1(objectCustomMask) * subjectValid);
+    return output;
+}
+
+half4 HoGeometryBufferFrag(v2f i, bool isFront, inout float depth)
+{
+    half alpha = HoAovResolveAlpha(i);
+    HoAovApplyAlpha(i, isFront, depth, alpha);
+
+    half3 normalTS;
+    half3 normalWS = HoAovGetNormal(i, isFront, normalTS);
+    float linearDepth = LinearEyeDepth(i.pos.z, _ZBufferParams);
+    return half4(normalize(normalWS) * 0.5h + 0.5h, linearDepth);
+}
+
 #endif

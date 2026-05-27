@@ -59,6 +59,18 @@ LILPBR_PROPERTY(float4,_HoAovCustom1Color)\
 LILPBR_PROPERTY(float4,_HoAovCustom2Color)\
 LILPBR_PROPERTY(float4,_HoAovCustom3Color)\
 LILPBR_PROPERTY(float,_HoCharacterCaptureOpacity)\
+LILPBR_PROPERTY(float,_HoMetadataBufferMaskWeight)\
+LILPBR_PROPERTY(float,_HoMetadataBufferSystemWriteMask)\
+LILPBR_PROPERTY(float,_HoMetadataBufferCustomWriteMask)\
+LILPBR_PROPERTY(float4,_HoMetadataBufferCustomValues0)\
+LILPBR_PROPERTY(float,_HoMetadataBufferGroupId)\
+LILPBR_PROPERTY(float,_HoMetadataBufferObjectId)\
+LILPBR_PROPERTY(float,_HoMetadataBufferMaterialClass)\
+LILPBR_PROPERTY(float,_HoMetadataBufferFlags)\
+LILPBR_PROPERTY(float,_HoMetadataBufferThickness)\
+LILPBR_PROPERTY(float,_HoMetadataBufferCurvature)\
+LILPBR_PROPERTY(float,_HoMetadataBufferTransmittanceHint)\
+LILPBR_PROPERTY(float,_HoMetadataBufferObjectCustomMask)\
 LILPBR_PROPERTY(uint,_UseScreenSpaceReflection)\
 LILPBR_PROPERTY(float,_SSRStrength)\
 LILPBR_PROPERTY(float,_SSRMaxDistance)\
@@ -179,7 +191,6 @@ LILPBR_TEXTURE(Texture2D,_HoAovCustom0Tex)\
 LILPBR_TEXTURE(Texture2D,_HoAovCustom1Tex)\
 LILPBR_TEXTURE(Texture2D,_HoAovCustom2Tex)\
 LILPBR_TEXTURE(Texture2D,_HoAovCustom3Tex)\
-LILPBR_TEXTURE(Texture2D,_LILPBRPlanarReflectionTexture)\
 LILPBR_TEXTURE(Texture2D,_EmissionMap)\
 LILPBR_TEXTURE(Texture2D,_EmissionSubpixel)\
 LILPBR_TEXTURE(Texture2D,_AnisotropyDirection)\

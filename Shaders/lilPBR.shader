@@ -115,6 +115,21 @@ Shader "lilPBR/lilPBR"
         _HoCharacterCaptureOpacity ("Character Capture Opacity", Range(0, 1)) = 1
         [LILFoldoutEnd]
 
+        [LILFoldout(MetadataBuffer)]
+        [HideInInspector] _HoMetadataBufferMaskWeight ("MetadataBuffer Mask Weight", Range(0, 1)) = 1
+        [HideInInspector] _HoMetadataBufferSystemWriteMask ("MetadataBuffer System Write Mask", Float) = 3847
+        [HideInInspector] _HoMetadataBufferCustomWriteMask ("MetadataBuffer Custom Write Mask", Float) = 0
+        [HideInInspector] _HoMetadataBufferCustomValues0 ("MetadataBuffer Custom 0-3", Vector) = (0,0,0,0)
+        [HideInInspector] _HoMetadataBufferGroupId ("MetadataBuffer Group ID", Float) = 0
+        [HideInInspector] _HoMetadataBufferObjectId ("MetadataBuffer Object ID", Float) = 0
+        [HideInInspector] _HoMetadataBufferMaterialClass ("MetadataBuffer Material Class", Float) = 0
+        [HideInInspector] _HoMetadataBufferFlags ("MetadataBuffer Flags", Float) = 0
+        [HideInInspector] _HoMetadataBufferThickness ("MetadataBuffer Thickness", Range(0, 1)) = 0
+        [HideInInspector] _HoMetadataBufferCurvature ("MetadataBuffer Curvature", Range(-1, 1)) = 0
+        [HideInInspector] _HoMetadataBufferTransmittanceHint ("MetadataBuffer Transmittance Hint", Range(0, 1)) = 0
+        [HideInInspector] _HoMetadataBufferObjectCustomMask ("MetadataBuffer Object Custom Mask", Float) = 0
+        [LILFoldoutEnd]
+
         [LILFoldout(Screen Space Reflection)]
         [ToggleUI] _UseScreenSpaceReflection ("Screen Space Reflection", Int) = 0
         [LILIf(_UseScreenSpaceReflection, 1)] _SSRStrength ("SSR Strength", Range(0.0, 1.0)) = 1.0
@@ -1042,6 +1057,156 @@ Shader "lilPBR/lilPBR"
                 LODFadeCrossFade(i.pos);
                 #endif
                 return HoAovSurfaceColorFrag(i, isFront, depth);
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "HoMetadataBuffer"
+            Tags { "LightMode" = "HoMetadataBuffer" }
+            ZWrite On
+            ZTest LEqual
+            Cull [_Cull]
+            AlphaToMask [_AlphaToMask]
+
+            HLSLPROGRAM
+            #pragma target 5.0
+
+            #pragma shader_feature_local _UVMODE_DEFAULT _UVMODE_PLANAR _UVMODE_TRIPLANAR
+            #pragma shader_feature_local _ATRASMASK
+            #pragma shader_feature_local_fragment _ _CUTOUT _DITHER _TRANSPARENT
+            #pragma shader_feature_local _RANDOMIZE_UV
+            #pragma shader_feature_local _TEXTUREMODE_SEPARATE
+            #pragma shader_feature_local_vertex _PARALLAXMODE_VERTEX
+            #pragma shader_feature_local_fragment _PARALLAXMODE_PIXEL
+            #pragma shader_feature_local_fragment _NORMALMAP
+            #pragma shader_feature_local_fragment _SUBSURFACE
+            #pragma shader_feature_local_fragment _TRANSLUCENT
+            #pragma shader_feature_local_vertex _WINDMODE_NONE _WINDMODE_CLOTH _WINDMODE_TREE
+            #pragma shader_feature_local_fragment _WINDMODE_POM
+
+            #pragma multi_compile _ LOD_FADE_CROSSFADE
+            #pragma multi_compile_instancing
+            #if !defined(LILPBR_SKIP_DOTS)
+                #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #endif
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/ShaderPass.hlsl"
+            struct v2f
+            {
+                POS_INTERPOLATION float4 pos : SV_POSITION;
+                float4 uv01 : TEXCOORD0;
+                float4 uv23 : TEXCOORD1;
+                float4 normal : TEXCOORD2;
+                float4 tangent : TEXCOORD3;
+                float4 binormal : TEXCOORD4;
+                float4 color : TEXCOORD5;
+                float3 V : TEXCOORD6;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            #define SHADERPASS SHADERPASS_DEPTHNORMALSONLY
+            #include "unity_urp.hlsl"
+            #include "pbr_core.hlsl"
+            #include "hoaov.hlsl"
+
+            v2f vert (appdata v)
+            {
+                v2f o = (v2f)0;
+                UNITY_SETUP_INSTANCE_ID(v);
+                UNITY_TRANSFER_INSTANCE_ID(v, o);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
+                DoVertex(v, o.pos, o.uv01, o.uv23, o.normal, o.tangent, o.binormal, o.color, o.V);
+                return o;
+            }
+
+            HoMetadataBufferOutput frag (v2f i, bool isFront : SV_IsFrontFace DEPTH_OUT)
+            {
+                UNITY_SETUP_INSTANCE_ID(i);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
+                #ifdef LOD_FADE_CROSSFADE
+                LODFadeCrossFade(i.pos);
+                #endif
+                return HoMetadataBufferFrag(i, isFront, depth);
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "HoGeometryBuffer"
+            Tags { "LightMode" = "HoGeometryBuffer" }
+            ZWrite On
+            ZTest LEqual
+            Cull [_Cull]
+            AlphaToMask [_AlphaToMask]
+
+            HLSLPROGRAM
+            #pragma target 5.0
+
+            #pragma shader_feature_local _UVMODE_DEFAULT _UVMODE_PLANAR _UVMODE_TRIPLANAR
+            #pragma shader_feature_local _ATRASMASK
+            #pragma shader_feature_local_fragment _ _CUTOUT _DITHER _TRANSPARENT
+            #pragma shader_feature_local _RANDOMIZE_UV
+            #pragma shader_feature_local _TEXTUREMODE_SEPARATE
+            #pragma shader_feature_local_vertex _PARALLAXMODE_VERTEX
+            #pragma shader_feature_local_fragment _PARALLAXMODE_PIXEL
+            #pragma shader_feature_local_fragment _NORMALMAP
+            #pragma shader_feature_local_fragment _SUBSURFACE
+            #pragma shader_feature_local_fragment _TRANSLUCENT
+            #pragma shader_feature_local_vertex _WINDMODE_NONE _WINDMODE_CLOTH _WINDMODE_TREE
+            #pragma shader_feature_local_fragment _WINDMODE_POM
+
+            #pragma multi_compile _ LOD_FADE_CROSSFADE
+            #pragma multi_compile_instancing
+            #if !defined(LILPBR_SKIP_DOTS)
+                #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #endif
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/ShaderPass.hlsl"
+            struct v2f
+            {
+                POS_INTERPOLATION float4 pos : SV_POSITION;
+                float4 uv01 : TEXCOORD0;
+                float4 uv23 : TEXCOORD1;
+                float4 normal : TEXCOORD2;
+                float4 tangent : TEXCOORD3;
+                float4 binormal : TEXCOORD4;
+                float4 color : TEXCOORD5;
+                float3 V : TEXCOORD6;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            #define SHADERPASS SHADERPASS_DEPTHNORMALSONLY
+            #include "unity_urp.hlsl"
+            #include "pbr_core.hlsl"
+            #include "hoaov.hlsl"
+
+            v2f vert (appdata v)
+            {
+                v2f o = (v2f)0;
+                UNITY_SETUP_INSTANCE_ID(v);
+                UNITY_TRANSFER_INSTANCE_ID(v, o);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
+                DoVertex(v, o.pos, o.uv01, o.uv23, o.normal, o.tangent, o.binormal, o.color, o.V);
+                return o;
+            }
+
+            half4 frag (v2f i, bool isFront : SV_IsFrontFace DEPTH_OUT) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(i);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
+                #ifdef LOD_FADE_CROSSFADE
+                LODFadeCrossFade(i.pos);
+                #endif
+                return HoGeometryBufferFrag(i, isFront, depth);
             }
             ENDHLSL
         }

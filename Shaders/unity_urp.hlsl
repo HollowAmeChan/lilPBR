@@ -218,8 +218,6 @@ CBUFFER_END
 LILPBR_TEXTURES
 LILPBR_SAMPLERS
 TEXTURE2D(_HTraceBufferAO);
-float4x4 _LILPBRPlanarReflectionTextureMatrix;
-float4 _LILPBRPlanarReflectionParams;
 
 // Lightings
 
@@ -395,30 +393,6 @@ half3 GetReflection(ShadingParams p, v2f i)
         environmentReflection = GlossyEnvironmentReflection(reflectionVector, p.perceptualRoughness, 1.0) * aoFactor.indirectAmbientOcclusion;
     }
     half3 reflection = environmentReflection;
-
-    if(_UsePlanarReflection != 0 && _PlanarReflectionStrength > 0.0 && _LILPBRPlanarReflectionParams.x > 0.5)
-    {
-        half planarSmoothnessFade = saturate((p.smoothness - _PlanarReflectionMinSmoothness) / max(1.0 - _PlanarReflectionMinSmoothness, 0.0001));
-        if(planarSmoothnessFade > 0.0)
-        {
-            float2 planarUV = GetNormalizedScreenSpaceUV(i.pos);
-            if(_PlanarReflectionFlipY != 0) planarUV.y = 1.0 - planarUV.y;
-            if(all(planarUV >= 0.0) && all(planarUV <= 1.0))
-            {
-                float planarEdge = min(min(planarUV.x, 1.0 - planarUV.x), min(planarUV.y, 1.0 - planarUV.y));
-                half planarEdgeFade = _PlanarReflectionEdgeFade > 0.0 ? saturate(planarEdge * _PlanarReflectionEdgeFade) : 1.0;
-                half planarDistanceFade = 1.0;
-                if(_PlanarReflectionFadeEnd > _PlanarReflectionFadeStart)
-                {
-                    float viewDistance = distance(GetCameraPos(), p.posWorld);
-                    planarDistanceFade = 1.0 - smoothstep(_PlanarReflectionFadeStart, _PlanarReflectionFadeEnd, viewDistance);
-                }
-                half planarWeight = saturate(_PlanarReflectionStrength * planarSmoothnessFade * planarEdgeFade * planarDistanceFade * _PlanarReflectionTint.a);
-                half3 planarColor = SAMPLE_TEXTURE2D(_LILPBRPlanarReflectionTexture, sampler_linear_clamp, planarUV).rgb * _PlanarReflectionTint.rgb;
-                reflection = lerp(reflection, planarColor * aoFactor.indirectAmbientOcclusion, planarWeight);
-            }
-        }
-    }
 
     if(_UseScreenSpaceReflection == 0 || _SSRStrength <= 0.0)
     {

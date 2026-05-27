@@ -569,6 +569,42 @@ msgstr "平铺"
 msgid "Foam"
 msgstr "泡沫"
 
+msgid "Foam Map"
+msgstr "泡沫贴图"
+
+msgid "Foam Mask"
+msgstr "泡沫遮罩"
+
+msgid "Foam Color"
+msgstr "泡沫颜色"
+
+msgid "Foam Intensity"
+msgstr "泡沫强度"
+
+msgid "Foam Threshold"
+msgstr "泡沫阈值"
+
+msgid "Foam Softness"
+msgstr "泡沫柔和度"
+
+msgid "Foam Flow Source"
+msgstr "泡沫流向来源"
+
+msgid "Foam Flow Strength"
+msgstr "泡沫流动强度"
+
+msgid "Foam Flow Speed"
+msgstr "泡沫流动速度"
+
+msgid "Foam Alpha Boost"
+msgstr "泡沫 Alpha 增强"
+
+msgid "Foam Smoothness"
+msgstr "泡沫平滑度"
+
+msgid "Foam Normal Dampen"
+msgstr "泡沫法线抑制"
+
 msgid "Caustics"
 msgstr "焦散"
 

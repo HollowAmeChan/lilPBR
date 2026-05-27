@@ -30,6 +30,21 @@ Shader "lilPBR/Water/Flowmap Water"
         _NormalStrength ("Buffer Normal Strength", Range(0.0, 2.0)) = 1.0
         [LILFoldoutEnd]
 
+        [LILFoldout(Foam)]
+        _FoamMap ("Foam Map", 2D) = "gray" {}
+        _FoamMask ("Foam Mask", 2D) = "white" {}
+        [HDR] _FoamColor ("Foam Color", Color) = (1,1,1,1)
+        _FoamIntensity ("Foam Intensity", Range(0.0, 2.0)) = 0.0
+        _FoamThreshold ("Foam Threshold", Range(0.0, 1.0)) = 0.55
+        _FoamSoftness ("Foam Softness", Range(0.001, 1.0)) = 0.18
+        [Enum(Flow0, 0, Flow1, 1, Blend, 2)] _FoamFlowSource ("Foam Flow Source", Int) = 0
+        _FoamFlowStrength ("Foam Flow Strength", Range(0.0, 2.0)) = 1.0
+        _FoamFlowSpeed ("Foam Flow Speed", Range(-4.0, 4.0)) = 1.0
+        _FoamAlphaBoost ("Foam Alpha Boost", Range(0.0, 1.0)) = 0.15
+        _FoamSmoothness ("Foam Smoothness", Range(0.0, 1.0)) = 0.28
+        _FoamNormalDampen ("Foam Normal Dampen", Range(0.0, 1.0)) = 0.35
+        [LILFoldoutEnd]
+
         [LILFoldout(Lighting)]
         _ReceiveShadowStrength ("Receive Shadow Strength", Range(0.0, 1.0)) = 1.0
         _ShadowMinLight ("Shadow Min Light", Range(0.0, 1.0)) = 0.38
@@ -100,6 +115,8 @@ Shader "lilPBR/Water/Flowmap Water"
     TEXTURE2D(_FlowMap1); SAMPLER(sampler_FlowMap1);
     TEXTURE2D(_NormalMap0); SAMPLER(sampler_NormalMap0);
     TEXTURE2D(_NormalMap1); SAMPLER(sampler_NormalMap1);
+    TEXTURE2D(_FoamMap); SAMPLER(sampler_FoamMap);
+    TEXTURE2D(_FoamMask); SAMPLER(sampler_FoamMask);
     TEXTURE2D(_LILPBRPlanarReflectionTexture); SAMPLER(sampler_LILPBRPlanarReflectionTexture);
     TEXTURE2D(_HoMetadataBufferCustom0Tex); SAMPLER(sampler_HoMetadataBufferCustom0Tex);
     TEXTURE2D(_HoMetadataBufferCustom1Tex); SAMPLER(sampler_HoMetadataBufferCustom1Tex);
@@ -126,6 +143,18 @@ Shader "lilPBR/Water/Flowmap Water"
         float4 _NormalMap1_ST;
         float _NormalScale1;
         float _NormalStrength;
+        float4 _FoamMap_ST;
+        float4 _FoamMask_ST;
+        float4 _FoamColor;
+        float _FoamIntensity;
+        float _FoamThreshold;
+        float _FoamSoftness;
+        float _FoamFlowSource;
+        float _FoamFlowStrength;
+        float _FoamFlowSpeed;
+        float _FoamAlphaBoost;
+        float _FoamSmoothness;
+        float _FoamNormalDampen;
         float _ReceiveShadowStrength;
         float _ShadowMinLight;
         float4 _ShadowTint;
@@ -186,6 +215,7 @@ Shader "lilPBR/Water/Flowmap Water"
         half alpha;
         half smoothness;
         half wetness;
+        half foam;
         half3 normalTS;
         half3 normalWS;
         half3 viewDirWS;
@@ -229,10 +259,21 @@ Shader "lilPBR/Water/Flowmap Water"
         return normalize(normalTS);
     }
 
-    half3 SampleFlowedNormal0(float2 uv)
+    half2 SampleFlowVector0(float2 uv)
     {
         float2 flowUV = uv * _FlowMap0_ST.xy + _FlowMap0_ST.zw + _FlowMap0Scroll.xy * _Time.y;
-        half2 flow = (SAMPLE_TEXTURE2D(_FlowMap0, sampler_FlowMap0, flowUV).rg * 2.0h - 1.0h) * _FlowStrength0;
+        return (SAMPLE_TEXTURE2D(_FlowMap0, sampler_FlowMap0, flowUV).rg * 2.0h - 1.0h) * _FlowStrength0;
+    }
+
+    half2 SampleFlowVector1(float2 uv)
+    {
+        float2 flowUV = uv * _FlowMap1_ST.xy + _FlowMap1_ST.zw + _FlowMap1Scroll.xy * _Time.y;
+        return (SAMPLE_TEXTURE2D(_FlowMap1, sampler_FlowMap1, flowUV).rg * 2.0h - 1.0h) * _FlowStrength1;
+    }
+
+    half3 SampleFlowedNormal0(float2 uv)
+    {
+        half2 flow = SampleFlowVector0(uv);
         float phaseA = frac(_Time.y * _FlowSpeed0);
         float phaseB = frac(phaseA + 0.5);
         float blend = abs(phaseA * 2.0 - 1.0);
@@ -244,8 +285,7 @@ Shader "lilPBR/Water/Flowmap Water"
 
     half3 SampleFlowedNormal1(float2 uv)
     {
-        float2 flowUV = uv * _FlowMap1_ST.xy + _FlowMap1_ST.zw + _FlowMap1Scroll.xy * _Time.y;
-        half2 flow = (SAMPLE_TEXTURE2D(_FlowMap1, sampler_FlowMap1, flowUV).rg * 2.0h - 1.0h) * _FlowStrength1;
+        half2 flow = SampleFlowVector1(uv);
         float phaseA = frac(_Time.y * _FlowSpeed1 + 0.25);
         float phaseB = frac(phaseA + 0.5);
         float blend = abs(phaseA * 2.0 - 1.0);
@@ -261,6 +301,54 @@ Shader "lilPBR/Water/Flowmap Water"
         return ApplyNormalStrength(normalTS, _NormalStrength);
     }
 
+    half2 ResolveFoamFlow(float2 uv)
+    {
+        half2 flow0 = SampleFlowVector0(uv);
+        half2 flow1 = SampleFlowVector1(uv);
+        if (_FoamFlowSource < 0.5)
+        {
+            return flow0;
+        }
+
+        if (_FoamFlowSource < 1.5)
+        {
+            return flow1;
+        }
+
+        return (flow0 + flow1) * 0.5h;
+    }
+
+    float ResolveFoamFlowSpeed()
+    {
+        if (_FoamFlowSource < 0.5)
+        {
+            return _FlowSpeed0 * _FoamFlowSpeed;
+        }
+
+        if (_FoamFlowSource < 1.5)
+        {
+            return _FlowSpeed1 * _FoamFlowSpeed;
+        }
+
+        return (_FlowSpeed0 + _FlowSpeed1) * 0.5 * _FoamFlowSpeed;
+    }
+
+    half ResolveFoamCoverage(float2 uv)
+    {
+        float2 foamUV = uv * _FoamMap_ST.xy + _FoamMap_ST.zw;
+        half2 flow = ResolveFoamFlow(uv) * _FoamFlowStrength;
+        float phaseA = frac(_Time.y * ResolveFoamFlowSpeed());
+        float phaseB = frac(phaseA + 0.5);
+        float blend = abs(phaseA * 2.0 - 1.0);
+        half foamA = SAMPLE_TEXTURE2D(_FoamMap, sampler_FoamMap, foamUV + flow * phaseA).r;
+        half foamB = SAMPLE_TEXTURE2D(_FoamMap, sampler_FoamMap, foamUV + flow * phaseB).r;
+        half foam = lerp(foamA, foamB, blend);
+        half mask = SAMPLE_TEXTURE2D(_FoamMask, sampler_FoamMask, uv * _FoamMask_ST.xy + _FoamMask_ST.zw).r;
+        half signal = foam * mask * _FoamIntensity;
+        half softness = max((half)_FoamSoftness, 0.001h);
+        return smoothstep(_FoamThreshold - softness, _FoamThreshold + softness, signal);
+    }
+
     half3 ResolveNormalWS(Varyings input, half3 normalTS)
     {
         half3 normalWS = normalize(input.normalWS);
@@ -273,11 +361,16 @@ Shader "lilPBR/Water/Flowmap Water"
     WaterSurface ResolveWaterSurface(Varyings input)
     {
         WaterSurface surface;
-        surface.alpha = saturate(_SurfaceColor.a * _SurfaceAlpha);
         surface.wetness = saturate(_Wetness);
+        surface.foam = ResolveFoamCoverage(input.uv);
+        half foamColorWeight = saturate(surface.foam * _FoamColor.a);
+        surface.alpha = saturate(_SurfaceColor.a * _SurfaceAlpha + foamColorWeight * _FoamAlphaBoost);
         surface.smoothness = saturate(_Smoothness + surface.wetness * _WetnessSmoothnessBoost);
-        surface.color = lerp(_SurfaceColor.rgb, _SurfaceColor.rgb * _WetnessColor.rgb, surface.wetness * _WetnessColor.a);
+        surface.smoothness = lerp(surface.smoothness, saturate(_FoamSmoothness), foamColorWeight);
+        half3 baseColor = lerp(_SurfaceColor.rgb, _SurfaceColor.rgb * _WetnessColor.rgb, surface.wetness * _WetnessColor.a);
+        surface.color = lerp(baseColor, _FoamColor.rgb, foamColorWeight);
         surface.normalTS = ResolveNormalTS(input.uv);
+        surface.normalTS = normalize(lerp(surface.normalTS, half3(0.0h, 0.0h, 1.0h), saturate(surface.foam * _FoamNormalDampen)));
         surface.normalWS = ResolveNormalWS(input, surface.normalTS);
         surface.viewDirWS = SafeNormalize(GetWorldSpaceViewDir(input.positionWS));
         return surface;

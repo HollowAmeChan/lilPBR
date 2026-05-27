@@ -7,6 +7,8 @@ ShaderImporter:
   - _FlowMap1: {instanceID: 0}
   - _NormalMap0: {instanceID: 0}
   - _NormalMap1: {instanceID: 0}
+  - _FoamMap: {instanceID: 0}
+  - _FoamMask: {instanceID: 0}
   - _LILPBRPlanarReflectionTexture: {instanceID: 0}
   - _HoMetadataBufferCustom0Tex: {instanceID: 0}
   - _HoMetadataBufferCustom1Tex: {instanceID: 0}

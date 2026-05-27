@@ -363,6 +363,42 @@ msgstr "水"
 msgid "Foam"
 msgstr "泡"
 
+msgid "Foam Map"
+msgstr "泡マップ"
+
+msgid "Foam Mask"
+msgstr "泡マスク"
+
+msgid "Foam Color"
+msgstr "泡の色"
+
+msgid "Foam Intensity"
+msgstr "泡の強度"
+
+msgid "Foam Threshold"
+msgstr "泡のしきい値"
+
+msgid "Foam Softness"
+msgstr "泡の柔らかさ"
+
+msgid "Foam Flow Source"
+msgstr "泡のフロー元"
+
+msgid "Foam Flow Strength"
+msgstr "泡のフロー強度"
+
+msgid "Foam Flow Speed"
+msgstr "泡のフロー速度"
+
+msgid "Foam Alpha Boost"
+msgstr "泡のアルファ加算"
+
+msgid "Foam Smoothness"
+msgstr "泡の滑らかさ"
+
+msgid "Foam Normal Dampen"
+msgstr "泡の法線抑制"
+
 msgid "Fog"
 msgstr "フォグ"
 

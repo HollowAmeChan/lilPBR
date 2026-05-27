@@ -976,6 +976,7 @@ Shader "lilPBR/lilPBR"
             Name "HoMetadataBufferSurfaceColor"
             Tags { "LightMode" = "HoMetadataBufferSurfaceColor" }
             ZWrite Off
+            Blend SrcAlpha OneMinusSrcAlpha, One OneMinusSrcAlpha
             ZTest LEqual
             Cull [_Cull]
             AlphaToMask [_AlphaToMask]

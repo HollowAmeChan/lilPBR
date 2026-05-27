@@ -111,7 +111,7 @@ float4 HoAovResolveCustom0To3(float2 uv_MainTex)
     return values;
 }
 
-float4 HoAovResolveSurfaceColor(v2f i, bool isFront, float2 uv_MainTex, float2 dx, float2 dy)
+float4 HoAovResolveSurfaceColor(v2f i, bool isFront, float2 uv_MainTex, float2 dx, float2 dy, half coverage)
 {
     half4 mainTex = Sample(_MainTex, sampler_trilinear_repeat, uv_MainTex, dx, dy) * _Color;
     half3 surfaceColor = mainTex.rgb;
@@ -130,7 +130,7 @@ float4 HoAovResolveSurfaceColor(v2f i, bool isFront, float2 uv_MainTex, float2 d
         surfaceColor *= i.color.rgb;
     }
 
-    return float4(saturate(surfaceColor), 1.0);
+    return float4(saturate(surfaceColor), saturate(coverage));
 }
 
 half HoAovSelectChannel(half4 value, uint channel)
@@ -199,6 +199,15 @@ half HoAovResolveAlpha(v2f i)
     return alpha;
 }
 
+half HoAovResolveSurfaceColorCoverage(half alpha)
+{
+    #if defined(_TRANSPARENT)
+        return saturate(alpha);
+    #else
+        return 1.0;
+    #endif
+}
+
 void HoAovApplyAlpha(v2f i, bool isFront, inout float depth, half alpha)
 {
     depth = i.pos.z;
@@ -217,6 +226,7 @@ HoAovOutput HoAovFrag(v2f i, bool isFront, inout float depth)
 {
     half alpha = HoAovResolveAlpha(i);
     HoAovApplyAlpha(i, isFront, depth, alpha);
+    half coverage = HoAovResolveSurfaceColorCoverage(alpha);
 
     float maskEnabled = HoAovHasSystemChannel(1.0);
     float idEnabled = HoAovHasSystemChannel(2.0);
@@ -228,7 +238,7 @@ HoAovOutput HoAovFrag(v2f i, bool isFront, inout float depth)
     float curvatureEnabled = HoAovHasSystemChannel(512.0);
     float materialEnabled = HoAovHasSystemChannel(1024.0);
     float utilityEnabled = HoAovHasSystemChannel(2048.0);
-    float subjectCoverage = saturate(_HoAovMaskWeight);
+    float subjectCoverage = saturate(_HoAovMaskWeight) * coverage;
     float subjectValid = step(0.0001, subjectCoverage);
 
     float linearDepth = LinearEyeDepth(i.pos.z, _ZBufferParams);
@@ -271,13 +281,14 @@ half4 HoAovSurfaceColorFrag(v2f i, bool isFront, inout float depth)
 {
     half alpha = HoAovResolveAlpha(i);
     HoAovApplyAlpha(i, isFront, depth, alpha);
+    half coverage = HoAovResolveSurfaceColorCoverage(alpha);
 
-    float subjectCoverage = saturate(_HoAovMaskWeight);
+    float subjectCoverage = saturate(_HoAovMaskWeight) * coverage;
     float subjectValid = step(0.0001, subjectCoverage);
     float2 uv_MainTex = i.uv01.xy * _MainTex_ST.xy + _MainTex_ST.zw;
     float2 uvDx = ddx(uv_MainTex);
     float2 uvDy = ddy(uv_MainTex);
-    return half4(HoAovResolveSurfaceColor(i, isFront, uv_MainTex, uvDx, uvDy) * subjectValid);
+    return half4(HoAovResolveSurfaceColor(i, isFront, uv_MainTex, uvDx, uvDy, subjectCoverage) * subjectValid);
 }
 
 #endif

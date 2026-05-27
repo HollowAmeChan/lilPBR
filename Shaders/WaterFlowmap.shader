@@ -158,6 +158,7 @@ Shader "lilPBR/Water/Flowmap Water"
     CBUFFER_END
 
     float4 _LILPBRPlanarReflectionParams;
+    float _HoPlanarReflectionSuppressMaterialSampling;
 
     struct Attributes
     {
@@ -351,12 +352,13 @@ Shader "lilPBR/Water/Flowmap Water"
             return half4(MetadataApplyCustomWriteMask(_HoMetadataBufferCustomValues0, 0.0));
         }
 
-        return half4(surface.smoothness, surface.wetness, saturate(_NormalStrength), saturate(_PlanarReflectionStrength));
+        half planarReflectionEnabled = _UsePlanarReflection != 0 ? 1.0h : 0.0h;
+        return half4(surface.smoothness, surface.wetness, saturate(_NormalStrength), saturate(_PlanarReflectionStrength) * planarReflectionEnabled);
     }
 
     half3 ApplyPlanarReflection(Varyings input, WaterSurface surface, half3 litColor)
     {
-        if (_UsePlanarReflection == 0 || _PlanarReflectionStrength <= 0.0 || _LILPBRPlanarReflectionParams.x <= 0.5)
+        if (_HoPlanarReflectionSuppressMaterialSampling > 0.5 || _UsePlanarReflection == 0 || _PlanarReflectionStrength <= 0.0 || _LILPBRPlanarReflectionParams.x <= 0.5)
         {
             return litColor;
         }

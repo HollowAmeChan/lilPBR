@@ -1,7 +1,7 @@
 #ifndef INCLUDED_LILPBR_HOCHARACTER_CAPTURE
 #define INCLUDED_LILPBR_HOCHARACTER_CAPTURE
 
-#define LIL_HO_CHARACTER_CAPTURE_HAS_AOV_PROPERTIES
+#define LIL_HO_CHARACTER_CAPTURE_HAS_METADATA_PROPERTIES
 #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/CharacterSpecialization/Shaders/HoCharacterCaptureCommon.hlsl"
 
 half4 HoCharacterCaptureResolveColor(v2f i, bool isFront)

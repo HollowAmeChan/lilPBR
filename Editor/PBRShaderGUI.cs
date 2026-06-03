@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using UnityEditor;
@@ -12,7 +11,6 @@ namespace jp.lilxyzw.lilpbr
     internal class PBRShaderGUI : ShaderGUI
     {
         private static readonly Dictionary<Shader, ShaderGuiCache> shaderGuiCaches = new();
-        private const long CacheBuildTimeoutMilliseconds = 250;
         private Dictionary<string, List<LILFoldoutDecorator>> foldoutStarts;
         private Dictionary<string, List<LILFoldoutEndDecorator>> foldoutEnds;
         private Dictionary<string, List<LILIfDecorator>> ifs;
@@ -21,7 +19,6 @@ namespace jp.lilxyzw.lilpbr
         private Dictionary<string, string> keywords;
         private HashSet<string> needToCache;
         private HashSet<string> clearCache;
-        private string cacheError;
 
         void UseCache(ShaderGuiCache cache)
         {
@@ -54,36 +51,10 @@ namespace jp.lilxyzw.lilpbr
 
         public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
         {
-            if (Settings.instance.useSafeMaterialGui)
-            {
-                EditorGUILayout.HelpBox("lilPBR is using Unity's default material GUI to avoid slow custom GUI initialization.", MessageType.Info);
-                if (GUILayout.Button("Enable lilPBR Custom GUI"))
-                {
-                    Settings.instance.useSafeMaterialGui = false;
-                    Settings.instance.Save();
-                    GUIUtility.ExitGUI();
-                }
-                base.OnGUI(materialEditor, properties);
-                return;
-            }
-
             if (!Initialize(materialEditor))
             {
                 base.OnGUI(materialEditor, properties);
                 return;
-            }
-            if (Settings.instance.useSafeMaterialGui)
-            {
-                EditorGUILayout.HelpBox(cacheError ?? "lilPBR custom GUI initialization was too slow. Reverted to Unity's default material GUI.", MessageType.Warning);
-                base.OnGUI(materialEditor, properties);
-                return;
-            }
-
-            if (GUILayout.Button("Use Safe Material GUI"))
-            {
-                Settings.instance.useSafeMaterialGui = true;
-                Settings.instance.Save();
-                GUIUtility.ExitGUI();
             }
 
             var wideMode = EditorGUIUtility.wideMode;
@@ -390,13 +361,6 @@ namespace jp.lilxyzw.lilpbr
                 if (!shaderGuiCaches.TryGetValue(shader, out var cache))
                 {
                     cache = new ShaderGuiCache(shader);
-                    if (cache.buildMilliseconds > CacheBuildTimeoutMilliseconds)
-                    {
-                        Settings.instance.useSafeMaterialGui = true;
-                        Settings.instance.Save();
-                        cacheError = $"lilPBR custom GUI cache took {cache.buildMilliseconds} ms to build.";
-                        return false;
-                    }
                     shaderGuiCaches.Add(shader, cache);
                 }
                 UseCache(cache);
@@ -477,11 +441,9 @@ namespace jp.lilxyzw.lilpbr
             public readonly HashSet<string> needToCache = new();
             public readonly HashSet<string> clearCache = new();
             public readonly ShaderImporter shaderImporter;
-            public readonly long buildMilliseconds;
 
             public ShaderGuiCache(Shader shader)
             {
-                var stopwatch = Stopwatch.StartNew();
                 shaderImporter = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(shader)) as ShaderImporter;
 
                 var count = shader.GetPropertyCount();
@@ -494,8 +456,6 @@ namespace jp.lilxyzw.lilpbr
                         AddAttribute(name, attr);
                     }
                 }
-                stopwatch.Stop();
-                buildMilliseconds = stopwatch.ElapsedMilliseconds;
             }
 
             private void AddAttribute(string name, string attr)

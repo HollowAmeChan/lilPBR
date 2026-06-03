@@ -4,7 +4,7 @@
 
 Unity currently spends a long time in `Application.UpdateScene`, shader compilation, and scene refresh after opening the project or touching lilPBR shader files. This is no longer mainly a ShaderGUI issue. The remaining cost is mostly caused by shader variant count and repeated invalidation of shared shader includes.
 
-The immediate safe-mode GUI change prevents custom material GUI initialization from blocking editor startup. The next optimization target is shader import and variant compilation.
+ShaderGUI initialization is no longer treated as a startup blocker. The remaining optimization target is shader import and variant compilation.
 
 ## Current Findings
 
@@ -371,6 +371,5 @@ Track before and after:
 ## Notes
 
 - Reducing variant count is more important than micro-optimizing ShaderGUI.
-- Safe material GUI should remain the default for project open.
 - Any automatic shader-setting generation must avoid writing files when content is unchanged.
 - Prefer small pass-by-pass changes with visual verification over one large shader rewrite.

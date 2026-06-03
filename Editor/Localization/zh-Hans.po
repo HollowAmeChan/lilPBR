@@ -570,3 +570,213 @@ msgstr "雾"
 
 msgid "Volumetric Fog"
 msgstr "体积雾"
+
+
+
+#: Crystal
+
+msgid "Surface"
+msgstr "表面"
+
+msgid "Volume Raymarch"
+msgstr "体积光线步进"
+
+msgid "Linear Mask"
+msgstr "线性遮罩"
+
+msgid "Ramp Emission"
+msgstr "渐变发光"
+
+msgid "Mask And Edges"
+msgstr "遮罩与边缘"
+
+msgid "Refraction Noise"
+msgstr "折射噪声"
+
+msgid "Desaturate"
+msgstr "去饱和"
+
+msgid "Lighting"
+msgstr "光照"
+
+msgid "Debug"
+msgstr "调试"
+
+
+
+#: WaterFlowmap
+
+msgid "Surface Color"
+msgstr "表面颜色"
+
+msgid "Surface Alpha"
+msgstr "表面透明度"
+
+msgid "Wetness Tint"
+msgstr "湿润染色"
+
+msgid "Wetness Smoothness Boost"
+msgstr "湿润光滑度增强"
+
+msgid "Flow"
+msgstr "流动"
+
+msgid "Flow Map 0 (RG)"
+msgstr "流向贴图 0 (RG)"
+
+msgid "Flow Strength 0"
+msgstr "流动强度 0"
+
+msgid "Flow Speed 0"
+msgstr "流动速度 0"
+
+msgid "Flow Map 0 Scroll XY"
+msgstr "流向贴图 0 滚动 XY"
+
+msgid "Flow Map 1 (RG)"
+msgstr "流向贴图 1 (RG)"
+
+msgid "Flow Strength 1"
+msgstr "流动强度 1"
+
+msgid "Flow Speed 1"
+msgstr "流动速度 1"
+
+msgid "Flow Map 1 Scroll XY"
+msgstr "流向贴图 1 滚动 XY"
+
+msgid "Normal"
+msgstr "法线"
+
+msgid "Normal Map 0"
+msgstr "法线贴图 0"
+
+msgid "Normal Scale 0"
+msgstr "法线缩放 0"
+
+msgid "Normal Map 1"
+msgstr "法线贴图 1"
+
+msgid "Normal Scale 1"
+msgstr "法线缩放 1"
+
+msgid "Buffer Normal Strength"
+msgstr "缓冲法线强度"
+
+msgid "Receive Shadow Strength"
+msgstr "接收阴影强度"
+
+msgid "Shadow Min Light"
+msgstr "阴影最小亮度"
+
+msgid "Shadow Tint"
+msgstr "阴影染色"
+
+msgid "Indirect Strength"
+msgstr "间接光强度"
+
+msgid "Specular Strength"
+msgstr "高光强度"
+
+msgid "Specular Color"
+msgstr "高光颜色"
+
+msgid "Normal Distortion"
+msgstr "法线扭曲"
+
+msgid "Buffer Coverage"
+msgstr "缓冲覆盖率"
+
+msgid "Advanced End"
+msgstr "高级结束"
+
+
+
+#: MetadataBuffer
+
+msgid "MetadataBuffer"
+msgstr "MetadataBuffer"
+
+msgid "MetadataBuffer Mask Weight"
+msgstr "MetadataBuffer 遮罩权重"
+
+msgid "MetadataBuffer System Write Mask"
+msgstr "MetadataBuffer 系统写入遮罩"
+
+msgid "MetadataBuffer Custom Write Mask"
+msgstr "MetadataBuffer 自定义写入遮罩"
+
+msgid "MetadataBuffer Custom 0-3"
+msgstr "MetadataBuffer 自定义 0-3"
+
+msgid "MetadataBuffer Group ID"
+msgstr "MetadataBuffer 组 ID"
+
+msgid "MetadataBuffer Object ID"
+msgstr "MetadataBuffer 对象 ID"
+
+msgid "MetadataBuffer Flags"
+msgstr "MetadataBuffer 标志"
+
+msgid "MetadataBuffer Material Class"
+msgstr "MetadataBuffer 材质类别"
+
+msgid "MetadataBuffer Thickness"
+msgstr "MetadataBuffer 厚度"
+
+msgid "MetadataBuffer Curvature"
+msgstr "MetadataBuffer 曲率"
+
+msgid "MetadataBuffer Transmittance Hint"
+msgstr "MetadataBuffer 透射提示"
+
+msgid "MetadataBuffer Object Custom Mask"
+msgstr "MetadataBuffer 对象自定义遮罩"
+
+
+
+#: Shadow
+
+msgid "Shadow"
+msgstr "阴影"
+
+msgid "Shadow Strength"
+msgstr "阴影强度"
+
+msgid "Shadow Contrast"
+msgstr "阴影对比度"
+
+msgid "Shadow Tint Strength"
+msgstr "阴影染色强度"
+
+msgid "HoShadow Strength"
+msgstr "HoShadow 强度"
+
+
+
+#: Character And SSS
+
+msgid "Character Capture"
+msgstr "角色捕获"
+
+msgid "HoSSS Profile ID"
+msgstr "HoSSS 配置 ID"
+
+msgid "HoSSS Thickness Scale"
+msgstr "HoSSS 厚度缩放"
+
+msgid "HoSSS Transmission Strength"
+msgstr "HoSSS 透射强度"
+
+msgid "HoSSS Transmission Radius"
+msgstr "HoSSS 透射半径"
+
+
+
+#: Blending
+
+msgid "SrcBlendAlpha"
+msgstr "源 Alpha 混合"
+
+msgid "DstBlendAlpha"
+msgstr "目标 Alpha 混合"

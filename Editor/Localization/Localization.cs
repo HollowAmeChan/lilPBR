@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -13,12 +12,10 @@ namespace jp.lilxyzw.lilpbr
         public LocalizationAsset localizationAsset;
         private static string[] languages;
         private static string[] languageNames;
-        private static readonly Dictionary<string, GUIContent> guicontents = new();
         private static string localizationFolder => AssetDatabase.GUIDToAssetPath("51be2e539426e71408b68600a577f98e");
 
         internal static void Load()
         {
-            guicontents.Clear();
             var language = CurrentLanguage;
             var path = localizationFolder + "/" + language + ".po";
             instance.localizationAsset = File.Exists(path) ? AssetDatabase.LoadAssetAtPath<LocalizationAsset>(path) : null;
@@ -85,8 +82,7 @@ namespace jp.lilxyzw.lilpbr
         private static GUIContent G(string key, Texture image, string tooltip)
         {
             if(!instance.localizationAsset) Load();
-            if(guicontents.TryGetValue(key, out var content)) return content;
-            return guicontents[key] = new GUIContent(L(key), image, L(tooltip));
+            return new GUIContent(L(key), image, L(tooltip));
         }
     }
 }

@@ -200,49 +200,6 @@ msgstr "AO 对比度"
 msgid "AO Mask"
 msgstr "AO 蒙版"
 
-
-
-#: HoAOV
-
-msgid "HoAOV"
-msgstr "HoAOV"
-
-msgid "HoAOV Mask Weight"
-msgstr "HoAOV 蒙版权重"
-
-msgid "HoAOV System Write Mask"
-msgstr "HoAOV 系统写入蒙版"
-
-msgid "HoAOV Custom Write Mask"
-msgstr "HoAOV 自定义写入蒙版"
-
-msgid "HoAOV Custom 0-3"
-msgstr "HoAOV 自定义 0-3"
-
-msgid "HoAOV Group ID"
-msgstr "HoAOV 组 ID"
-
-msgid "HoAOV Object ID"
-msgstr "HoAOV 对象 ID"
-
-msgid "HoAOV Material Class"
-msgstr "HoAOV 材质分类"
-
-msgid "HoAOV Flags"
-msgstr "HoAOV 标记"
-
-msgid "HoAOV Thickness"
-msgstr "HoAOV 厚度"
-
-msgid "HoAOV Curvature"
-msgstr "HoAOV 曲率"
-
-msgid "HoAOV Utility"
-msgstr "HoAOV 辅助值"
-
-msgid "HoAOV Object Custom Mask"
-msgstr "HoAOV 对象自定义蒙版"
-
 msgid "Custom 0"
 msgstr "自定义 0"
 

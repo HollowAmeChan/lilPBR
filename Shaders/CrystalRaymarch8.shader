@@ -86,7 +86,7 @@ Shader "lilPBR/Crystal/Raymarch 8"
         [LILFoldoutEnd]
 
         [LILFoldout(Debug)]
-        [Enum(Off, 0, VolumeMain, 1, VolumeSecondary, 2, RampCoord, 3, Edges, 4, Thickness, 5, Fresnel, 6, Normal, 7, Emission, 8)] _CrystalDebugMode ("调试模式", Int) = 0
+        [IntRange] _CrystalDebugMode ("调试模式", Range(0, 8)) = 0
         [LILFoldoutEnd]
 
         [LILFoldout(Advanced)]

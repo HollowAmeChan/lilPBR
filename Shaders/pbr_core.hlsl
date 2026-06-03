@@ -5,6 +5,16 @@
 // Shader Layer
 uint _HideShaderLayer;
 
+#ifndef LILPBR_MAIN_SAMPLER
+#define LILPBR_MAIN_SAMPLER sampler_MainTex
+#endif
+#ifndef LILPBR_PBR_SAMPLER
+#define LILPBR_PBR_SAMPLER sampler_PBRMap
+#endif
+#ifndef LILPBR_PARALLAX_SAMPLER
+#define LILPBR_PARALLAX_SAMPLER sampler_ParallaxMap
+#endif
+
 bool IsShowLayer()
 {
     return (1 << _ShaderLayer & _HideShaderLayer) == 0;
@@ -32,9 +42,9 @@ half SmoothnessGSAA(ShadingParams p)
 half SampleHeight(float2 uv, float2 dx, float2 dy)
 {
     #ifdef _TEXTUREMODE_SEPARATE
-    return Sample(_ParallaxMap, sampler_ParallaxMap, uv, dx, dy).r;
+    return Sample(_ParallaxMap, LILPBR_PARALLAX_SAMPLER, uv, dx, dy).r;
     #else
-    return Sample(_PBRMap, sampler_PBRMap, uv, dx, dy)[_HeightChannel];
+    return Sample(_PBRMap, LILPBR_PBR_SAMPLER, uv, dx, dy)[_HeightChannel];
     #endif
 }
 
@@ -188,9 +198,9 @@ void DoDetail(inout ShadingParams p, inout half3 tangentNormal, half3x3 matrixTB
     }
 
     if(dot(projection.xyz,projection.xyz) > 0) mask *= saturate(dot(p.N, projection.xyz) * projectionSharpness - projectionThreshold * projectionSharpness);
-    half4 detail1tex = Sample(tex, sampler_MainTex, uv_Detail, dx, dy);
+    half4 detail1tex = Sample(tex, LILPBR_MAIN_SAMPLER, uv_Detail, dx, dy);
     p.albedo = lilBlendColor(p.albedo, detail1tex.rgb, detail1tex.a * mask, albedoblend);
-    half4 detail1bumpmap = Sample(bump, sampler_MainTex, uv_Detail, dx, dy);
+    half4 detail1bumpmap = Sample(bump, LILPBR_MAIN_SAMPLER, uv_Detail, dx, dy);
     half detail1bumpscale = bumpblend ? bumpscale : bumpscale * mask;
     half3 detail1tangentNormal = UnpackScaleNormal(detail1bumpmap, detail1bumpscale);
     detail1tangentNormal = mul(matrixTBN, mul(detail1tangentNormal, detailTBN));
@@ -618,17 +628,17 @@ half4 Shading(v2f i, float4 posSV, float3 posWorld, half3 V, half3 tangent, half
 
     if(_UseScreenSpaceAO != 0)
     {
-        p.ssaoMask = Sample(_SSAOMask, sampler_MainTex, uv_MainTex, dx, dy).r;
+        p.ssaoMask = Sample(_SSAOMask, LILPBR_MAIN_SAMPLER, uv_MainTex, dx, dy).r;
     }
 
     // Albedo
-    half4 mainTex = Sample(_MainTex, sampler_MainTex, uv_MainTex, dx, dy) * _Color;
+    half4 mainTex = Sample(_MainTex, LILPBR_MAIN_SAMPLER, uv_MainTex, dx, dy) * _Color;
     p.albedo = mainTex.rgb;
     p.albedoback = mainTex.rgb;
     p.alpha = mainTex.a;
 
     #ifdef _BACKFACE_COLOR
-    half4 backfaceTex = Sample(_BackfaceTex, sampler_MainTex, uv_MainTex, dx, dy) * _BackfaceColor;
+    half4 backfaceTex = Sample(_BackfaceTex, LILPBR_MAIN_SAMPLER, uv_MainTex, dx, dy) * _BackfaceColor;
     if(isFront)
     {
         p.albedo = mainTex.rgb;
@@ -648,7 +658,7 @@ half4 Shading(v2f i, float4 posSV, float3 posWorld, half3 V, half3 tangent, half
 
     // Normal Map
     #ifdef _NORMALMAP
-    half4 bumpmap = Sample(_BumpMap, sampler_MainTex, uv_MainTex, dx, dy);
+    half4 bumpmap = Sample(_BumpMap, LILPBR_MAIN_SAMPLER, uv_MainTex, dx, dy);
     half3 tangentNormal = UnpackScaleNormal(bumpmap, _BumpScale);
     #else
     half4 bumpmap = half4(0.5,0.5,1,0.5);
@@ -656,7 +666,7 @@ half4 Shading(v2f i, float4 posSV, float3 posWorld, half3 V, half3 tangent, half
     #endif
 
     p.N = mul(tangentNormal, matrixTBN);
-    half4 detailMask = Sample(_DetailMask, sampler_MainTex, uv_MainTex, dx, dy);
+    half4 detailMask = Sample(_DetailMask, LILPBR_MAIN_SAMPLER, uv_MainTex, dx, dy);
     #ifdef _DETAIL1
     DoDetail(p, tangentNormal, matrixTBN, offset, uvDensity, dx, dy, detailMask[0], _DetailUVMode1, _DetailTex1_ST, _DetailTex1, _DetailAlbedoBlend1, _DetailBumpMap1, _DetailBumpMapBlend1, _DetailBumpScale1, _DetailProjection1, _DetailProjectionSharpness1, _DetailProjectionThreshold1);
     #endif
@@ -675,11 +685,11 @@ half4 Shading(v2f i, float4 posSV, float3 posWorld, half3 V, half3 tangent, half
 
     // PBR Map
     #ifdef _TEXTUREMODE_SEPARATE
-    p.metallic = Sample(_MetallicGlossMap, sampler_MainTex, uv_MainTex, dx, dy).r;
-    p.occlusion = Sample(_OcclusionMap, sampler_MainTex, uv_MainTex, dx, dy).r;
-    p.smoothness = Sample(_SmoothnessMap, sampler_MainTex, uv_MainTex, dx, dy).r;
+    p.metallic = Sample(_MetallicGlossMap, LILPBR_MAIN_SAMPLER, uv_MainTex, dx, dy).r;
+    p.occlusion = Sample(_OcclusionMap, LILPBR_MAIN_SAMPLER, uv_MainTex, dx, dy).r;
+    p.smoothness = Sample(_SmoothnessMap, LILPBR_MAIN_SAMPLER, uv_MainTex, dx, dy).r;
     #else
-    half4 pbrmap = Sample(_PBRMap, sampler_MainTex, uv_MainTex, dx, dy);
+    half4 pbrmap = Sample(_PBRMap, LILPBR_MAIN_SAMPLER, uv_MainTex, dx, dy);
     p.metallic = pbrmap[_MetallicChannel];
     p.occlusion = pbrmap[_OcclusionChannel];
     p.smoothness = pbrmap[_SmoothnessChannel];
@@ -728,11 +738,11 @@ half4 Shading(v2f i, float4 posSV, float3 posWorld, half3 V, half3 tangent, half
     p.perceptualRoughness = 1.2;
     #ifdef _ANISOTROPY
         p.isAnisotropy = true;
-        half4 anisoTangentMap = Sample(_AnisotropyDirection, sampler_MainTex, uv_MainTex, dx, dy);
+        half4 anisoTangentMap = Sample(_AnisotropyDirection, LILPBR_MAIN_SAMPLER, uv_MainTex, dx, dy);
         half3 anisoTangent = anisoTangentMap * 2 - 1;
         p.T = OrthoNormalize(normalize(mul(anisoTangent, matrixTBN)), p.N);
         p.B = cross(p.N, p.T);
-        p.anisotropy = _Anisotropy * Sample(_AnisotropyMask, sampler_MainTex, uv_MainTex, dx, dy)[_AnisotropyChannel];
+        p.anisotropy = _Anisotropy * Sample(_AnisotropyMask, LILPBR_MAIN_SAMPLER, uv_MainTex, dx, dy)[_AnisotropyChannel];
         half3 anisoDirectionWS = OrthoNormalize(p.V, p.anisotropy > 0.0 ? p.B : p.T);
         p.refN = normalize(lerp(p.N, anisoDirectionWS, abs(p.anisotropy)));
         p.perceptualRoughness = saturate(1.2 - abs(p.anisotropy));
@@ -747,9 +757,9 @@ half4 Shading(v2f i, float4 posSV, float3 posWorld, half3 V, half3 tangent, half
     p.emission = _EmissionSubpixel.SampleGrad(sampler_trilinear_repeat, uv_MainTex * _EmissionSubpixel_ST.xy, dx * _EmissionSubpixel_ST.x * 2.5, dy * _EmissionSubpixel_ST.y * 2.5).rgb / _EmissionSubpixel.SampleGrad(sampler_point_clamp, float2(0.5,0.5), 2, 2).rgb;
     float2 dotuv = uv_MainTex * _EmissionSubpixel_ST.xy;
     dotuv = (floor(dotuv) + saturate(frac(dotuv) / saturate(fwidth(dotuv))) - 0.5) / _EmissionSubpixel_ST.xy;
-    p.emission *= _EmissionMap.Sample(sampler_MainTex, dotuv).rgb * _EmissionColor.rgb;
+    p.emission *= _EmissionMap.Sample(LILPBR_MAIN_SAMPLER, dotuv).rgb * _EmissionColor.rgb;
     #else
-    p.emission = Sample(_EmissionMap, sampler_MainTex, uv_MainTex, dx, dy).rgb * _EmissionColor.rgb;
+    p.emission = Sample(_EmissionMap, LILPBR_MAIN_SAMPLER, uv_MainTex, dx, dy).rgb * _EmissionColor.rgb;
     #endif
     #endif
 
@@ -771,14 +781,14 @@ half4 Shading(v2f i, float4 posSV, float3 posWorld, half3 V, half3 tangent, half
         cp.isAnisotropy = false;
         cp.anisotropy = 0;
 
-        half4 coatmap = Sample(_ClearCoatMask, sampler_MainTex, uv_MainTex, dx, dy);
+        half4 coatmap = Sample(_ClearCoatMask, LILPBR_MAIN_SAMPLER, uv_MainTex, dx, dy);
         half coat = coatmap[_ClearCoatChannel] * _ClearCoat;
         cp.smoothness = min(coatmap[_ClearCoatSmoothnessChannel] * _ClearCoatSmoothness, smoothnessGSAA);
         cp.perceptualRoughness = 1.2 - cp.smoothness * 1.2;
         cp.roughness = cp.perceptualRoughness * cp.perceptualRoughness;
 
         #ifdef _CLEARCOAT_NORMALMAP
-        half4 coatbumpmap = Sample(_ClearCoatBumpMap, sampler_MainTex, uv_MainTex, dx, dy);
+        half4 coatbumpmap = Sample(_ClearCoatBumpMap, LILPBR_MAIN_SAMPLER, uv_MainTex, dx, dy);
         half3 coatTangentNormal = UnpackScaleNormal(coatbumpmap, _ClearCoatBumpScale);
         #else
         half4 coatbumpmap = half4(0.5,0.5,1,0.5);
@@ -827,7 +837,7 @@ half4 Shading(v2f i, float4 posSV, float3 posWorld, half3 V, half3 tangent, half
         half4 wbumpmap = 0;
 
         float wheight = SampleHeight(uv_MainTex, dx, dy);
-        wheight = wheight + 1 - Sample(_WetnessMask, sampler_MainTex, uv_MainTex, dx, dy)[_WetnessChannel];
+        wheight = wheight + 1 - Sample(_WetnessMask, LILPBR_MAIN_SAMPLER, uv_MainTex, dx, dy)[_WetnessChannel];
         float wblend = saturate(_WetnessDepth*normal.y - wheight);
         float wdepth = (1-wblend)*(1-wblend);
         float2 waveUV = (posWorld.xz - p.V.xz/p.V.y*(1-_WetnessDepth)/uvDensity*0.05) * _WetnessBumpMap_ST.xy;
@@ -836,7 +846,7 @@ half4 Shading(v2f i, float4 posSV, float3 posWorld, half3 V, half3 tangent, half
         for(int w = 0; w < 3; w++)
         {
             float2 scroll = float2(sin(w/3.0*6.28), cos(w/3.0*6.28));
-            wbumpmap += _WetnessBumpMap.Sample(sampler_MainTex, waveUV + _Time.x * _WetnessBumpScroll * scroll) / 3.0;
+            wbumpmap += _WetnessBumpMap.Sample(LILPBR_MAIN_SAMPLER, waveUV + _Time.x * _WetnessBumpScroll * scroll) / 3.0;
         }
         half3 wtangentNormal = UnpackScaleNormal(wbumpmap, _WetnessBumpScale);
         wp.N = mul(wtangentNormal, matrixTBN);
@@ -899,7 +909,7 @@ half4 Shading(v2f i, float4 posSV, float3 posWorld, half3 V, half3 tangent, half
     #endif
 
     #ifdef _SUBSURFACE
-    half subsurfaceMask = Sample(_SubsurfaceMap, sampler_MainTex, uv_MainTex, dx, dy)[_SubsurfaceChannel];
+    half subsurfaceMask = Sample(_SubsurfaceMap, LILPBR_MAIN_SAMPLER, uv_MainTex, dx, dy)[_SubsurfaceChannel];
     if(_SubsurfaceInvert != 0) subsurfaceMask = 1.0 - subsurfaceMask;
     half subsurface = pow(saturate(subsurfaceMask), _SubsurfacePower) * _SubsurfaceScattering;
     half subsurfaceRim = lerp(1, abs(dot(p.N, p.V)), _SubsurfaceRim);
@@ -985,7 +995,7 @@ void ShadingAlpha(v2f i, float4 posSV, float3 posWorld, half3 V, half3 tangent, 
     FixAtras(uv_MainTex, uv[0]);
     #endif
 
-    half4 mainTex = _MainTex.Sample(sampler_MainTex, uv_MainTex) * _Color;
+    half4 mainTex = _MainTex.Sample(LILPBR_MAIN_SAMPLER, uv_MainTex) * _Color;
     half alpha = mainTex.a;
 
     #ifdef _TRANSLUCENT
@@ -1013,17 +1023,17 @@ ShadingParams ShadingMeta(v2f i, float4 posSV, float2 uv[4])
 
     // Albedo
     float2 uv_MainTex = uv[0] * _MainTex_ST.xy + _MainTex_ST.zw;
-    half4 mainTex = _MainTex.Sample(sampler_MainTex, uv_MainTex) * _Color;
+    half4 mainTex = _MainTex.Sample(LILPBR_MAIN_SAMPLER, uv_MainTex) * _Color;
     p.albedo = mainTex.rgb;
     p.alpha = mainTex.a;
 
     // PBR Map
     #ifdef _TEXTUREMODE_SEPARATE
-    p.metallic = _MetallicGlossMap.Sample(sampler_MainTex, uv_MainTex).r;
-    p.occlusion = _OcclusionMap.Sample(sampler_MainTex, uv_MainTex).r;
-    p.smoothness = _SmoothnessMap.Sample(sampler_MainTex, uv_MainTex).r;
+    p.metallic = _MetallicGlossMap.Sample(LILPBR_MAIN_SAMPLER, uv_MainTex).r;
+    p.occlusion = _OcclusionMap.Sample(LILPBR_MAIN_SAMPLER, uv_MainTex).r;
+    p.smoothness = _SmoothnessMap.Sample(LILPBR_MAIN_SAMPLER, uv_MainTex).r;
     #else
-    half4 pbrmap = _PBRMap.Sample(sampler_MainTex, uv_MainTex);
+    half4 pbrmap = _PBRMap.Sample(LILPBR_MAIN_SAMPLER, uv_MainTex);
     p.metallic = pbrmap[_MetallicChannel];
     p.occlusion = pbrmap[_OcclusionChannel];
     p.smoothness = pbrmap[_SmoothnessChannel];
@@ -1043,7 +1053,7 @@ ShadingParams ShadingMeta(v2f i, float4 posSV, float2 uv[4])
 
     // Emission
     #ifdef _EMISSION
-    p.emission = _EmissionMap.Sample(sampler_MainTex, uv_MainTex).rgb * _EmissionColor.rgb;
+    p.emission = _EmissionMap.Sample(LILPBR_MAIN_SAMPLER, uv_MainTex).rgb * _EmissionColor.rgb;
     #endif
     return p;
 }

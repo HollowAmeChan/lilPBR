@@ -209,14 +209,17 @@ float3 GetOpaquePosW(float2 uvScreen, float3 V)
 }
 
 #define LILPBR_PROPERTY(t,n) t n;
-#define LILPBR_TEXTURE(t,n) t n;
-#define LILPBR_SAMPLER(t,n) SAMPLER(n);
+#define LILPBR_TEXTURE(t,n) TEXTURE2D(n);
+#define LILPBR_SAMPLER(t,n)
 
 CBUFFER_START(UnityPerMaterial)
 LILPBR_PROPERTIES
 CBUFFER_END
 LILPBR_TEXTURES
 LILPBR_SAMPLERS
+SAMPLER(sampler_MainTex);
+SAMPLER(sampler_PBRMap);
+SAMPLER(sampler_ParallaxMap);
 TEXTURE2D(_HTraceBufferAO);
 
 // Lightings

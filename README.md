@@ -6,9 +6,9 @@
 
 `lilPBR` 与其他仓库的关系：
 
-- `lilToon-URP-Extensions` 提供平面反射、HoAOV 等共享 RendererFeature。
+- `lilToon-URP-Extensions` 提供 MetadataBuffer、GeometryBuffer、平面反射等共享 RendererFeature。
 - `lilToon-UnityGLTF-Extensions` 保存 glTF 材质契约，后续可映射成 lilPBR 材质。
-- `lilToon` 与本包共享 HoAOV、AO、SSS、OIT 和材质契约语义。
+- `lilToon` 与本包共享 MetadataBuffer、GeometryBuffer、AO、SSS、OIT 和材质契约语义。
 - `HoUrp17.3.0` 是 URP pass 的目标运行时。
 
 ## 主要功能
@@ -19,7 +19,7 @@
 - 默认、平面和三平面 UV 模式。
 - Normal、Parallax/Height 和顶点位移。
 - Emission、Subpixel Emission、Anisotropy、Clear Coat、Cloth、Fake Translucent、SSS、Detail、Wetness/Rain、Wind、Distance Fade。
-- URP `ForwardLit`、`GBuffer`、`ShadowCaster`、`DepthOnly`、`DepthNormals`、`Meta`、`MotionVectors`、`XRMotionVectors`、`HoAOV`、`HoCharacterCapture` pass。
+- URP `ForwardLit`、`GBuffer`、`ShadowCaster`、`DepthOnly`、`DepthNormals`、`Meta`、`MotionVectors`、`XRMotionVectors`、`HoMetadataBuffer`、`HoMetadataBufferSurfaceColor`、`HoGeometryBuffer`、`HoCharacterCapture` pass。
 - 不支持 Built-in Render Pipeline、HDRP 或 LWRP。
 - `Scripts/VolumetricFog.cs` 提供全局体积雾 shader 参数。
 
@@ -41,9 +41,9 @@ D:/Unity_Fork/lilToon-URP-Extensions/Runtime/PlanarReflection/HoPlanarReflection
 
 把 `HoPlanarReflectionSurface` 加到镜面、抛光地面或水面 mesh 上，启用 URP Renderer Asset 里的 MetadataBuffer、GeometryBuffer 和 PlanarReflection composite，再在 lilPBR 材质里开启平面反射即可。
 
-## HoAOV 与角色捕获
+## MetadataBuffer 与角色捕获
 
-`lilPBR` 包含 HoAOV 属性和 pass，因此场景/PBR 材质也能写入与 lilToon 一致的语义缓冲。HoPost、Shoost、HTrace 和角色特化效果会消费这些缓冲。
+`lilPBR` 包含 MetadataBuffer、SurfaceColor 和 GeometryBuffer pass，因此场景/PBR 材质也能写入与 lilToon 一致的语义缓冲。SSS、ScreenProcess、平面反射和角色特化效果会消费这些缓冲。
 
 ## 安装
 

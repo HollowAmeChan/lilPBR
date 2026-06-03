@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.ExceptionServices;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -267,14 +269,23 @@ namespace jp.lilxyzw.lilpbr
                     var count = propertyCache.Count;
                     if (prop.propertyType() == ShaderPropertyType.Texture)
                     {
-                        if (!prop.propertyFlags().HasFlag(ShaderPropertyFlags.NoScaleOffset)) EditorGUI.indentLevel++;
+                        bool hasScaleOffset = !prop.propertyFlags().HasFlag(ShaderPropertyFlags.NoScaleOffset);
+                        if (hasScaleOffset) EditorGUI.indentLevel++;
                         Rect rect;
                         GUIContent label = L10n.G(prop.displayName);
-                        if (count == 0) rect = materialEditor.TexturePropertySingleLine(label, prop);
+                        if (count == 0 && MaterialGradientEditorCompatibility.IsGradientTexture(prop))
+                        {
+                            rect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
+                            if (!MaterialGradientEditorCompatibility.TryDrawGradientTexture(rect, prop, label, materialEditor))
+                            {
+                                rect = materialEditor.TexturePropertySingleLine(label, prop);
+                            }
+                        }
+                        else if (count == 0) rect = materialEditor.TexturePropertySingleLine(label, prop);
                         else if (count == 1) rect = materialEditor.TexturePropertySingleLine(label, prop, propertyCache[0]);
                         else rect = materialEditor.TexturePropertySingleLine(label, prop, propertyCache[0], propertyCache[1]);
 
-                        if (!prop.propertyFlags().HasFlag(ShaderPropertyFlags.NoScaleOffset))
+                        if (hasScaleOffset)
                         {
                             bool isOpened = openedTextures.Contains(prop.name);
                             EditorGUI.BeginChangeCheck();
@@ -545,6 +556,108 @@ namespace jp.lilxyzw.lilpbr
             {
                 return float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var result) ? result : 0f;
             }
+        }
+    }
+
+    internal static class MaterialGradientEditorCompatibility
+    {
+        private const string ApiTypeName = "lilToon.URP.Extensions.Editor.MaterialGradient.HoMaterialGradientEditorApi";
+        private const string ApiAssemblyName = "jp.lilxyzw.liltoon.urp.extensions.Editor";
+        private static MethodInfo isGradientTextureMethod;
+        private static MethodInfo tryDrawGradientTextureMethod;
+        private static bool initialized;
+        private static bool disabled;
+        private static bool loggedFailure;
+
+        public static bool IsGradientTexture(MaterialProperty property)
+        {
+            if (!EnsureInitialized()) return false;
+
+            try
+            {
+                return (bool)isGradientTextureMethod.Invoke(null, new object[] { property });
+            }
+            catch (TargetInvocationException e) when (e.InnerException is ExitGUIException)
+            {
+                ExceptionDispatchInfo.Capture(e.InnerException).Throw();
+                throw;
+            }
+            catch (TargetInvocationException e)
+            {
+                DisableAfterFailure(e.InnerException ?? e);
+                return false;
+            }
+            catch (Exception e)
+            {
+                DisableAfterFailure(e);
+                return false;
+            }
+        }
+
+        public static bool TryDrawGradientTexture(Rect rect, MaterialProperty property, GUIContent label, MaterialEditor editor)
+        {
+            if (!EnsureInitialized()) return false;
+
+            try
+            {
+                return (bool)tryDrawGradientTextureMethod.Invoke(null, new object[] { rect, property, label, editor });
+            }
+            catch (TargetInvocationException e) when (e.InnerException is ExitGUIException)
+            {
+                ExceptionDispatchInfo.Capture(e.InnerException).Throw();
+                throw;
+            }
+            catch (TargetInvocationException e)
+            {
+                DisableAfterFailure(e.InnerException ?? e);
+                return false;
+            }
+            catch (Exception e)
+            {
+                DisableAfterFailure(e);
+                return false;
+            }
+        }
+
+        private static bool EnsureInitialized()
+        {
+            if (disabled) return false;
+            if (initialized) return isGradientTextureMethod != null && tryDrawGradientTextureMethod != null;
+
+            initialized = true;
+            Type apiType = Type.GetType(ApiTypeName + ", " + ApiAssemblyName);
+            if (apiType == null)
+            {
+                apiType = AppDomain.CurrentDomain.GetAssemblies()
+                    .Select(assembly => assembly.GetType(ApiTypeName))
+                    .FirstOrDefault(type => type != null);
+            }
+
+            if (apiType == null) return false;
+
+            isGradientTextureMethod = apiType.GetMethod(
+                "IsGradientTexture",
+                BindingFlags.Public | BindingFlags.Static,
+                null,
+                new[] { typeof(MaterialProperty) },
+                null);
+
+            tryDrawGradientTextureMethod = apiType.GetMethod(
+                "TryDrawGradientTexture",
+                BindingFlags.Public | BindingFlags.Static,
+                null,
+                new[] { typeof(Rect), typeof(MaterialProperty), typeof(GUIContent), typeof(MaterialEditor) },
+                null);
+
+            return isGradientTextureMethod != null && tryDrawGradientTextureMethod != null;
+        }
+
+        private static void DisableAfterFailure(Exception exception)
+        {
+            disabled = true;
+            if (loggedFailure) return;
+            loggedFailure = true;
+            Debug.LogException(exception);
         }
     }
 

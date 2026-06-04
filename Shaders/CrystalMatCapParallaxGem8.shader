@@ -44,19 +44,6 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         [LILVector3] _CrystalVolumeOffset ("体积偏移 XYZ", Vector) = (0,0,0,0)
         [LILFoldoutEnd]
 
-        [LILFoldout(Lighting)]
-        _CrystalReceiveShadowStrength ("接收阴影强度", Range(0.0, 1.0)) = 1.0
-        _CrystalShadowMinLight ("阴影最小亮度", Range(0.0, 1.0)) = 0.0
-        _CrystalShadowTint ("阴影染色", Color) = (0.16,0.22,0.36,1)
-        _CrystalIndirectStrength ("间接光强度", Range(0.0, 4.0)) = 1.0
-        [LILFoldoutEnd]
-
-        [LILFoldout(Fake Gem Highlight)]
-        _CrystalGemHighlightSharpness ("高光锐度", Range(0.0, 1.0)) = 1.0
-        _CrystalGemHighlightStrength ("高光强度", Range(0.0, 8.0)) = 1.0
-        [HDR] _CrystalGemHighlightColor ("高光颜色", Color) = (1,1,1,1)
-        [LILFoldoutEnd]
-
         [LILFoldout(Fake Gem MatCap)]
         _CrystalGemMatCap ("MatCap", 2D) = "black" {}
         [HDR] _CrystalGemMatCapColor ("MatCap 颜色", Color) = (1,1,1,1)
@@ -96,13 +83,23 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         [LILFoldoutEnd]
 
         [LILFoldout(Fake Gem Composite)]
-        _CrystalGemBaseLightStrength ("基础光照权重", Range(0.0, 2.0)) = 1.0
+        _CrystalGemBaseLightStrength ("基础层权重", Range(0.0, 2.0)) = 1.0
         _CrystalGemSurfaceLayerStrength ("表面层权重", Range(0.0, 2.0)) = 1.0
         _CrystalGemInternalLayerStrength ("内部层权重", Range(0.0, 2.0)) = 1.0
         _CrystalGemRampEmissionStrength ("Ramp 发光权重", Range(0.0, 2.0)) = 1.0
         _CrystalGemComponentMax ("单组分通道上限", Range(0.0, 16.0)) = 8.0
         _CrystalGemCompositeExposure ("合成整体强度", Range(0.0, 2.0)) = 1.0
-        _CrystalGemCompositeMax ("最终通道上限", Range(0.0, 32.0)) = 16.0
+        _CrystalGemCompositeMax ("合成通道上限", Range(0.0, 32.0)) = 16.0
+        [LILFoldoutEnd]
+
+        [LILFoldout(Lighting)]
+        _CrystalReceiveShadowStrength ("接收阴影强度", Range(0.0, 1.0)) = 1.0
+        _CrystalShadowMinLight ("阴影最小亮度", Range(0.0, 1.0)) = 0.0
+        _CrystalShadowTint ("阴影染色", Color) = (0.16,0.22,0.36,1)
+        _CrystalIndirectStrength ("间接光强度", Range(0.0, 4.0)) = 1.0
+        _CrystalGemHighlightSharpness ("高光锐度", Range(0.0, 1.0)) = 1.0
+        _CrystalGemHighlightStrength ("高光强度", Range(0.0, 8.0)) = 1.0
+        [HDR] _CrystalGemHighlightColor ("高光颜色", Color) = (1,1,1,1)
         [LILFoldoutEnd]
 
         [LILFoldout(Advanced)]

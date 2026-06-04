@@ -45,15 +45,6 @@ Shader "lilPBR/Crystal/Raymarch 8"
         [LILVector3] _CrystalVolumeOffset ("体积偏移 XYZ", Vector) = (0,0,0,0)
         [LILFoldoutEnd]
 
-        [LILFoldout(Lighting)]
-        _CrystalReceiveShadowStrength ("接收阴影强度", Range(0.0, 1.0)) = 1.0
-        _CrystalShadowMinLight ("阴影最小亮度", Range(0.0, 1.0)) = 0.0
-        _CrystalShadowTint ("阴影染色", Color) = (0.16,0.22,0.36,1)
-        _CrystalIndirectStrength ("间接光强度", Range(0.0, 4.0)) = 1.0
-        _CrystalSpecularStrength ("高光强度", Range(0.0, 8.0)) = 1.0
-        [HDR] _CrystalSpecularColor ("高光颜色", Color) = (1,1,1,1)
-        [LILFoldoutEnd]
-
         [LILFoldout(Ramp Emission)]
         [NoScaleOffset] _CrystalRamp ("渐变贴图", 2D) = "white" {}
         [HDR] _CrystalRampTint ("渐变染色", Color) = (1,1,1,1)
@@ -64,6 +55,15 @@ Shader "lilPBR/Crystal/Raymarch 8"
         _CrystalRampMaskParallax ("遮罩视差", Range(0.0, 16.0)) = 4.0
         _CrystalRampFresnelStrength ("菲涅尔权重", Range(0.0, 1.0)) = 0.0
         _CrystalFresnelPower ("菲涅尔范围", Range(0.05, 8.0)) = 1.0
+        [LILFoldoutEnd]
+
+        [LILFoldout(Lighting)]
+        _CrystalReceiveShadowStrength ("接收阴影强度", Range(0.0, 1.0)) = 1.0
+        _CrystalShadowMinLight ("阴影最小亮度", Range(0.0, 1.0)) = 0.0
+        _CrystalShadowTint ("阴影染色", Color) = (0.16,0.22,0.36,1)
+        _CrystalIndirectStrength ("间接光强度", Range(0.0, 4.0)) = 1.0
+        _CrystalSpecularStrength ("高光强度", Range(0.0, 8.0)) = 1.0
+        [HDR] _CrystalSpecularColor ("高光颜色", Color) = (1,1,1,1)
         [LILFoldoutEnd]
 
         [LILFoldout(Advanced)]

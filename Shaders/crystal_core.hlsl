@@ -288,7 +288,8 @@ half3 CrystalShade(CrystalVaryings input, CrystalSurface surface)
     half shadowLight = lerp(saturate(_CrystalShadowMinLight), 1.0h, shadow);
     half nDotL = saturate(dot(surface.normalWS, mainLight.direction));
     half directShape = lerp(0.25h, 1.0h, nDotL);
-    half3 shadowedColor = lerp(surface.color * _CrystalShadowTint.rgb, surface.color, shadowLight);
+    half3 materialColor = max(surface.color + surface.emission, half3(0.0h, 0.0h, 0.0h));
+    half3 shadowedColor = lerp(materialColor * _CrystalShadowTint.rgb, materialColor, shadowLight);
     half3 color = shadowedColor * SampleSH(surface.normalWS) * _CrystalIndirectStrength * surface.occlusion;
     color += shadowedColor * mainLight.color * directShape * shadowLight;
 
@@ -314,7 +315,7 @@ half3 CrystalShade(CrystalVaryings input, CrystalSurface surface)
     }
     #endif
 
-    return color + surface.emission;
+    return color;
 }
 
 half4 CrystalFragForward(CrystalVaryings input, bool isFront : SV_IsFrontFace) : SV_Target

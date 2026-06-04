@@ -85,10 +85,6 @@ Shader "lilPBR/Crystal/Raymarch 8"
         [HDR] _CrystalSpecularColor ("高光颜色", Color) = (1,1,1,1)
         [LILFoldoutEnd]
 
-        [LILFoldout(Debug)]
-        [IntRange] _CrystalDebugMode ("调试模式", Range(0, 8)) = 0
-        [LILFoldoutEnd]
-
         [LILFoldout(Advanced)]
         [Enum(Off, 0, Front, 1, Back, 2)] _Cull ("剔除模式", Int) = 2
         [ToggleUI][LILFoldoutEnd] _ZWrite ("写入深度", Int) = 1
@@ -166,7 +162,6 @@ Shader "lilPBR/Crystal/Raymarch 8"
         float _CrystalIndirectStrength;
         float _CrystalSpecularStrength;
         float4 _CrystalSpecularColor;
-        float _CrystalDebugMode;
     CBUFFER_END
 
     #include "crystal_raymarch.hlsl"

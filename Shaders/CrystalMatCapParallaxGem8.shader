@@ -83,7 +83,12 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
 
         [LILFoldout(Fake Gem Composite)]
         _CrystalGemBaseLightStrength ("基础光照权重", Range(0.0, 2.0)) = 1.0
+        _CrystalGemSurfaceLayerStrength ("表面层权重", Range(0.0, 2.0)) = 1.0
+        _CrystalGemInternalLayerStrength ("内部层权重", Range(0.0, 2.0)) = 1.0
         _CrystalGemRampEmissionStrength ("Ramp 发光权重", Range(0.0, 2.0)) = 1.0
+        _CrystalGemComponentMax ("单组分通道上限", Range(0.0, 16.0)) = 8.0
+        _CrystalGemCompositeExposure ("合成整体强度", Range(0.0, 2.0)) = 1.0
+        _CrystalGemCompositeMax ("最终通道上限", Range(0.0, 32.0)) = 16.0
         [LILFoldoutEnd]
 
         [LILFoldout(Fake Gem Highlight)]
@@ -116,10 +121,6 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         [HDR] _CrystalGemParallaxTint ("内部主颜色", Color) = (1,0.72,0.18,1)
         [HDR] _CrystalGemParallaxSecondaryColor ("内部变化颜色", Color) = (1,0.16,0.02,1)
         _CrystalGemParallaxColorVariation ("颜色变化量", Range(0.0, 1.0)) = 0.65
-        [LILFoldoutEnd]
-
-        [LILFoldout(Debug)]
-        [IntRange] _CrystalDebugMode ("调试模式", Range(0, 8)) = 0
         [LILFoldoutEnd]
 
         [LILFoldout(Advanced)]
@@ -202,7 +203,12 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         float4 _CrystalShadowTint;
         float _CrystalIndirectStrength;
         float _CrystalGemBaseLightStrength;
+        float _CrystalGemSurfaceLayerStrength;
+        float _CrystalGemInternalLayerStrength;
         float _CrystalGemRampEmissionStrength;
+        float _CrystalGemComponentMax;
+        float _CrystalGemCompositeExposure;
+        float _CrystalGemCompositeMax;
         float _CrystalGemHighlightSharpness;
         float _CrystalGemHighlightStrength;
         float4 _CrystalGemHighlightColor;
@@ -220,7 +226,6 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         float4 _CrystalGemParallaxTint;
         float4 _CrystalGemParallaxSecondaryColor;
         float _CrystalGemParallaxColorVariation;
-        float _CrystalDebugMode;
     CBUFFER_END
 
     #include "crystal_raymarch.hlsl"

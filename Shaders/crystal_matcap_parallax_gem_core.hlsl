@@ -1,13 +1,44 @@
 #ifndef INCLUDED_LILPBR_CRYSTAL_MATCAP_PARALLAX_GEM_CORE
 #define INCLUDED_LILPBR_CRYSTAL_MATCAP_PARALLAX_GEM_CORE
 
+half CrystalGemClampRange(half value, half minValue, half maxValue)
+{
+    return min(max(value, minValue), maxValue);
+}
+
+half3 CrystalGemClampColor(half3 color, half maxValue)
+{
+    half limit = max(maxValue, 0.0h);
+    return min(max(color, half3(0.0h, 0.0h, 0.0h)), half3(limit, limit, limit));
+}
+
+half3 CrystalGemClampComponent(half3 color)
+{
+    return CrystalGemClampColor(color, _CrystalGemComponentMax);
+}
+
+half3 CrystalGemClampComposite(half3 color)
+{
+    return CrystalGemClampColor(color, _CrystalGemCompositeMax);
+}
+
+half CrystalGemParallaxScale()
+{
+    return CrystalGemClampRange(_CrystalGemParallaxScale, 0.5h, 6.0h);
+}
+
+half CrystalGemParallaxDepth()
+{
+    return CrystalGemClampRange(_CrystalGemParallaxDepth, 0.0h, 16.0h);
+}
+
 half3 CrystalGemMatCap(CrystalSurface surface)
 {
     float2 matcapUV = mul((float3x3)UNITY_MATRIX_V, normalize(surface.normalWS)).xy * 0.5 + 0.5;
     matcapUV = matcapUV * _CrystalGemMatCap_ST.xy + _CrystalGemMatCap_ST.zw;
     half3 matcap = SAMPLE_TEXTURE2D(_CrystalGemMatCap, sampler_CrystalGemMatCap, matcapUV).rgb * _CrystalGemMatCapColor.rgb;
     half edgeWeight = lerp(1.0h, surface.fresnel, saturate(_CrystalGemMatCapFresnel));
-    return matcap * _CrystalGemMatCapStrength * edgeWeight;
+    return matcap * CrystalGemClampRange(_CrystalGemMatCapStrength, 0.0h, 4.0h) * edgeWeight;
 }
 
 float2 CrystalGemSphereIntersection(float3 rayOrigin, float3 rayDirection, float radius)
@@ -43,19 +74,20 @@ struct CrystalGemInternalRay
 
 half CrystalGemCoverage()
 {
-    return saturate(0.35h + _CrystalGemParallaxDepth * 0.0625h);
+    return saturate(0.35h + CrystalGemParallaxDepth() * 0.0625h);
 }
 
 half CrystalGemShapeContrast()
 {
-    half slider = saturate((max(_CrystalGemParallaxContrast, 0.25h) - 0.25h) * 0.129032h);
+    half contrast = CrystalGemClampRange(_CrystalGemParallaxContrast, 0.25h, 8.0h);
+    half slider = saturate((contrast - 0.25h) * 0.129032h);
     return lerp(0.55h, 1.85h, slider);
 }
 
 bool CrystalGemBuildInternalRay(CrystalVaryings input, CrystalSurface surface, out CrystalGemInternalRay ray)
 {
     ray = (CrystalGemInternalRay)0;
-    if (_CrystalGemParallaxStrength <= 0.0 || _CrystalGemParallaxDepth <= 0.0)
+    if (_CrystalGemParallaxStrength <= 0.0 || CrystalGemParallaxDepth() <= 0.0h)
     {
         return false;
     }
@@ -86,7 +118,7 @@ bool CrystalGemBuildInternalRay(CrystalVaryings input, CrystalSurface surface, o
 
 float CrystalGemFractalDensity(float3 position)
 {
-    float3 p = position * max(_CrystalGemParallaxScale, 0.001);
+    float3 p = position * CrystalGemParallaxScale();
     float3 origin = p;
     float density = 0.0;
 
@@ -128,7 +160,7 @@ half3 CrystalGemPaletteBase(half density, half phase)
 {
     half variation = saturate(_CrystalGemParallaxColorVariation);
     half paletteMask = saturate(phase * 0.55h + density * 0.45h);
-    return lerp(_CrystalGemParallaxTint.rgb, _CrystalGemParallaxSecondaryColor.rgb, paletteMask * variation);
+    return max(lerp(_CrystalGemParallaxTint.rgb, _CrystalGemParallaxSecondaryColor.rgb, paletteMask * variation), half3(0.0h, 0.0h, 0.0h));
 }
 
 half3 CrystalGemPaletteColor(half density, half phase)
@@ -169,7 +201,7 @@ half3 CrystalGemInternalVolume(CrystalVaryings input, CrystalSurface surface)
 
     half volumeMask = saturate(dot(accumulated, half3(0.2126h, 0.7152h, 0.0722h)));
     half fresnelWeight = saturate(lerp(1.0h, surface.fresnel + volumeMask, saturate(_CrystalGemParallaxFresnel)));
-    return accumulated * _CrystalGemParallaxStrength * fresnelWeight;
+    return accumulated * CrystalGemClampRange(_CrystalGemParallaxStrength, 0.0h, 4.0h) * fresnelWeight;
 }
 
 half3 CrystalGemBaseLighting(CrystalVaryings input, CrystalSurface surface)
@@ -179,10 +211,11 @@ half3 CrystalGemBaseLighting(CrystalVaryings input, CrystalSurface surface)
 
     half shadow = lerp(1.0h, mainLight.shadowAttenuation, saturate(_CrystalReceiveShadowStrength));
     half shadowLight = lerp(saturate(_CrystalShadowMinLight), 1.0h, shadow);
+    half indirectStrength = CrystalGemClampRange(_CrystalIndirectStrength, 0.0h, 4.0h);
     half nDotL = saturate(dot(surface.normalWS, mainLight.direction));
     half directShape = lerp(0.25h, 1.0h, nDotL);
     half3 shadowedColor = lerp(surface.color * _CrystalShadowTint.rgb, surface.color, shadowLight);
-    half3 color = shadowedColor * SampleSH(surface.normalWS) * _CrystalIndirectStrength * surface.occlusion;
+    half3 color = shadowedColor * SampleSH(surface.normalWS) * indirectStrength * surface.occlusion;
     color += shadowedColor * mainLight.color * directShape * shadowLight;
 
     #if defined(_ADDITIONAL_LIGHTS)
@@ -197,7 +230,7 @@ half3 CrystalGemBaseLighting(CrystalVaryings input, CrystalSurface surface)
     }
     #endif
 
-    return color * _CrystalGemBaseLightStrength;
+    return color * CrystalGemClampRange(_CrystalGemBaseLightStrength, 0.0h, 2.0h);
 }
 
 half3 CrystalGemHighlight(CrystalVaryings input, CrystalSurface surface)
@@ -218,7 +251,9 @@ half3 CrystalGemHighlight(CrystalVaryings input, CrystalSurface surface)
     half3 halfDir = SafeNormalize(mainLight.direction + surface.viewDirWS);
     half nDotH = saturate(dot(surface.normalWS, halfDir));
     half shadow = lerp(1.0h, mainLight.shadowAttenuation, saturate(_CrystalReceiveShadowStrength));
-    color += pow(nDotH, specPower) * sharpness * shadow * mainLight.color * _CrystalGemHighlightColor.rgb * _CrystalGemHighlightStrength * dielectricSpec;
+    half highlightStrength = CrystalGemClampRange(_CrystalGemHighlightStrength, 0.0h, 8.0h);
+    half3 highlightColor = max(_CrystalGemHighlightColor.rgb, half3(0.0h, 0.0h, 0.0h));
+    color += pow(nDotH, specPower) * sharpness * shadow * mainLight.color * highlightColor * highlightStrength * dielectricSpec;
 
     #if defined(_ADDITIONAL_LIGHTS)
     uint pixelLightCount = GetAdditionalLightsCount();
@@ -228,7 +263,7 @@ half3 CrystalGemHighlight(CrystalVaryings input, CrystalSurface surface)
         half3 lightHalfDir = SafeNormalize(light.direction + surface.viewDirWS);
         half lightNdotH = saturate(dot(surface.normalWS, lightHalfDir));
         half lightShadow = lerp(1.0h, light.shadowAttenuation, saturate(_CrystalReceiveShadowStrength));
-        color += pow(lightNdotH, specPower) * sharpness * light.distanceAttenuation * lightShadow * light.color * _CrystalGemHighlightColor.rgb * _CrystalGemHighlightStrength * dielectricSpec;
+        color += pow(lightNdotH, specPower) * sharpness * light.distanceAttenuation * lightShadow * light.color * highlightColor * highlightStrength * dielectricSpec;
     }
     #endif
 
@@ -237,14 +272,15 @@ half3 CrystalGemHighlight(CrystalVaryings input, CrystalSurface surface)
 
 half3 CrystalGemRampEmission(CrystalSurface surface)
 {
-    return surface.emission * _CrystalGemRampEmissionStrength;
+    return surface.emission * CrystalGemClampRange(_CrystalGemRampEmissionStrength, 0.0h, 2.0h);
 }
 
 half3 CrystalGemReflection(CrystalSurface surface)
 {
-    half fresnel = pow(saturate(surface.fresnel), max(_CrystalGemReflectionFresnel, 0.001h));
+    half fresnelPower = CrystalGemClampRange(_CrystalGemReflectionFresnel, 0.05h, 4.0h);
+    half fresnel = pow(saturate(surface.fresnel), fresnelPower);
     half3 reflectionDirection = reflect(-surface.viewDirWS, surface.normalWS);
-    return SampleSH(reflectionDirection) * fresnel * _CrystalGemReflectionStrength;
+    return SampleSH(reflectionDirection) * fresnel * CrystalGemClampRange(_CrystalGemReflectionStrength, 0.0h, 1.0h);
 }
 
 struct CrystalGemComponents
@@ -266,17 +302,28 @@ CrystalGemComponents CrystalGemResolveComponents(CrystalVaryings input, CrystalS
     components.matCap = CrystalGemMatCap(surface);
     components.reflection = CrystalGemReflection(surface);
     components.internalVolume = CrystalGemInternalVolume(input, surface);
+
+    half surfaceLayerStrength = CrystalGemClampRange(_CrystalGemSurfaceLayerStrength, 0.0h, 2.0h);
+    half internalLayerStrength = CrystalGemClampRange(_CrystalGemInternalLayerStrength, 0.0h, 2.0h);
+    components.baseLighting = CrystalGemClampComponent(components.baseLighting);
+    components.highlight = CrystalGemClampComponent(components.highlight * surfaceLayerStrength);
+    components.matCap = CrystalGemClampComponent(components.matCap * surfaceLayerStrength);
+    components.reflection = CrystalGemClampComponent(components.reflection * surfaceLayerStrength);
+    components.rampEmission = CrystalGemClampComponent(components.rampEmission * internalLayerStrength);
+    components.internalVolume = CrystalGemClampComponent(components.internalVolume * internalLayerStrength);
     return components;
 }
 
 half3 CrystalGemCompose(CrystalGemComponents components)
 {
-    return components.baseLighting
+    half3 color = components.baseLighting
         + components.highlight
         + components.rampEmission
         + components.matCap
         + components.reflection
         + components.internalVolume;
+    color *= CrystalGemClampRange(_CrystalGemCompositeExposure, 0.0h, 2.0h);
+    return CrystalGemClampComposite(color);
 }
 
 half3 CrystalShadeMatCapParallaxGem(CrystalVaryings input, CrystalSurface surface)
@@ -294,12 +341,6 @@ half4 CrystalFragMatCapParallaxGem(CrystalVaryings input, bool isFront : SV_IsFr
     {
         surface.normalWS = -surface.normalWS;
         surface.fresnel = CrystalFresnel(surface.normalWS, surface.viewDirWS, _CrystalFresnelPower);
-    }
-
-    half3 debugColor = CrystalDebugColor(surface);
-    if (debugColor.x >= 0.0h)
-    {
-        return half4(debugColor, 1.0h);
     }
 
     return half4(CrystalShadeMatCapParallaxGem(input, surface), surface.alpha);

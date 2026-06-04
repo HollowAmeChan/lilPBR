@@ -47,6 +47,12 @@ CrystalRaymarchOutput CrystalRaymarch8(CrystalRaymarchInput input)
     float surfaceNoise = max(input.refractionSurfaceNoise, 0.001);
     float eta = saturate(1.0 - (surfaceNoise / refraction));
     float3 ray = refract(normalize(input.viewDirection), normalize(input.normal), eta);
+    float stepLength = min(max(input.stepLength, 0.0), 4.0);
+    float volumeNoiseScale = min(max(input.volumeNoiseScale, 0.001), 4.0);
+    float volumeNoiseExp = min(max(input.volumeNoiseExp, 0.05), 4.0);
+    float volumeNoiseMultiply = min(max(input.volumeNoiseMultiply, 0.0), 16.0);
+    float secondaryExp = min(max(input.secondaryExp, 0.05), 4.0);
+    float secondaryMultiply = min(max(input.secondaryMultiply, 0.0), 8.0);
 
     float stepDistance = 0.0;
     float mainMask = 0.0;
@@ -56,13 +62,13 @@ CrystalRaymarchOutput CrystalRaymarch8(CrystalRaymarchInput input)
     for (int i = 0; i < 8; i++)
     {
         float3 samplePosition = input.position + ray * stepDistance;
-        float2 volumeNoise = SampleCrystalVolumeTriplanar(samplePosition, input.volumeNoiseScale);
+        float2 volumeNoise = SampleCrystalVolumeTriplanar(samplePosition, volumeNoiseScale);
         half linearMask = CrystalLinearMask(samplePosition, input);
 
-        mainMask += pow(saturate(pow(saturate(volumeNoise.r), input.volumeNoiseExp) * input.volumeNoiseMultiply * 1.45), 1.25) * saturate(1.0 - (i / 20.0)) * linearMask;
-        secondaryMask += pow(saturate(volumeNoise.g), input.secondaryExp * 0.95) * input.secondaryMultiply * 2.0 * linearMask;
+        mainMask += pow(saturate(pow(saturate(volumeNoise.r), volumeNoiseExp) * volumeNoiseMultiply * 1.45), 1.25) * saturate(1.0 - (i / 20.0)) * linearMask;
+        secondaryMask += pow(saturate(volumeNoise.g), secondaryExp * 0.95) * secondaryMultiply * 2.0 * linearMask;
 
-        stepDistance += input.stepLength * 0.125;
+        stepDistance += stepLength * 0.125;
     }
 
     CrystalRaymarchOutput output;

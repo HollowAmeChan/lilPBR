@@ -323,19 +323,6 @@ half3 CrystalShade(CrystalVaryings input, CrystalSurface surface)
     return color + surface.emission;
 }
 
-half3 CrystalDebugColor(CrystalSurface surface)
-{
-    if (_CrystalDebugMode < 0.5) return half3(-1.0h, -1.0h, -1.0h);
-    if (_CrystalDebugMode < 1.5) return half3(surface.volumeMain, surface.volumeMain, surface.volumeMain);
-    if (_CrystalDebugMode < 2.5) return half3(surface.volumeSecondary, surface.volumeSecondary, surface.volumeSecondary);
-    if (_CrystalDebugMode < 3.5) return half3(surface.rampCoord, surface.rampCoord, surface.rampCoord);
-    if (_CrystalDebugMode < 4.5) return half3(surface.edges, surface.edges, surface.edges);
-    if (_CrystalDebugMode < 5.5) return half3(surface.thickness, surface.thickness, surface.thickness);
-    if (_CrystalDebugMode < 6.5) return half3(surface.fresnel, surface.fresnel, surface.fresnel);
-    if (_CrystalDebugMode < 7.5) return surface.normalWS * 0.5h + 0.5h;
-    return surface.emission;
-}
-
 half4 CrystalFragForward(CrystalVaryings input, bool isFront : SV_IsFrontFace) : SV_Target
 {
     UNITY_SETUP_INSTANCE_ID(input);
@@ -345,12 +332,6 @@ half4 CrystalFragForward(CrystalVaryings input, bool isFront : SV_IsFrontFace) :
     if (!isFront)
     {
         surface.normalWS = -surface.normalWS;
-    }
-
-    half3 debugColor = CrystalDebugColor(surface);
-    if (debugColor.x >= 0.0h)
-    {
-        return half4(debugColor, 1.0h);
     }
 
     return half4(CrystalShade(input, surface), surface.alpha);

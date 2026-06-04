@@ -7,7 +7,6 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         _MainTex ("主贴图", 2D) = "white" {}
         _Cutoff ("透明裁剪阈值", Range(0.0, 1.0)) = 0.5
         _CrystalMask ("表面遮罩 (R 边缘, G 厚度)", 2D) = "white" {}
-        _CrystalOcclusion ("环境遮蔽", Range(0.0, 1.0)) = 1.0
         _CrystalNormalMap ("法线贴图", 2D) = "bump" {}
         _CrystalNormalScale ("法线缩放", Range(0.0, 4.0)) = 1.0
         _CrystalNormalStrength ("法线强度", Range(0.0, 2.0)) = 1.0
@@ -68,21 +67,19 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         _CrystalFresnelPower ("菲涅尔范围", Range(0.05, 8.0)) = 1.0
         [LILFoldoutEnd]
 
-        [LILFoldout(Fake Gem Internal Shape)]
+        [LILFoldout(Internal Impurities)]
         _CrystalGemParallaxScale ("结构密度", Range(0.5, 6.0)) = 2.25
         _CrystalGemParallaxDepth ("内部覆盖范围", Range(0.0, 16.0)) = 12.0
         _CrystalGemParallaxStrength ("内部亮度", Range(0.0, 4.0)) = 1.25
         _CrystalGemParallaxContrast ("结构锐度", Range(0.25, 8.0)) = 1.15
         _CrystalGemParallaxFresnel ("边缘混合", Range(0.0, 1.0)) = 0.25
-        [LILFoldoutEnd]
-
-        [LILFoldout(Fake Gem Internal Color)]
         [HDR] _CrystalGemParallaxTint ("内部主颜色", Color) = (1,0.72,0.18,1)
         [HDR] _CrystalGemParallaxSecondaryColor ("内部变化颜色", Color) = (1,0.16,0.02,1)
         _CrystalGemParallaxColorVariation ("颜色变化量", Range(0.0, 1.0)) = 0.65
         [LILFoldoutEnd]
 
         [LILFoldout(Shadow)]
+        _CrystalOcclusion ("环境遮蔽", Range(0.0, 1.0)) = 1.0
         _CrystalReceiveShadowStrength ("接收阴影强度", Range(0.0, 1.0)) = 1.0
         _CrystalShadowMinLight ("阴影最小亮度", Range(0.0, 1.0)) = 0.0
         _CrystalShadowTint ("阴影染色", Color) = (0.16,0.22,0.36,1)

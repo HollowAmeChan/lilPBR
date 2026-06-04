@@ -8,7 +8,6 @@ Shader "lilPBR/Crystal/Raymarch 8"
         _Cutoff ("透明裁剪阈值", Range(0.0, 1.0)) = 0.5
         _CrystalMask ("表面遮罩 (R 边缘, G 厚度)", 2D) = "white" {}
         _CrystalSmoothness ("光滑度", Range(0.0, 1.0)) = 1.0
-        _CrystalOcclusion ("环境遮蔽", Range(0.0, 1.0)) = 1.0
         _CrystalNormalMap ("法线贴图", 2D) = "bump" {}
         _CrystalNormalScale ("法线缩放", Range(0.0, 4.0)) = 1.0
         _CrystalNormalStrength ("法线强度", Range(0.0, 2.0)) = 1.0
@@ -58,6 +57,7 @@ Shader "lilPBR/Crystal/Raymarch 8"
         [LILFoldoutEnd]
 
         [LILFoldout(Shadow)]
+        _CrystalOcclusion ("环境遮蔽", Range(0.0, 1.0)) = 1.0
         _CrystalReceiveShadowStrength ("接收阴影强度", Range(0.0, 1.0)) = 1.0
         _CrystalShadowMinLight ("阴影最小亮度", Range(0.0, 1.0)) = 0.0
         _CrystalShadowTint ("阴影染色", Color) = (0.16,0.22,0.36,1)

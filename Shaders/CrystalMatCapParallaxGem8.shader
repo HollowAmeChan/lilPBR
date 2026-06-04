@@ -43,14 +43,14 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         [LILVector3] _CrystalVolumeOffset ("体积偏移 XYZ", Vector) = (0,0,0,0)
         [LILFoldoutEnd]
 
-        [LILFoldout(Fake Gem MatCap)]
+        [LILFoldout(Gem MatCap)]
         _CrystalGemMatCap ("MatCap", 2D) = "black" {}
         [HDR] _CrystalGemMatCapColor ("MatCap 颜色", Color) = (1,1,1,1)
         _CrystalGemMatCapStrength ("MatCap 强度", Range(0.0, 4.0)) = 1.0
         _CrystalGemMatCapFresnel ("MatCap 边缘增强", Range(0.0, 1.0)) = 0.35
         [LILFoldoutEnd]
 
-        [LILFoldout(Fake Gem Reflection)]
+        [LILFoldout(Gem Reflection)]
         _CrystalGemReflectionStrength ("反射强度", Range(0.0, 1.0)) = 0.18
         _CrystalGemReflectionFresnel ("反射边缘", Range(0.05, 4.0)) = 1.0
         [LILFoldoutEnd]

@@ -596,6 +596,12 @@ msgstr "去饱和"
 msgid "Internal Impurities"
 msgstr "内部杂质"
 
+msgid "Gem MatCap"
+msgstr "宝石 MatCap"
+
+msgid "Gem Reflection"
+msgstr "宝石反射"
+
 msgid "Lighting"
 msgstr "光照"
 

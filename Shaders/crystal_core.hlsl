@@ -61,7 +61,7 @@ struct CrystalSurface
 half4 CrystalSampleMain(CrystalVaryings input)
 {
     float2 uv = input.uv * _MainTex_ST.xy + _MainTex_ST.zw;
-    return SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv) * _CrystalBaseColor;
+    return SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv);
 }
 
 void CrystalClipAlpha(half alpha)
@@ -196,7 +196,7 @@ CrystalMaskData CrystalResolveMask(CrystalVaryings input, half3 viewDirWS)
     half4 mask = SAMPLE_TEXTURE2D(_CrystalMask, sampler_CrystalMask, maskUV);
     half edgeRB = lerp(mask.r, mask.b, saturate(_CrystalEdgesStyle));
     half thicknessA = saturate(mask.g);
-    half thicknessB = saturate(1.0h - mask.g);
+    half thicknessB = saturate(1.0h - thicknessA);
     half thicknessStyle = lerp(thicknessA, thicknessB, saturate(_CrystalEdgesStyle));
     half edgeBase = lerp(edgeRB, thicknessStyle, _CrystalEdgesUseThickness != 0 ? 1.0h : 0.0h);
 
@@ -267,7 +267,8 @@ CrystalSurface CrystalResolveSurface(CrystalVaryings input, half4 mainTex)
     half rampMask = CrystalResolveRampMask(volume, masks, surface.fresnel);
     half rampCoord = CrystalResolveRampCoord(rampMask, surface.fresnel);
 
-    half3 baseColor = mainTex.rgb;
+    half4 baseTex = mainTex * _CrystalBaseColor;
+    half3 baseColor = baseTex.rgb;
     half desaturateMask = pow(saturate(surface.fresnel), max(_CrystalDesaturateFresnelExp, 0.001h)) * masks.thicknessForDesaturate;
     half luma = dot(baseColor, half3(0.2126h, 0.7152h, 0.0722h));
     baseColor = lerp(baseColor, half3(luma, luma, luma) * _CrystalDesaturateLighten, desaturateMask * _CrystalDesaturateAmount);
@@ -276,7 +277,7 @@ CrystalSurface CrystalResolveSurface(CrystalVaryings input, half4 mainTex)
     surface.emission = CrystalResolveEmission(rampCoord, rampMask);
     surface.smoothness = CRYSTAL_SURFACE_SMOOTHNESS;
     surface.occlusion = saturate(_CrystalOcclusion);
-    surface.alpha = saturate(mainTex.a);
+    surface.alpha = saturate(baseTex.a);
     surface.volumeMain = volume.mainMask;
     surface.volumeSecondary = volume.secondaryMask;
     surface.rampCoord = rampCoord;

@@ -6,6 +6,7 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         [LILPropertyCache] _CrystalBaseColor ("基础颜色", Color) = (0.18,0.45,0.95,1)
         _MainTex ("主贴图", 2D) = "white" {}
         _Cutoff ("透明裁剪阈值", Range(0.0, 1.0)) = 0.5
+        _CrystalMask ("表面遮罩 (R/B 边缘, G 厚度)", 2D) = "white" {}
         _CrystalOcclusion ("环境遮蔽", Range(0.0, 1.0)) = 1.0
         _CrystalNormalMap ("法线贴图", 2D) = "bump" {}
         _CrystalNormalScale ("法线缩放", Range(0.0, 4.0)) = 1.0
@@ -40,7 +41,6 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         [LILFoldoutEnd]
 
         [LILFoldout(Mask And Edges)]
-        _CrystalMask ("遮罩 (R 边缘 / G 厚度 / B 边缘)", 2D) = "white" {}
         _CrystalThicknessExp ("厚度指数", Range(0.05, 8.0)) = 1.0
         _CrystalThicknessNegate ("厚度反转", Range(0.0, 1.0)) = 0.75
         _CrystalThicknessNegateFresnel ("厚度反转菲涅尔", Range(0.0, 2.0)) = 0.0

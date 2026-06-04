@@ -596,6 +596,9 @@ msgstr "去饱和"
 msgid "Lighting"
 msgstr "光照"
 
+msgid "Highlight"
+msgstr "高光"
+
 msgid "Debug"
 msgstr "调试"
 

@@ -82,21 +82,14 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         _CrystalGemParallaxColorVariation ("颜色变化量", Range(0.0, 1.0)) = 0.65
         [LILFoldoutEnd]
 
-        [LILFoldout(Fake Gem Composite)]
-        _CrystalGemBaseLightStrength ("基础层权重", Range(0.0, 2.0)) = 1.0
-        _CrystalGemSurfaceLayerStrength ("表面层权重", Range(0.0, 2.0)) = 1.0
-        _CrystalGemInternalLayerStrength ("内部层权重", Range(0.0, 2.0)) = 1.0
-        _CrystalGemRampEmissionStrength ("Ramp 发光权重", Range(0.0, 2.0)) = 1.0
-        _CrystalGemComponentMax ("单组分通道上限", Range(0.0, 16.0)) = 8.0
-        _CrystalGemCompositeExposure ("合成整体强度", Range(0.0, 2.0)) = 1.0
-        _CrystalGemCompositeMax ("合成通道上限", Range(0.0, 32.0)) = 16.0
-        [LILFoldoutEnd]
-
-        [LILFoldout(Lighting)]
+        [LILFoldout(Shadow)]
         _CrystalReceiveShadowStrength ("接收阴影强度", Range(0.0, 1.0)) = 1.0
         _CrystalShadowMinLight ("阴影最小亮度", Range(0.0, 1.0)) = 0.0
         _CrystalShadowTint ("阴影染色", Color) = (0.16,0.22,0.36,1)
         _CrystalIndirectStrength ("间接光强度", Range(0.0, 4.0)) = 1.0
+        [LILFoldoutEnd]
+
+        [LILFoldout(Highlight)]
         _CrystalGemHighlightSharpness ("高光锐度", Range(0.0, 1.0)) = 1.0
         _CrystalGemHighlightStrength ("高光强度", Range(0.0, 8.0)) = 1.0
         [HDR] _CrystalGemHighlightColor ("高光颜色", Color) = (1,1,1,1)
@@ -169,13 +162,6 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         float _CrystalShadowMinLight;
         float4 _CrystalShadowTint;
         float _CrystalIndirectStrength;
-        float _CrystalGemBaseLightStrength;
-        float _CrystalGemSurfaceLayerStrength;
-        float _CrystalGemInternalLayerStrength;
-        float _CrystalGemRampEmissionStrength;
-        float _CrystalGemComponentMax;
-        float _CrystalGemCompositeExposure;
-        float _CrystalGemCompositeMax;
         float _CrystalGemHighlightSharpness;
         float _CrystalGemHighlightStrength;
         float4 _CrystalGemHighlightColor;

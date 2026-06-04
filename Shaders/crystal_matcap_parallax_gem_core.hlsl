@@ -6,22 +6,6 @@ half CrystalGemClampRange(half value, half minValue, half maxValue)
     return min(max(value, minValue), maxValue);
 }
 
-half3 CrystalGemClampColor(half3 color, half maxValue)
-{
-    half limit = max(maxValue, 0.0h);
-    return min(max(color, half3(0.0h, 0.0h, 0.0h)), half3(limit, limit, limit));
-}
-
-half3 CrystalGemClampComponent(half3 color)
-{
-    return CrystalGemClampColor(color, _CrystalGemComponentMax);
-}
-
-half3 CrystalGemClampComposite(half3 color)
-{
-    return CrystalGemClampColor(color, _CrystalGemCompositeMax);
-}
-
 half CrystalGemParallaxScale()
 {
     return CrystalGemClampRange(_CrystalGemParallaxScale, 0.5h, 6.0h);
@@ -240,11 +224,6 @@ half3 CrystalGemHighlight(CrystalVaryings input, CrystalSurface surface)
     return color;
 }
 
-half3 CrystalGemRampEmission(CrystalSurface surface)
-{
-    return surface.emission * CrystalGemClampRange(_CrystalGemRampEmissionStrength, 0.0h, 2.0h);
-}
-
 half3 CrystalGemReflection(CrystalSurface surface)
 {
     half fresnelPower = CrystalGemClampRange(_CrystalGemReflectionFresnel, 0.05h, 4.0h);
@@ -265,19 +244,11 @@ struct CrystalGemComponents
 CrystalGemComponents CrystalGemResolveComponents(CrystalVaryings input, CrystalSurface surface)
 {
     CrystalGemComponents components;
-    components.baseLayer = surface.color * CrystalGemClampRange(_CrystalGemBaseLightStrength, 0.0h, 2.0h);
+    components.baseLayer = surface.color;
     components.matCap = CrystalGemMatCap(surface);
     components.reflection = CrystalGemReflection(surface);
-    components.rampEmission = CrystalGemRampEmission(surface);
+    components.rampEmission = surface.emission;
     components.internalVolume = CrystalGemInternalVolume(input, surface);
-
-    half surfaceLayerStrength = CrystalGemClampRange(_CrystalGemSurfaceLayerStrength, 0.0h, 2.0h);
-    half internalLayerStrength = CrystalGemClampRange(_CrystalGemInternalLayerStrength, 0.0h, 2.0h);
-    components.baseLayer = CrystalGemClampComponent(components.baseLayer);
-    components.matCap = CrystalGemClampComponent(components.matCap * surfaceLayerStrength);
-    components.reflection = CrystalGemClampComponent(components.reflection * surfaceLayerStrength);
-    components.rampEmission = CrystalGemClampComponent(components.rampEmission * internalLayerStrength);
-    components.internalVolume = CrystalGemClampComponent(components.internalVolume * internalLayerStrength);
     return components;
 }
 
@@ -288,8 +259,7 @@ half3 CrystalGemCompose(CrystalGemComponents components)
         + components.reflection
         + components.rampEmission
         + components.internalVolume;
-    color *= CrystalGemClampRange(_CrystalGemCompositeExposure, 0.0h, 2.0h);
-    return CrystalGemClampComposite(color);
+    return max(color, half3(0.0h, 0.0h, 0.0h));
 }
 
 half3 CrystalGemShadeLighting(CrystalVaryings input, CrystalSurface surface)

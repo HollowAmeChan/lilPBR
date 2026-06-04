@@ -336,7 +336,9 @@ half4 CrystalFragMatCapParallaxGem(CrystalVaryings input, bool isFront : SV_IsFr
     UNITY_SETUP_INSTANCE_ID(input);
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-    CrystalSurface surface = CrystalResolveSurface(input);
+    half4 mainTex = CrystalSampleMain(input);
+    CrystalClipAlpha(mainTex.a);
+    CrystalSurface surface = CrystalResolveSurface(input, mainTex);
     if (!isFront)
     {
         surface.normalWS = -surface.normalWS;

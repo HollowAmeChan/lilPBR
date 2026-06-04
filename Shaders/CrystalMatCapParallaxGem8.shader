@@ -4,6 +4,8 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
     {
         [LILFoldout(Surface)]
         [LILPropertyCache] _CrystalBaseColor ("基础颜色", Color) = (0.18,0.45,0.95,1)
+        _MainTex ("主贴图", 2D) = "white" {}
+        _Cutoff ("透明裁剪阈值", Range(0.0, 1.0)) = 0.5
         _CrystalOcclusion ("环境遮蔽", Range(0.0, 1.0)) = 1.0
         _CrystalNormalMap ("法线贴图", 2D) = "bump" {}
         _CrystalNormalScale ("法线缩放", Range(0.0, 4.0)) = 1.0
@@ -23,14 +25,6 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         _CrystalVolumeSecondaryIntersect ("次级交叠强度", Range(0.0, 4.0)) = 1.0
         [Enum(World, 0, Local, 1, LocalOneToOne, 2)] _CrystalVolumeSpace ("体积空间", Int) = 1
         [LILVector3] _CrystalVolumeOffset ("体积偏移 XYZ", Vector) = (0,0,0,0)
-        [LILFoldoutEnd]
-
-        [LILFoldout(Linear Mask)]
-        [LILVector3] _CrystalLinearMaskVector ("线性遮罩方向", Vector) = (0,1,0,0)
-        [LILVector3] _CrystalLinearMaskWorldOffset ("线性遮罩世界偏移", Vector) = (0,0,0,0)
-        _CrystalLinearMaskScale ("线性遮罩缩放", Float) = 1.0
-        _CrystalLinearMaskOffset ("线性遮罩偏移", Float) = 0.0
-        _CrystalLinearMaskNegate ("线性遮罩反转", Range(0.0, 1.0)) = 0.0
         [LILFoldoutEnd]
 
         [LILFoldout(Ramp Emission)]
@@ -136,12 +130,12 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
-    #define CRYSTAL_SURFACE_METALLIC 0.0h
     #define CRYSTAL_SURFACE_SMOOTHNESS 1.0h
     #define CRYSTAL_PBR_SPECULAR_STRENGTH 0.0h
     #define CRYSTAL_PBR_SPECULAR_COLOR half3(1.0h, 1.0h, 1.0h)
 
     TEXTURE2D(_CrystalVolumeNoise); SAMPLER(sampler_CrystalVolumeNoise);
+    TEXTURE2D(_MainTex); SAMPLER(sampler_MainTex);
     TEXTURE2D(_CrystalRamp); SAMPLER(sampler_CrystalRamp);
     TEXTURE2D(_CrystalMask); SAMPLER(sampler_CrystalMask);
     TEXTURE2D(_CrystalNormalMap); SAMPLER(sampler_CrystalNormalMap);
@@ -150,6 +144,8 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
 
     CBUFFER_START(UnityPerMaterial)
         float4 _CrystalBaseColor;
+        float4 _MainTex_ST;
+        float _Cutoff;
         float _CrystalOcclusion;
         float4 _CrystalNormalMap_ST;
         float _CrystalNormalScale;
@@ -165,11 +161,6 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         float _CrystalVolumeSecondaryIntersect;
         float _CrystalVolumeSpace;
         float4 _CrystalVolumeOffset;
-        float4 _CrystalLinearMaskVector;
-        float4 _CrystalLinearMaskWorldOffset;
-        float _CrystalLinearMaskScale;
-        float _CrystalLinearMaskOffset;
-        float _CrystalLinearMaskNegate;
         float4 _CrystalRampTint;
         float _CrystalRampExp;
         float _CrystalRampMainMaskExp;
@@ -238,8 +229,8 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         Tags
         {
             "RenderPipeline" = "UniversalPipeline"
-            "RenderType" = "Opaque"
-            "Queue" = "Geometry"
+            "RenderType" = "TransparentCutout"
+            "Queue" = "AlphaTest"
             "IgnoreProjector" = "True"
         }
 

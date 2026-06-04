@@ -1,10 +1,6 @@
 #ifndef INCLUDED_LILPBR_CRYSTAL_CORE
 #define INCLUDED_LILPBR_CRYSTAL_CORE
 
-#ifndef CRYSTAL_SURFACE_METALLIC
-#define CRYSTAL_SURFACE_METALLIC saturate(_CrystalMetallic)
-#endif
-
 #ifndef CRYSTAL_SURFACE_SMOOTHNESS
 #define CRYSTAL_SURFACE_SMOOTHNESS saturate(_CrystalSmoothness)
 #endif
@@ -51,7 +47,6 @@ struct CrystalSurface
     half3 emission;
     half3 normalWS;
     half3 viewDirWS;
-    half metallic;
     half smoothness;
     half occlusion;
     half alpha;
@@ -62,6 +57,17 @@ struct CrystalSurface
     half edges;
     half thickness;
 };
+
+half4 CrystalSampleMain(CrystalVaryings input)
+{
+    float2 uv = input.uv * _MainTex_ST.xy + _MainTex_ST.zw;
+    return SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv) * _CrystalBaseColor;
+}
+
+void CrystalClipAlpha(half alpha)
+{
+    clip(alpha - saturate(_Cutoff));
+}
 
 CrystalVaryings CrystalVert(CrystalAttributes input)
 {
@@ -220,11 +226,6 @@ CrystalRaymarchInput CrystalBuildRaymarchInput(CrystalVaryings input, half3 norm
     rayInput.volumeNoiseMultiply = _CrystalVolumeNoiseMultiply;
     rayInput.secondaryExp = _CrystalVolumeSecondaryExp;
     rayInput.secondaryMultiply = _CrystalVolumeSecondaryMultiply;
-    rayInput.linearMaskScale = _CrystalLinearMaskScale;
-    rayInput.linearMaskNegate = _CrystalLinearMaskNegate;
-    rayInput.linearMaskOffset = _CrystalLinearMaskOffset;
-    rayInput.linearMaskVector = SafeNormalize(_CrystalLinearMaskVector.xyz);
-    rayInput.linearMaskWorldOffset = _CrystalLinearMaskWorldOffset.xyz;
     return rayInput;
 }
 
@@ -252,7 +253,7 @@ half3 CrystalResolveEmission(half rampCoord, half rampMask)
     return ramp * emissionMask * _CrystalRampEmissionPower;
 }
 
-CrystalSurface CrystalResolveSurface(CrystalVaryings input)
+CrystalSurface CrystalResolveSurface(CrystalVaryings input, half4 mainTex)
 {
     CrystalSurface surface;
     surface.viewDirWS = SafeNormalize(GetWorldSpaceViewDir(input.positionWS));
@@ -266,17 +267,16 @@ CrystalSurface CrystalResolveSurface(CrystalVaryings input)
     half rampMask = CrystalResolveRampMask(volume, masks, surface.fresnel);
     half rampCoord = CrystalResolveRampCoord(rampMask, surface.fresnel);
 
-    half3 baseColor = _CrystalBaseColor.rgb;
+    half3 baseColor = mainTex.rgb;
     half desaturateMask = pow(saturate(surface.fresnel), max(_CrystalDesaturateFresnelExp, 0.001h)) * masks.thicknessForDesaturate;
     half luma = dot(baseColor, half3(0.2126h, 0.7152h, 0.0722h));
     baseColor = lerp(baseColor, half3(luma, luma, luma) * _CrystalDesaturateLighten, desaturateMask * _CrystalDesaturateAmount);
 
     surface.color = baseColor;
     surface.emission = CrystalResolveEmission(rampCoord, rampMask);
-    surface.metallic = CRYSTAL_SURFACE_METALLIC;
     surface.smoothness = CRYSTAL_SURFACE_SMOOTHNESS;
     surface.occlusion = saturate(_CrystalOcclusion);
-    surface.alpha = saturate(_CrystalBaseColor.a);
+    surface.alpha = saturate(mainTex.a);
     surface.volumeMain = volume.mainMask;
     surface.volumeSecondary = volume.secondaryMask;
     surface.rampCoord = rampCoord;
@@ -301,7 +301,7 @@ half3 CrystalShade(CrystalVaryings input, CrystalSurface surface)
     half3 halfDir = SafeNormalize(mainLight.direction + surface.viewDirWS);
     half nDotH = saturate(dot(surface.normalWS, halfDir));
     half specPower = exp2(lerp(5.0h, 12.0h, surface.smoothness));
-    half dielectricSpec = lerp(0.04h, 1.0h, surface.metallic);
+    half dielectricSpec = 0.04h;
     color += pow(nDotH, specPower) * surface.smoothness * shadow * mainLight.color * CRYSTAL_PBR_SPECULAR_COLOR * CRYSTAL_PBR_SPECULAR_STRENGTH * dielectricSpec;
 
     #if defined(_ADDITIONAL_LIGHTS)
@@ -328,7 +328,9 @@ half4 CrystalFragForward(CrystalVaryings input, bool isFront : SV_IsFrontFace) :
     UNITY_SETUP_INSTANCE_ID(input);
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-    CrystalSurface surface = CrystalResolveSurface(input);
+    half4 mainTex = CrystalSampleMain(input);
+    CrystalClipAlpha(mainTex.a);
+    CrystalSurface surface = CrystalResolveSurface(input, mainTex);
     if (!isFront)
     {
         surface.normalWS = -surface.normalWS;
@@ -341,6 +343,7 @@ half4 CrystalFragDepth(CrystalVaryings input) : SV_Target
 {
     UNITY_SETUP_INSTANCE_ID(input);
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+    CrystalClipAlpha(CrystalSampleMain(input).a);
     return 0;
 }
 
@@ -349,7 +352,9 @@ half4 CrystalFragDepthNormals(CrystalVaryings input, bool isFront : SV_IsFrontFa
     UNITY_SETUP_INSTANCE_ID(input);
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-    CrystalSurface surface = CrystalResolveSurface(input);
+    half4 mainTex = CrystalSampleMain(input);
+    CrystalClipAlpha(mainTex.a);
+    CrystalSurface surface = CrystalResolveSurface(input, mainTex);
     half3 normalWS = isFront ? surface.normalWS : -surface.normalWS;
     return half4(normalize(normalWS) * 0.5h + 0.5h, 1.0h);
 }

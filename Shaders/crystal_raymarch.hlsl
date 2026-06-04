@@ -14,11 +14,6 @@ struct CrystalRaymarchInput
     float volumeNoiseMultiply;
     float secondaryExp;
     float secondaryMultiply;
-    float linearMaskScale;
-    float linearMaskNegate;
-    float linearMaskOffset;
-    float3 linearMaskVector;
-    float3 linearMaskWorldOffset;
 };
 
 struct CrystalRaymarchOutput
@@ -33,12 +28,6 @@ float2 SampleCrystalVolumeTriplanar(float3 position, float scale)
     float2 sampleZY = SAMPLE_TEXTURE2D(_CrystalVolumeNoise, sampler_CrystalVolumeNoise, position.zy * scale + float2(144.23, 5444.12)).rg;
     float2 sampleXZ = SAMPLE_TEXTURE2D(_CrystalVolumeNoise, sampler_CrystalVolumeNoise, position.xz * scale + float2(3127.11, 1522.12)).rg;
     return sampleXY * sampleZY * sampleXZ;
-}
-
-half CrystalLinearMask(float3 position, CrystalRaymarchInput input)
-{
-    float axisMask = (dot(position - input.linearMaskWorldOffset, input.linearMaskVector) + input.linearMaskOffset) * input.linearMaskScale;
-    return saturate(saturate(axisMask) + input.linearMaskNegate);
 }
 
 CrystalRaymarchOutput CrystalRaymarch8(CrystalRaymarchInput input)
@@ -63,10 +52,9 @@ CrystalRaymarchOutput CrystalRaymarch8(CrystalRaymarchInput input)
     {
         float3 samplePosition = input.position + ray * stepDistance;
         float2 volumeNoise = SampleCrystalVolumeTriplanar(samplePosition, volumeNoiseScale);
-        half linearMask = CrystalLinearMask(samplePosition, input);
 
-        mainMask += pow(saturate(pow(saturate(volumeNoise.r), volumeNoiseExp) * volumeNoiseMultiply * 1.45), 1.25) * saturate(1.0 - (i / 20.0)) * linearMask;
-        secondaryMask += pow(saturate(volumeNoise.g), secondaryExp * 0.95) * secondaryMultiply * 2.0 * linearMask;
+        mainMask += pow(saturate(pow(saturate(volumeNoise.r), volumeNoiseExp) * volumeNoiseMultiply * 1.45), 1.25) * saturate(1.0 - (i / 20.0));
+        secondaryMask += pow(saturate(volumeNoise.g), secondaryExp * 0.95) * secondaryMultiply * 2.0;
 
         stepDistance += stepLength * 0.125;
     }

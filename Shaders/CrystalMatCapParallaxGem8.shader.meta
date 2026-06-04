@@ -9,7 +9,6 @@ ShaderImporter:
   - _CrystalNormalMap: {instanceID: 0}
   - _CrystalRefractionNoise: {instanceID: 0}
   - _CrystalGemMatCap: {instanceID: 0}
-  - _CrystalGemParallaxMap: {instanceID: 0}
   nonModifiableTextures: []
   userData:
   assetBundleName:

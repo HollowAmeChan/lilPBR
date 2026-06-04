@@ -587,9 +587,6 @@ msgstr "线性遮罩"
 msgid "Ramp Emission"
 msgstr "渐变发光"
 
-msgid "Mask And Edges"
-msgstr "遮罩与边缘"
-
 msgid "Refraction Noise"
 msgstr "折射噪声"
 

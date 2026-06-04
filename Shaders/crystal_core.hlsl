@@ -135,7 +135,7 @@ float2 CrystalParallaxMaskUV(CrystalVaryings input, half3 viewDirWS)
     half3x3 tangentToWorld = CrystalTangentToWorld(input);
     half3 viewDirTS = mul(transpose(tangentToWorld), viewDirWS);
     float height = SAMPLE_TEXTURE2D(_CrystalMask, sampler_CrystalMask, input.uv * _CrystalMask_ST.xy + _CrystalMask_ST.zw).g;
-    float2 parallax = viewDirTS.xy / max(abs(viewDirTS.z), 0.25h) * (height - 0.5) * _CrystalEdgesParallax * 0.002;
+    float2 parallax = viewDirTS.xy / max(abs(viewDirTS.z), 0.25h) * (height - 0.5) * _CrystalRampMaskParallax * 0.002;
     return input.uv * _CrystalMask_ST.xy + _CrystalMask_ST.zw - parallax;
 }
 
@@ -194,16 +194,12 @@ CrystalMaskData CrystalResolveMask(CrystalVaryings input, half3 viewDirWS)
 {
     float2 maskUV = CrystalParallaxMaskUV(input, viewDirWS);
     half4 mask = SAMPLE_TEXTURE2D(_CrystalMask, sampler_CrystalMask, maskUV);
-    half edgeRB = lerp(mask.r, mask.b, saturate(_CrystalEdgesStyle));
-    half thicknessA = saturate(mask.g);
-    half thicknessB = saturate(1.0h - thicknessA);
-    half thicknessStyle = lerp(thicknessA, thicknessB, saturate(_CrystalEdgesStyle));
-    half edgeBase = lerp(edgeRB, thicknessStyle, _CrystalEdgesUseThickness != 0 ? 1.0h : 0.0h);
+    half thickness = saturate(mask.g);
 
     CrystalMaskData data;
-    data.edges = saturate(edgeBase * _CrystalEdgesEmission);
-    data.thickness = pow(saturate(thicknessA + _CrystalThicknessNegate), max(_CrystalThicknessExp, 0.001h));
-    data.thicknessForDesaturate = saturate(lerp(1.0h, thicknessA, _CrystalDesaturateThickness));
+    data.edges = saturate(mask.r);
+    data.thickness = thickness;
+    data.thicknessForDesaturate = saturate(lerp(1.0h, thickness, _CrystalDesaturateThickness));
     return data;
 }
 
@@ -232,25 +228,22 @@ CrystalRaymarchInput CrystalBuildRaymarchInput(CrystalVaryings input, half3 norm
 half CrystalResolveRampMask(CrystalRaymarchOutput volume, CrystalMaskData masks, half fresnel)
 {
     half volumeMask = saturate(volume.mainMask + volume.secondaryMask * _CrystalVolumeSecondaryIntersect);
-    half edges = lerp(masks.edges, masks.edges * volumeMask, saturate(_CrystalEdgesOnlyOnMasked));
-    half thickness = saturate(masks.thickness + (1.0h - fresnel) * _CrystalThicknessNegateFresnel);
-    half thicknessMask = lerp(1.0h, thickness, saturate(_CrystalThicknessEmission));
-    return saturate(edges + volumeMask * thicknessMask);
+    half thicknessMask = lerp(1.0h, masks.thickness, saturate(_CrystalRampThicknessStrength));
+    half edgeMask = masks.edges * max(_CrystalRampEdgeStrength, 0.0h);
+    half fresnelMask = fresnel * saturate(_CrystalRampFresnelStrength);
+    return saturate(volumeMask * thicknessMask + edgeMask + fresnelMask);
 }
 
-half CrystalResolveRampCoord(half rampMask, half fresnel)
+half CrystalApplyRampContrast(half value)
 {
-    half remapped = 1.0h - pow(saturate(1.0h - rampMask), max(_CrystalRampExp, 0.001h));
-    half rampFresnel = pow(saturate(1.0h - fresnel), max(_CrystalRampFresnelExp, 0.001h));
-    half fresnelMask = saturate(pow(rampFresnel, max(_CrystalRampFresnelExp2, 0.001h)) + _CrystalRampFresnelAdd);
-    return saturate(remapped * fresnelMask);
+    half contrast = max(_CrystalRampContrast, 0.001h);
+    return saturate((saturate(value) - 0.5h) * contrast + 0.5h);
 }
 
 half3 CrystalResolveEmission(half rampCoord, half rampMask)
 {
     half3 ramp = SAMPLE_TEXTURE2D(_CrystalRamp, sampler_CrystalRamp, float2(rampCoord, 0.5)).rgb * _CrystalRampTint.rgb;
-    half emissionMask = pow(saturate(rampMask), max(_CrystalRampMainMaskExp, 0.001h));
-    return ramp * emissionMask * _CrystalRampEmissionPower;
+    return ramp * saturate(rampMask) * _CrystalRampEmissionPower;
 }
 
 CrystalSurface CrystalResolveSurface(CrystalVaryings input, half4 mainTex)
@@ -264,8 +257,8 @@ CrystalSurface CrystalResolveSurface(CrystalVaryings input, half4 mainTex)
 
     CrystalMaskData masks = CrystalResolveMask(input, surface.viewDirWS);
     CrystalRaymarchOutput volume = CrystalRaymarch8(CrystalBuildRaymarchInput(input, surface.normalWS, surface.viewDirWS));
-    half rampMask = CrystalResolveRampMask(volume, masks, surface.fresnel);
-    half rampCoord = CrystalResolveRampCoord(rampMask, surface.fresnel);
+    half rampMask = CrystalApplyRampContrast(CrystalResolveRampMask(volume, masks, surface.fresnel));
+    half rampCoord = rampMask;
 
     half4 baseTex = mainTex * _CrystalBaseColor;
     half3 baseColor = baseTex.rgb;

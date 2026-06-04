@@ -6,7 +6,7 @@ Shader "lilPBR/Crystal/Raymarch 8"
         [LILPropertyCache] _CrystalBaseColor ("基础颜色", Color) = (0.18,0.45,0.95,1)
         _MainTex ("主贴图", 2D) = "white" {}
         _Cutoff ("透明裁剪阈值", Range(0.0, 1.0)) = 0.5
-        _CrystalMask ("表面遮罩 (R边缘G厚度B边缘)", 2D) = "white" {}
+        _CrystalMask ("表面遮罩 (R 边缘, G 厚度)", 2D) = "white" {}
         _CrystalSmoothness ("光滑度", Range(0.0, 1.0)) = 1.0
         _CrystalOcclusion ("环境遮蔽", Range(0.0, 1.0)) = 1.0
         _CrystalNormalMap ("法线贴图", 2D) = "bump" {}
@@ -32,25 +32,13 @@ Shader "lilPBR/Crystal/Raymarch 8"
         [LILFoldout(Ramp Emission)]
         [NoScaleOffset] _CrystalRamp ("渐变贴图", 2D) = "white" {}
         [HDR] _CrystalRampTint ("渐变染色", Color) = (1,1,1,1)
-        _CrystalRampExp ("渐变指数", Range(0.05, 8.0)) = 2.0
-        _CrystalRampMainMaskExp ("渐变主遮罩指数", Range(0.05, 8.0)) = 2.0
-        _CrystalRampFresnelExp ("渐变菲涅尔指数", Range(0.05, 8.0)) = 1.0
-        _CrystalRampFresnelExp2 ("渐变菲涅尔指数 2", Range(0.05, 8.0)) = 2.0
-        _CrystalRampFresnelAdd ("渐变菲涅尔叠加", Range(0.0, 2.0)) = 1.0
-        _CrystalRampEmissionPower ("渐变发光强度", Range(0.0, 16.0)) = 4.0
-        _CrystalFresnelPower ("菲涅尔强度", Range(0.05, 8.0)) = 1.0
-        [LILFoldoutEnd]
-
-        [LILFoldout(Mask And Edges)]
-        _CrystalThicknessExp ("厚度指数", Range(0.05, 8.0)) = 1.0
-        _CrystalThicknessNegate ("厚度反转", Range(0.0, 1.0)) = 0.75
-        _CrystalThicknessNegateFresnel ("厚度反转菲涅尔", Range(0.0, 2.0)) = 0.0
-        _CrystalThicknessEmission ("厚度发光", Range(0.0, 4.0)) = 1.0
-        _CrystalEdgesEmission ("边缘发光", Range(0.0, 4.0)) = 0.25
-        _CrystalEdgesParallax ("边缘视差", Range(0.0, 32.0)) = 16.0
-        _CrystalEdgesStyle ("边缘样式", Range(0.0, 1.0)) = 0.0
-        [ToggleUI] _CrystalEdgesUseThickness ("改用厚度作为边缘", Int) = 1
-        _CrystalEdgesOnlyOnMasked ("边缘仅限遮罩区域", Range(0.0, 1.0)) = 0.0
+        _CrystalRampEmissionPower ("发光强度", Range(0.0, 8.0)) = 1.0
+        _CrystalRampContrast ("遮罩对比度", Range(0.25, 4.0)) = 1.0
+        _CrystalRampThicknessStrength ("厚度权重", Range(0.0, 1.0)) = 1.0
+        _CrystalRampEdgeStrength ("边缘权重", Range(0.0, 2.0)) = 0.25
+        _CrystalRampMaskParallax ("遮罩视差", Range(0.0, 16.0)) = 4.0
+        _CrystalRampFresnelStrength ("菲涅尔权重", Range(0.0, 1.0)) = 0.0
+        _CrystalFresnelPower ("菲涅尔范围", Range(0.05, 8.0)) = 1.0
         [LILFoldoutEnd]
 
         [LILFoldout(Refraction Noise)]
@@ -119,23 +107,14 @@ Shader "lilPBR/Crystal/Raymarch 8"
         float _CrystalVolumeSpace;
         float4 _CrystalVolumeOffset;
         float4 _CrystalRampTint;
-        float _CrystalRampExp;
-        float _CrystalRampMainMaskExp;
-        float _CrystalRampFresnelExp;
-        float _CrystalRampFresnelExp2;
-        float _CrystalRampFresnelAdd;
         float _CrystalRampEmissionPower;
+        float _CrystalRampContrast;
+        float _CrystalRampThicknessStrength;
+        float _CrystalRampEdgeStrength;
+        float _CrystalRampMaskParallax;
+        float _CrystalRampFresnelStrength;
         float _CrystalFresnelPower;
         float4 _CrystalMask_ST;
-        float _CrystalThicknessExp;
-        float _CrystalThicknessNegate;
-        float _CrystalThicknessNegateFresnel;
-        float _CrystalThicknessEmission;
-        float _CrystalEdgesEmission;
-        float _CrystalEdgesParallax;
-        float _CrystalEdgesStyle;
-        uint _CrystalEdgesUseThickness;
-        float _CrystalEdgesOnlyOnMasked;
         uint _CrystalUseRefractionNoise;
         float4 _CrystalRefractionNoise_ST;
         float _CrystalRefractionNoiseScale;

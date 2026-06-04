@@ -68,6 +68,10 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         [LILFoldoutEnd]
 
         [LILFoldout(Internal Impurities)]
+        [Enum(Fractal, 0, Marble, 1, Veins, 2)] _CrystalGemImpurityMode ("杂质算法", Int) = 0
+        _CrystalGemImpurityFlowSpeed ("流动速度", Range(0.0, 4.0)) = 0.0
+        _CrystalGemImpurityFlowStrength ("流动强度", Range(0.0, 1.0)) = 0.0
+        _CrystalGemImpurityFlowPhase ("流动相位", Range(0.0, 6.283)) = 0.0
         _CrystalGemParallaxScale ("结构密度", Range(0.5, 6.0)) = 2.25
         _CrystalGemParallaxDepth ("内部覆盖范围", Range(0.0, 16.0)) = 12.0
         _CrystalGemParallaxStrength ("内部亮度", Range(0.0, 4.0)) = 1.25
@@ -168,6 +172,10 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         float _CrystalGemMatCapFresnel;
         float _CrystalGemReflectionStrength;
         float _CrystalGemReflectionFresnel;
+        float _CrystalGemImpurityMode;
+        float _CrystalGemImpurityFlowSpeed;
+        float _CrystalGemImpurityFlowStrength;
+        float _CrystalGemImpurityFlowPhase;
         float _CrystalGemParallaxScale;
         float _CrystalGemParallaxDepth;
         float _CrystalGemParallaxStrength;

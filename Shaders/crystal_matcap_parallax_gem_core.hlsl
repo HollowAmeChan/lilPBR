@@ -6,6 +6,13 @@ half CrystalGemClampRange(half value, half minValue, half maxValue)
     return min(max(value, minValue), maxValue);
 }
 
+float2 CrystalGemRotate2(float2 value, float angle)
+{
+    float s = sin(angle);
+    float c = cos(angle);
+    return float2(value.x * c - value.y * s, value.x * s + value.y * c);
+}
+
 half CrystalGemParallaxScale()
 {
     return CrystalGemClampRange(_CrystalGemParallaxScale, 0.5h, 6.0h);
@@ -14,6 +21,50 @@ half CrystalGemParallaxScale()
 half CrystalGemParallaxDepth()
 {
     return CrystalGemClampRange(_CrystalGemParallaxDepth, 0.0h, 16.0h);
+}
+
+half CrystalGemImpurityMode()
+{
+    return floor(CrystalGemClampRange(_CrystalGemImpurityMode, 0.0h, 2.0h) + 0.5h);
+}
+
+half CrystalGemImpurityFlowSpeed()
+{
+    return CrystalGemClampRange(_CrystalGemImpurityFlowSpeed, 0.0h, 4.0h);
+}
+
+half CrystalGemImpurityFlowStrength()
+{
+    return saturate(_CrystalGemImpurityFlowStrength);
+}
+
+float CrystalGemImpurityTime()
+{
+    return _Time.y * CrystalGemImpurityFlowSpeed() + _CrystalGemImpurityFlowPhase;
+}
+
+float2 CrystalGemImpurityFoldParams(float baseFold, float baseOffset)
+{
+    half flowStrength = CrystalGemImpurityFlowStrength();
+    float time = CrystalGemImpurityTime();
+    float animatedFold = sin(time * 0.35432) * 0.7 + 1.5;
+    float animatedOffset = -0.4 + sin(time * 0.2443) * 0.3;
+    return float2(lerp(baseFold, animatedFold, flowStrength), lerp(baseOffset, animatedOffset, flowStrength));
+}
+
+float3 CrystalGemAnimateImpurityPosition(float3 position, float stepT)
+{
+    half flowStrength = CrystalGemImpurityFlowStrength();
+    float time = CrystalGemImpurityTime();
+    float3 p = position;
+    p.xy = CrystalGemRotate2(p.xy, sin(time * 0.177 + stepT * 2.1) * flowStrength * 0.45);
+    p.yz = CrystalGemRotate2(p.yz, sin(time * 0.131 - stepT * 1.7) * flowStrength * 0.35);
+    p += float3(
+        sin(time * 0.35432 + position.y * 2.0 + stepT * 2.7),
+        sin(time * 0.2443 + position.z * 2.3 - stepT * 2.1),
+        sin(time * 0.193 + position.x * 1.7)
+    ) * (0.18 * flowStrength);
+    return p;
 }
 
 half3 CrystalGemMatCap(CrystalSurface surface)
@@ -38,13 +89,6 @@ float2 CrystalGemSphereIntersection(float3 rayOrigin, float3 rayDirection, float
 
     h = sqrt(h);
     return float2(-b - h, -b + h);
-}
-
-float2 CrystalGemRotate2(float2 value, float angle)
-{
-    float s = sin(angle);
-    float c = cos(angle);
-    return float2(value.x * c - value.y * s, value.x * s + value.y * c);
 }
 
 struct CrystalGemInternalRay
@@ -102,6 +146,7 @@ bool CrystalGemBuildInternalRay(CrystalVaryings input, CrystalSurface surface, o
 
 float CrystalGemFractalDensity(float3 position)
 {
+    float2 foldParams = CrystalGemImpurityFoldParams(0.7, -0.7);
     float3 p = position * CrystalGemParallaxScale();
     float3 origin = p;
     float density = 0.0;
@@ -109,13 +154,55 @@ float CrystalGemFractalDensity(float3 position)
     [unroll]
     for (int i = 0; i < 6; i++)
     {
-        p = 0.7 * abs(p) / max(dot(p, p), 0.001) - 0.7;
+        p = foldParams.x * abs(p) / max(dot(p, p), 0.001) + foldParams.y;
         p.yz = float2(p.y * p.y - p.z * p.z, 2.0 * p.y * p.z);
         p = p.zxy;
         density += exp(-19.0 * abs(dot(p, origin)));
     }
 
     return saturate(density * 0.5);
+}
+
+float CrystalGemMarbleDensity(float3 position)
+{
+    float3 p = position * CrystalGemParallaxScale();
+    float time = CrystalGemImpurityTime();
+    half flowStrength = CrystalGemImpurityFlowStrength();
+    float3 layerDir = normalize(float3(0.78, 0.34, 0.52));
+    float3 crossDir = normalize(float3(-0.42, 0.86, 0.28));
+    float lowWarp = sin(dot(p, float3(1.73, 2.11, 0.91)) + time * 0.31) * lerp(0.28, 0.85, flowStrength);
+    float crossWarp = sin(dot(p, float3(-1.21, 0.73, 2.47)) - time * 0.23) * lerp(0.18, 0.55, flowStrength);
+    float layer = dot(p, layerDir) + lowWarp + crossWarp * 0.55;
+    float broad = 0.5 + 0.5 * sin(layer * 4.6);
+    float fine = 0.5 + 0.5 * sin((layer + dot(p, crossDir) * 0.18) * 17.0 + broad * 2.4);
+    float cloudy = 0.5 + 0.5 * sin(dot(p, float3(2.31, -1.17, 1.63)) * 3.1 + lowWarp * 2.0);
+    float density = broad * 0.58 + fine * 0.27 + cloudy * 0.15;
+    return saturate(smoothstep(0.18, 0.92, density));
+}
+
+float CrystalGemVeinDensity(float3 position)
+{
+    float3 p = position * CrystalGemParallaxScale();
+    float folded = CrystalGemFractalDensity(position * 0.75);
+    float veinA = sin(dot(p, float3(7.13, 11.71, 5.41)) + folded * 4.0);
+    float veinB = sin(dot(p.zxy, float3(13.31, 4.17, 8.69)) - folded * 2.5);
+    float bands = 1.0 - abs(veinA * 0.65 + veinB * 0.35);
+    return saturate(pow(saturate(bands), 3.0) * (0.45 + folded));
+}
+
+half CrystalGemImpurityDensity(float3 normalizedSample, half mode)
+{
+    if (mode < 0.5h)
+    {
+        return CrystalGemFractalDensity(normalizedSample);
+    }
+
+    if (mode < 1.5h)
+    {
+        return CrystalGemMarbleDensity(normalizedSample);
+    }
+
+    return CrystalGemVeinDensity(normalizedSample);
 }
 
 half CrystalGemInsideMask(float3 normalizedSample, half coverage)
@@ -125,11 +212,11 @@ half CrystalGemInsideMask(float3 normalizedSample, half coverage)
     return saturate(max(bodyMask, shellFloor * 0.35));
 }
 
-half CrystalGemVolumeDensity(float3 normalizedSample, half coverage, half contrast)
+half CrystalGemVolumeDensity(float3 normalizedSample, float3 impuritySample, half coverage, half contrast, half mode)
 {
     half densityGain = lerp(0.85h, 1.25h, coverage);
     half insideMask = CrystalGemInsideMask(normalizedSample, coverage);
-    half density = CrystalGemFractalDensity(normalizedSample);
+    half density = CrystalGemImpurityDensity(impuritySample, mode);
     return pow(density * insideMask, contrast) * densityGain;
 }
 
@@ -155,9 +242,66 @@ half3 CrystalGemPaletteColor(half density, half phase)
     return paletteBase * lerp(half3(density, density, density), densityProfile, variation);
 }
 
-half3 CrystalGemVolumeSampleColor(half density, half phase)
+half3 CrystalGemMarblePaletteColor(half density, half phase)
 {
-    return CrystalGemPaletteColor(density, phase);
+    half variation = saturate(_CrystalGemParallaxColorVariation);
+    half band = pow(abs(cos(density * 4.712h + phase * 1.5h)), lerp(4.0h, 16.0h, variation));
+    half colorMask = saturate(lerp(phase * 0.45h + density * 0.55h, band, variation));
+    half3 tint = max(lerp(_CrystalGemParallaxTint.rgb, _CrystalGemParallaxSecondaryColor.rgb, colorMask), half3(0.0h, 0.0h, 0.0h));
+    return tint * lerp(density, 1.0h, band) * (0.35h + band * 0.65h);
+}
+
+half3 CrystalGemVeinPaletteColor(half density, half phase)
+{
+    half variation = saturate(_CrystalGemParallaxColorVariation);
+    half veinMask = pow(saturate(density), lerp(0.55h, 1.5h, variation));
+    half3 tint = max(lerp(_CrystalGemParallaxSecondaryColor.rgb, _CrystalGemParallaxTint.rgb, saturate(phase * 0.35h + density * 0.65h)), half3(0.0h, 0.0h, 0.0h));
+    return tint * veinMask;
+}
+
+half3 CrystalGemVolumeSampleColor(half density, half phase, half mode)
+{
+    if (mode < 0.5h)
+    {
+        return CrystalGemPaletteColor(density, phase);
+    }
+
+    if (mode < 1.5h)
+    {
+        return CrystalGemMarblePaletteColor(density, phase);
+    }
+
+    return CrystalGemVeinPaletteColor(density, phase);
+}
+
+half CrystalGemVolumePersistence(half mode)
+{
+    if (mode < 0.5h)
+    {
+        return 0.985h;
+    }
+
+    if (mode < 1.5h)
+    {
+        return 0.99h;
+    }
+
+    return 0.975h;
+}
+
+half CrystalGemVolumeStepWeight(half density, half coverage, half mode)
+{
+    if (mode < 1.5h && mode >= 0.5h)
+    {
+        return lerp(0.035h, 0.06h, coverage);
+    }
+
+    if (mode >= 1.5h)
+    {
+        return density * lerp(0.065h, 0.105h, coverage);
+    }
+
+    return density * lerp(0.045h, 0.075h, coverage);
 }
 
 half3 CrystalGemInternalVolume(CrystalVaryings input, CrystalSurface surface)
@@ -170,6 +314,8 @@ half3 CrystalGemInternalVolume(CrystalVaryings input, CrystalSurface surface)
 
     half3 accumulated = half3(0.0h, 0.0h, 0.0h);
     half contrast = CrystalGemShapeContrast();
+    half mode = CrystalGemImpurityMode();
+    half persistence = CrystalGemVolumePersistence(mode);
 
     [unroll]
     for (int i = 0; i < 24; i++)
@@ -177,10 +323,11 @@ half3 CrystalGemInternalVolume(CrystalVaryings input, CrystalSurface surface)
         float stepT = (i + 0.5) * (1.0 / 24.0);
         float3 sampleOS = ray.entryOS + ray.directionOS * (ray.travelDistance * stepT);
         float3 normalizedSample = sampleOS / ray.radius;
-        half density = CrystalGemVolumeDensity(normalizedSample, ray.coverage, contrast);
-        half phase = CrystalGemVolumePhase(normalizedSample, stepT);
-        half3 sampleColor = CrystalGemVolumeSampleColor(density, phase);
-        accumulated = accumulated * 0.985h + sampleColor * density * lerp(0.045h, 0.075h, ray.coverage);
+        float3 impuritySample = CrystalGemAnimateImpurityPosition(normalizedSample, stepT);
+        half density = CrystalGemVolumeDensity(normalizedSample, impuritySample, ray.coverage, contrast, mode);
+        half phase = CrystalGemVolumePhase(impuritySample, stepT);
+        half3 sampleColor = CrystalGemVolumeSampleColor(density, phase, mode);
+        accumulated = accumulated * persistence + sampleColor * CrystalGemVolumeStepWeight(density, ray.coverage, mode);
     }
 
     half volumeMask = saturate(dot(accumulated, half3(0.2126h, 0.7152h, 0.0722h)));

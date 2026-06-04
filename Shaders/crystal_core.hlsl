@@ -295,9 +295,8 @@ half3 CrystalShade(CrystalVaryings input, CrystalSurface surface)
 
     half3 halfDir = SafeNormalize(mainLight.direction + surface.viewDirWS);
     half nDotH = saturate(dot(surface.normalWS, halfDir));
-    half specPower = exp2(lerp(5.0h, 12.0h, surface.smoothness));
-    half dielectricSpec = 0.04h;
-    color += pow(nDotH, specPower) * surface.smoothness * shadow * mainLight.color * CRYSTAL_PBR_SPECULAR_COLOR * CRYSTAL_PBR_SPECULAR_STRENGTH * dielectricSpec;
+    half specPower = exp2(lerp(4.0h, 8.0h, surface.smoothness));
+    color += pow(nDotH, specPower) * surface.smoothness * shadow * mainLight.color * CRYSTAL_PBR_SPECULAR_COLOR * CRYSTAL_PBR_SPECULAR_STRENGTH;
 
     #if defined(_ADDITIONAL_LIGHTS)
     uint pixelLightCount = GetAdditionalLightsCount();
@@ -311,7 +310,7 @@ half3 CrystalShade(CrystalVaryings input, CrystalSurface surface)
 
         half3 lightHalfDir = SafeNormalize(light.direction + surface.viewDirWS);
         half lightNdotH = saturate(dot(surface.normalWS, lightHalfDir));
-        color += pow(lightNdotH, specPower) * surface.smoothness * light.distanceAttenuation * lightShadow * light.color * CRYSTAL_PBR_SPECULAR_COLOR * CRYSTAL_PBR_SPECULAR_STRENGTH * dielectricSpec;
+        color += pow(lightNdotH, specPower) * surface.smoothness * light.distanceAttenuation * lightShadow * light.color * CRYSTAL_PBR_SPECULAR_COLOR * CRYSTAL_PBR_SPECULAR_STRENGTH;
     }
     #endif
 

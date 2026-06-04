@@ -215,8 +215,7 @@ half3 CrystalGemHighlight(CrystalVaryings input, CrystalSurface surface)
     Light mainLight = GetMainLight(shadowCoord);
 
     half sharpness = saturate(_CrystalGemHighlightSharpness);
-    half specPower = exp2(lerp(5.0h, 12.0h, sharpness));
-    half dielectricSpec = 0.04h;
+    half specPower = exp2(lerp(4.0h, 8.0h, sharpness));
     half3 color = half3(0.0h, 0.0h, 0.0h);
 
     half3 halfDir = SafeNormalize(mainLight.direction + surface.viewDirWS);
@@ -224,7 +223,7 @@ half3 CrystalGemHighlight(CrystalVaryings input, CrystalSurface surface)
     half shadow = lerp(1.0h, mainLight.shadowAttenuation, saturate(_CrystalReceiveShadowStrength));
     half highlightStrength = CrystalGemClampRange(_CrystalGemHighlightStrength, 0.0h, 8.0h);
     half3 highlightColor = max(_CrystalGemHighlightColor.rgb, half3(0.0h, 0.0h, 0.0h));
-    color += pow(nDotH, specPower) * sharpness * shadow * mainLight.color * highlightColor * highlightStrength * dielectricSpec;
+    color += pow(nDotH, specPower) * sharpness * shadow * mainLight.color * highlightColor * highlightStrength;
 
     #if defined(_ADDITIONAL_LIGHTS)
     uint pixelLightCount = GetAdditionalLightsCount();
@@ -234,7 +233,7 @@ half3 CrystalGemHighlight(CrystalVaryings input, CrystalSurface surface)
         half3 lightHalfDir = SafeNormalize(light.direction + surface.viewDirWS);
         half lightNdotH = saturate(dot(surface.normalWS, lightHalfDir));
         half lightShadow = lerp(1.0h, light.shadowAttenuation, saturate(_CrystalReceiveShadowStrength));
-        color += pow(lightNdotH, specPower) * sharpness * light.distanceAttenuation * lightShadow * light.color * highlightColor * highlightStrength * dielectricSpec;
+        color += pow(lightNdotH, specPower) * sharpness * light.distanceAttenuation * lightShadow * light.color * highlightColor * highlightStrength;
     }
     #endif
 

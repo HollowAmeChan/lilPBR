@@ -85,22 +85,31 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         [HDR] _CrystalSpecularColor ("高光颜色", Color) = (1,1,1,1)
         [LILFoldoutEnd]
 
-        [LILFoldout(Fake Gem)]
+        [LILFoldout(Fake Gem Composite)]
         _CrystalGemBaseLightStrength ("基础光照权重", Range(0.0, 2.0)) = 1.0
         _CrystalGemVolumeEmissionStrength ("体积杂质权重", Range(0.0, 2.0)) = 1.0
+        [LILFoldoutEnd]
+
+        [LILFoldout(Fake Gem MatCap)]
         _CrystalGemMatCap ("MatCap", 2D) = "black" {}
         [HDR] _CrystalGemMatCapColor ("MatCap 颜色", Color) = (1,1,1,1)
         _CrystalGemMatCapStrength ("MatCap 强度", Range(0.0, 4.0)) = 1.0
         _CrystalGemMatCapFresnel ("MatCap 边缘增强", Range(0.0, 1.0)) = 0.35
-        [HDR] _CrystalGemParallaxTint ("内部主颜色", Color) = (1,0.72,0.18,1)
-        [HDR] _CrystalGemParallaxSecondaryColor ("内部变化颜色", Color) = (1,0.16,0.02,1)
-        _CrystalGemParallaxColorVariation ("颜色变化量", Range(0.0, 1.0)) = 0.65
-        _CrystalGemParallaxRampBlend ("Ramp 混合", Range(0.0, 1.0)) = 0.35
+        [LILFoldoutEnd]
+
+        [LILFoldout(Fake Gem Internal Shape)]
         _CrystalGemParallaxScale ("结构密度", Range(0.5, 6.0)) = 2.25
         _CrystalGemParallaxDepth ("内部覆盖范围", Range(0.0, 16.0)) = 12.0
         _CrystalGemParallaxStrength ("内部亮度", Range(0.0, 4.0)) = 1.25
         _CrystalGemParallaxContrast ("结构锐度", Range(0.25, 8.0)) = 1.15
         _CrystalGemParallaxFresnel ("边缘混合", Range(0.0, 1.0)) = 0.25
+        [LILFoldoutEnd]
+
+        [LILFoldout(Fake Gem Internal Color)]
+        [HDR] _CrystalGemParallaxTint ("内部主颜色", Color) = (1,0.72,0.18,1)
+        [HDR] _CrystalGemParallaxSecondaryColor ("内部变化颜色", Color) = (1,0.16,0.02,1)
+        _CrystalGemParallaxColorVariation ("颜色变化量", Range(0.0, 1.0)) = 0.65
+        _CrystalGemParallaxRampBlend ("Ramp 混合", Range(0.0, 1.0)) = 0.35
         [LILFoldoutEnd]
 
         [LILFoldout(Debug)]
@@ -191,15 +200,15 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         float4 _CrystalGemMatCapColor;
         float _CrystalGemMatCapStrength;
         float _CrystalGemMatCapFresnel;
-        float4 _CrystalGemParallaxTint;
-        float4 _CrystalGemParallaxSecondaryColor;
-        float _CrystalGemParallaxColorVariation;
-        float _CrystalGemParallaxRampBlend;
         float _CrystalGemParallaxScale;
         float _CrystalGemParallaxDepth;
         float _CrystalGemParallaxStrength;
         float _CrystalGemParallaxContrast;
         float _CrystalGemParallaxFresnel;
+        float4 _CrystalGemParallaxTint;
+        float4 _CrystalGemParallaxSecondaryColor;
+        float _CrystalGemParallaxColorVariation;
+        float _CrystalGemParallaxRampBlend;
         float _CrystalDebugMode;
     CBUFFER_END
 

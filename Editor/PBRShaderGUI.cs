@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
+using System.Text;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -366,16 +367,13 @@ namespace jp.lilxyzw.lilpbr
             var targetMaterial = materialEditor.target as Material;
             if (!targetMaterial || !targetMaterial.shader) return false;
 
-            if (shader != targetMaterial.shader)
+            shader = targetMaterial.shader;
+            if (!shaderGuiCaches.TryGetValue(shader, out var cache) || !cache.IsCurrent(shader))
             {
-                shader = targetMaterial.shader;
-                if (!shaderGuiCaches.TryGetValue(shader, out var cache))
-                {
-                    cache = new ShaderGuiCache(shader);
-                    shaderGuiCaches.Add(shader, cache);
-                }
-                UseCache(cache);
+                cache = new ShaderGuiCache(shader);
+                shaderGuiCaches[shader] = cache;
             }
+            UseCache(cache);
             return foldoutStarts != null;
         }
 
@@ -452,10 +450,12 @@ namespace jp.lilxyzw.lilpbr
             public readonly HashSet<string> needToCache = new();
             public readonly HashSet<string> clearCache = new();
             public readonly ShaderImporter shaderImporter;
+            private readonly string propertySignature;
 
             public ShaderGuiCache(Shader shader)
             {
                 shaderImporter = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(shader)) as ShaderImporter;
+                propertySignature = CreatePropertySignature(shader);
 
                 var count = shader.GetPropertyCount();
                 for (int i = 0; i < count; i++)
@@ -467,6 +467,24 @@ namespace jp.lilxyzw.lilpbr
                         AddAttribute(name, attr);
                     }
                 }
+            }
+
+            public bool IsCurrent(Shader shader) => propertySignature == CreatePropertySignature(shader);
+
+            private static string CreatePropertySignature(Shader shader)
+            {
+                var builder = new StringBuilder();
+                var count = shader.GetPropertyCount();
+                builder.Append(count);
+                for (int i = 0; i < count; i++)
+                {
+                    builder.Append('\n').Append(shader.GetPropertyName(i)).Append(':');
+                    foreach (var attr in shader.GetPropertyAttributes(i))
+                    {
+                        builder.Append('[').Append(attr).Append(']');
+                    }
+                }
+                return builder.ToString();
             }
 
             private void AddAttribute(string name, string attr)

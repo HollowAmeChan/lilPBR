@@ -4,8 +4,6 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
     {
         [LILFoldout(Surface)]
         [LILPropertyCache] _CrystalBaseColor ("基础颜色", Color) = (0.18,0.45,0.95,1)
-        _CrystalSmoothness ("光滑度", Range(0.0, 1.0)) = 1.0
-        _CrystalMetallic ("金属度", Range(0.0, 1.0)) = 0.0
         _CrystalOcclusion ("环境遮蔽", Range(0.0, 1.0)) = 1.0
         _CrystalNormalMap ("法线贴图", 2D) = "bump" {}
         _CrystalNormalScale ("法线缩放", Range(0.0, 4.0)) = 1.0
@@ -81,13 +79,17 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         _CrystalShadowMinLight ("阴影最小亮度", Range(0.0, 1.0)) = 0.0
         _CrystalShadowTint ("阴影染色", Color) = (0.16,0.22,0.36,1)
         _CrystalIndirectStrength ("间接光强度", Range(0.0, 4.0)) = 1.0
-        _CrystalSpecularStrength ("高光强度", Range(0.0, 8.0)) = 1.0
-        [HDR] _CrystalSpecularColor ("高光颜色", Color) = (1,1,1,1)
         [LILFoldoutEnd]
 
         [LILFoldout(Fake Gem Composite)]
         _CrystalGemBaseLightStrength ("基础光照权重", Range(0.0, 2.0)) = 1.0
-        _CrystalGemVolumeEmissionStrength ("体积杂质权重", Range(0.0, 2.0)) = 1.0
+        _CrystalGemRampEmissionStrength ("Ramp 发光权重", Range(0.0, 2.0)) = 1.0
+        [LILFoldoutEnd]
+
+        [LILFoldout(Fake Gem Highlight)]
+        _CrystalGemHighlightSharpness ("高光锐度", Range(0.0, 1.0)) = 1.0
+        _CrystalGemHighlightStrength ("高光强度", Range(0.0, 8.0)) = 1.0
+        [HDR] _CrystalGemHighlightColor ("高光颜色", Color) = (1,1,1,1)
         [LILFoldoutEnd]
 
         [LILFoldout(Fake Gem MatCap)]
@@ -95,6 +97,11 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         [HDR] _CrystalGemMatCapColor ("MatCap 颜色", Color) = (1,1,1,1)
         _CrystalGemMatCapStrength ("MatCap 强度", Range(0.0, 4.0)) = 1.0
         _CrystalGemMatCapFresnel ("MatCap 边缘增强", Range(0.0, 1.0)) = 0.35
+        [LILFoldoutEnd]
+
+        [LILFoldout(Fake Gem Reflection)]
+        _CrystalGemReflectionStrength ("反射强度", Range(0.0, 1.0)) = 0.18
+        _CrystalGemReflectionFresnel ("反射边缘", Range(0.05, 4.0)) = 1.0
         [LILFoldoutEnd]
 
         [LILFoldout(Fake Gem Internal Shape)]
@@ -109,7 +116,6 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         [HDR] _CrystalGemParallaxTint ("内部主颜色", Color) = (1,0.72,0.18,1)
         [HDR] _CrystalGemParallaxSecondaryColor ("内部变化颜色", Color) = (1,0.16,0.02,1)
         _CrystalGemParallaxColorVariation ("颜色变化量", Range(0.0, 1.0)) = 0.65
-        _CrystalGemParallaxRampBlend ("Ramp 混合", Range(0.0, 1.0)) = 0.35
         [LILFoldoutEnd]
 
         [LILFoldout(Debug)]
@@ -129,6 +135,11 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
+    #define CRYSTAL_SURFACE_METALLIC 0.0h
+    #define CRYSTAL_SURFACE_SMOOTHNESS 1.0h
+    #define CRYSTAL_PBR_SPECULAR_STRENGTH 0.0h
+    #define CRYSTAL_PBR_SPECULAR_COLOR half3(1.0h, 1.0h, 1.0h)
+
     TEXTURE2D(_CrystalVolumeNoise); SAMPLER(sampler_CrystalVolumeNoise);
     TEXTURE2D(_CrystalRamp); SAMPLER(sampler_CrystalRamp);
     TEXTURE2D(_CrystalMask); SAMPLER(sampler_CrystalMask);
@@ -138,8 +149,6 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
 
     CBUFFER_START(UnityPerMaterial)
         float4 _CrystalBaseColor;
-        float _CrystalSmoothness;
-        float _CrystalMetallic;
         float _CrystalOcclusion;
         float4 _CrystalNormalMap_ST;
         float _CrystalNormalScale;
@@ -192,14 +201,17 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         float _CrystalShadowMinLight;
         float4 _CrystalShadowTint;
         float _CrystalIndirectStrength;
-        float _CrystalSpecularStrength;
-        float4 _CrystalSpecularColor;
         float _CrystalGemBaseLightStrength;
-        float _CrystalGemVolumeEmissionStrength;
+        float _CrystalGemRampEmissionStrength;
+        float _CrystalGemHighlightSharpness;
+        float _CrystalGemHighlightStrength;
+        float4 _CrystalGemHighlightColor;
         float4 _CrystalGemMatCap_ST;
         float4 _CrystalGemMatCapColor;
         float _CrystalGemMatCapStrength;
         float _CrystalGemMatCapFresnel;
+        float _CrystalGemReflectionStrength;
+        float _CrystalGemReflectionFresnel;
         float _CrystalGemParallaxScale;
         float _CrystalGemParallaxDepth;
         float _CrystalGemParallaxStrength;
@@ -208,7 +220,6 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         float4 _CrystalGemParallaxTint;
         float4 _CrystalGemParallaxSecondaryColor;
         float _CrystalGemParallaxColorVariation;
-        float _CrystalGemParallaxRampBlend;
         float _CrystalDebugMode;
     CBUFFER_END
 

@@ -1,6 +1,22 @@
 #ifndef INCLUDED_LILPBR_CRYSTAL_CORE
 #define INCLUDED_LILPBR_CRYSTAL_CORE
 
+#ifndef CRYSTAL_SURFACE_METALLIC
+#define CRYSTAL_SURFACE_METALLIC saturate(_CrystalMetallic)
+#endif
+
+#ifndef CRYSTAL_SURFACE_SMOOTHNESS
+#define CRYSTAL_SURFACE_SMOOTHNESS saturate(_CrystalSmoothness)
+#endif
+
+#ifndef CRYSTAL_PBR_SPECULAR_STRENGTH
+#define CRYSTAL_PBR_SPECULAR_STRENGTH _CrystalSpecularStrength
+#endif
+
+#ifndef CRYSTAL_PBR_SPECULAR_COLOR
+#define CRYSTAL_PBR_SPECULAR_COLOR _CrystalSpecularColor.rgb
+#endif
+
 struct CrystalAttributes
 {
     float4 positionOS : POSITION;
@@ -257,8 +273,8 @@ CrystalSurface CrystalResolveSurface(CrystalVaryings input)
 
     surface.color = baseColor;
     surface.emission = CrystalResolveEmission(rampCoord, rampMask);
-    surface.metallic = saturate(_CrystalMetallic);
-    surface.smoothness = saturate(_CrystalSmoothness);
+    surface.metallic = CRYSTAL_SURFACE_METALLIC;
+    surface.smoothness = CRYSTAL_SURFACE_SMOOTHNESS;
     surface.occlusion = saturate(_CrystalOcclusion);
     surface.alpha = saturate(_CrystalBaseColor.a);
     surface.volumeMain = volume.mainMask;
@@ -286,7 +302,7 @@ half3 CrystalShade(CrystalVaryings input, CrystalSurface surface)
     half nDotH = saturate(dot(surface.normalWS, halfDir));
     half specPower = exp2(lerp(5.0h, 12.0h, surface.smoothness));
     half dielectricSpec = lerp(0.04h, 1.0h, surface.metallic);
-    color += pow(nDotH, specPower) * surface.smoothness * shadow * mainLight.color * _CrystalSpecularColor.rgb * _CrystalSpecularStrength * dielectricSpec;
+    color += pow(nDotH, specPower) * surface.smoothness * shadow * mainLight.color * CRYSTAL_PBR_SPECULAR_COLOR * CRYSTAL_PBR_SPECULAR_STRENGTH * dielectricSpec;
 
     #if defined(_ADDITIONAL_LIGHTS)
     uint pixelLightCount = GetAdditionalLightsCount();
@@ -300,7 +316,7 @@ half3 CrystalShade(CrystalVaryings input, CrystalSurface surface)
 
         half3 lightHalfDir = SafeNormalize(light.direction + surface.viewDirWS);
         half lightNdotH = saturate(dot(surface.normalWS, lightHalfDir));
-        color += pow(lightNdotH, specPower) * surface.smoothness * light.distanceAttenuation * lightShadow * light.color * _CrystalSpecularColor.rgb * _CrystalSpecularStrength * dielectricSpec;
+        color += pow(lightNdotH, specPower) * surface.smoothness * light.distanceAttenuation * lightShadow * light.color * CRYSTAL_PBR_SPECULAR_COLOR * CRYSTAL_PBR_SPECULAR_STRENGTH * dielectricSpec;
     }
     #endif
 

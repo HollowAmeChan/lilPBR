@@ -15,6 +15,22 @@ Shader "lilPBR/Crystal/Raymarch 8"
         _CrystalNormalSpherical ("球形法线混合", Range(0.0, 1.0)) = 0.5
         [LILFoldoutEnd]
 
+        [LILFoldout(Desaturate)]
+        _CrystalDesaturateAmount ("去饱和强度", Range(0.0, 1.0)) = 0.75
+        _CrystalDesaturateFresnelExp ("去饱和菲涅尔指数", Range(0.05, 8.0)) = 1.0
+        _CrystalDesaturateLighten ("去饱和提亮", Range(0.0, 4.0)) = 0.5
+        _CrystalDesaturateThickness ("去饱和厚度影响", Range(0.0, 1.0)) = 1.0
+        [LILFoldoutEnd]
+
+        [LILFoldout(Refraction Noise)]
+        [ToggleUI] _CrystalUseRefractionNoise ("启用折射表面噪声", Int) = 1
+        _CrystalRefractionNoise ("折射表面噪声", 2D) = "white" {}
+        _CrystalRefractionNoiseScale ("折射噪声缩放", Range(0.001, 8.0)) = 1.0
+        _CrystalRefractionNoiseStrength ("折射噪声强度", Range(0.0, 1.0)) = 1.0
+        _CrystalRefractionNoiseAdd ("折射噪声叠加", Range(0.0, 1.0)) = 0.0
+        _CrystalRefractionNoiseParallax ("折射噪声视差", Range(0.0, 32.0)) = 5.0
+        [LILFoldoutEnd]
+
         [LILFoldout(Volume Raymarch)]
         [NoScaleOffset] _CrystalVolumeNoise ("体积噪声 (RG)", 2D) = "gray" {}
         _CrystalStepLength ("步进长度", Range(0.0, 4.0)) = 1.0
@@ -29,6 +45,15 @@ Shader "lilPBR/Crystal/Raymarch 8"
         [LILVector3] _CrystalVolumeOffset ("体积偏移 XYZ", Vector) = (0,0,0,0)
         [LILFoldoutEnd]
 
+        [LILFoldout(Lighting)]
+        _CrystalReceiveShadowStrength ("接收阴影强度", Range(0.0, 1.0)) = 1.0
+        _CrystalShadowMinLight ("阴影最小亮度", Range(0.0, 1.0)) = 0.0
+        _CrystalShadowTint ("阴影染色", Color) = (0.16,0.22,0.36,1)
+        _CrystalIndirectStrength ("间接光强度", Range(0.0, 4.0)) = 1.0
+        _CrystalSpecularStrength ("高光强度", Range(0.0, 8.0)) = 1.0
+        [HDR] _CrystalSpecularColor ("高光颜色", Color) = (1,1,1,1)
+        [LILFoldoutEnd]
+
         [LILFoldout(Ramp Emission)]
         [NoScaleOffset] _CrystalRamp ("渐变贴图", 2D) = "white" {}
         [HDR] _CrystalRampTint ("渐变染色", Color) = (1,1,1,1)
@@ -39,31 +64,6 @@ Shader "lilPBR/Crystal/Raymarch 8"
         _CrystalRampMaskParallax ("遮罩视差", Range(0.0, 16.0)) = 4.0
         _CrystalRampFresnelStrength ("菲涅尔权重", Range(0.0, 1.0)) = 0.0
         _CrystalFresnelPower ("菲涅尔范围", Range(0.05, 8.0)) = 1.0
-        [LILFoldoutEnd]
-
-        [LILFoldout(Refraction Noise)]
-        [ToggleUI] _CrystalUseRefractionNoise ("启用折射表面噪声", Int) = 1
-        _CrystalRefractionNoise ("折射表面噪声", 2D) = "white" {}
-        _CrystalRefractionNoiseScale ("折射噪声缩放", Range(0.001, 8.0)) = 1.0
-        _CrystalRefractionNoiseStrength ("折射噪声强度", Range(0.0, 1.0)) = 1.0
-        _CrystalRefractionNoiseAdd ("折射噪声叠加", Range(0.0, 1.0)) = 0.0
-        _CrystalRefractionNoiseParallax ("折射噪声视差", Range(0.0, 32.0)) = 5.0
-        [LILFoldoutEnd]
-
-        [LILFoldout(Desaturate)]
-        _CrystalDesaturateAmount ("去饱和强度", Range(0.0, 1.0)) = 0.75
-        _CrystalDesaturateFresnelExp ("去饱和菲涅尔指数", Range(0.05, 8.0)) = 1.0
-        _CrystalDesaturateLighten ("去饱和提亮", Range(0.0, 4.0)) = 0.5
-        _CrystalDesaturateThickness ("去饱和厚度影响", Range(0.0, 1.0)) = 1.0
-        [LILFoldoutEnd]
-
-        [LILFoldout(Lighting)]
-        _CrystalReceiveShadowStrength ("接收阴影强度", Range(0.0, 1.0)) = 1.0
-        _CrystalShadowMinLight ("阴影最小亮度", Range(0.0, 1.0)) = 0.0
-        _CrystalShadowTint ("阴影染色", Color) = (0.16,0.22,0.36,1)
-        _CrystalIndirectStrength ("间接光强度", Range(0.0, 4.0)) = 1.0
-        _CrystalSpecularStrength ("高光强度", Range(0.0, 8.0)) = 1.0
-        [HDR] _CrystalSpecularColor ("高光颜色", Color) = (1,1,1,1)
         [LILFoldoutEnd]
 
         [LILFoldout(Advanced)]

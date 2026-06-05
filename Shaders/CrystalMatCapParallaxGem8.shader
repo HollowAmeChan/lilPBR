@@ -82,12 +82,17 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         _CrystalGemParallaxColorVariation ("颜色变化量", Range(0.0, 1.0)) = 0.65
         [LILFoldoutEnd]
 
+        [LILFoldout(Environment)]
+        _CrystalIndirectStrength ("间接光强度", Range(0.0, 4.0)) = 1.0
+        _CrystalSSAOStrength ("SSAO 强度", Range(0.0, 1.0)) = 0.0
+        _CrystalSSAOTint ("SSAO 染色", Color) = (0.0,0.0,0.0,1)
+        [LILFoldoutEnd]
+
         [LILFoldout(Shadow)]
-        _CrystalOcclusion ("环境遮蔽", Range(0.0, 1.0)) = 1.0
-        _CrystalReceiveShadowStrength ("接收阴影强度", Range(0.0, 1.0)) = 1.0
+        _CrystalShadowStrength ("阴影强度", Range(0.0, 1.0)) = 1.0
+        _CrystalShadowCastStrength ("ShadowCast 强度", Range(0.0, 1.0)) = 1.0
         _CrystalShadowMinLight ("阴影最小亮度", Range(0.0, 1.0)) = 0.0
         _CrystalShadowTint ("阴影染色", Color) = (0.16,0.22,0.36,1)
-        _CrystalIndirectStrength ("间接光强度", Range(0.0, 4.0)) = 1.0
         [LILFoldoutEnd]
 
         [LILFoldout(Highlight)]
@@ -125,7 +130,10 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         float4 _CrystalBaseColor;
         float4 _MainTex_ST;
         float _Cutoff;
-        float _CrystalOcclusion;
+        float _CrystalShadowStrength;
+        float _CrystalSSAOStrength;
+        float4 _CrystalSSAOTint;
+        float _CrystalShadowCastStrength;
         float4 _CrystalNormalMap_ST;
         float _CrystalNormalScale;
         float _CrystalNormalStrength;
@@ -159,7 +167,6 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         float _CrystalDesaturateFresnelExp;
         float _CrystalDesaturateLighten;
         float _CrystalDesaturateThickness;
-        float _CrystalReceiveShadowStrength;
         float _CrystalShadowMinLight;
         float4 _CrystalShadowTint;
         float _CrystalIndirectStrength;
@@ -215,6 +222,7 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
             #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
+            #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
             ENDHLSL
         }
 

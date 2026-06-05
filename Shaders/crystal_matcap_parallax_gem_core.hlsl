@@ -351,10 +351,12 @@ half3 CrystalGemHighlight(CrystalVaryings input, CrystalSurface surface)
 
     half3 halfDir = SafeNormalize(mainLight.direction + surface.viewDirWS);
     half nDotH = saturate(dot(surface.normalWS, halfDir));
-    half shadow = lerp(1.0h, mainLight.shadowAttenuation, saturate(_CrystalReceiveShadowStrength));
+    half shadow = CrystalResolveShadowCast(mainLight.shadowAttenuation);
+    half shadowLight = CrystalResolveShadowLight(shadow);
     half highlightStrength = CrystalGemClampRange(_CrystalGemHighlightStrength, 0.0h, 8.0h);
     half3 highlightColor = max(_CrystalGemHighlightColor.rgb, half3(0.0h, 0.0h, 0.0h));
-    color += pow(nDotH, specPower) * sharpness * shadow * mainLight.color * highlightColor * highlightStrength;
+    half3 shadowedHighlightColor = CrystalApplyShadowTint(highlightColor, shadowLight);
+    color += pow(nDotH, specPower) * sharpness * shadowLight * mainLight.color * shadowedHighlightColor * highlightStrength;
 
     #if defined(_ADDITIONAL_LIGHTS)
     uint pixelLightCount = GetAdditionalLightsCount();
@@ -363,8 +365,10 @@ half3 CrystalGemHighlight(CrystalVaryings input, CrystalSurface surface)
         Light light = GetAdditionalLight(lightIndex, input.positionWS, half4(1.0h, 1.0h, 1.0h, 1.0h));
         half3 lightHalfDir = SafeNormalize(light.direction + surface.viewDirWS);
         half lightNdotH = saturate(dot(surface.normalWS, lightHalfDir));
-        half lightShadow = lerp(1.0h, light.shadowAttenuation, saturate(_CrystalReceiveShadowStrength));
-        color += pow(lightNdotH, specPower) * sharpness * light.distanceAttenuation * lightShadow * light.color * highlightColor * highlightStrength;
+        half lightShadow = CrystalResolveShadowCast(light.shadowAttenuation);
+        half lightShadowLight = CrystalResolveShadowLight(lightShadow);
+        half3 lightShadowedHighlightColor = CrystalApplyShadowTint(highlightColor, lightShadowLight);
+        color += pow(lightNdotH, specPower) * sharpness * light.distanceAttenuation * lightShadowLight * light.color * lightShadowedHighlightColor * highlightStrength;
     }
     #endif
 

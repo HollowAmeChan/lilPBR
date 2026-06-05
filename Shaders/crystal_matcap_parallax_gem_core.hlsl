@@ -126,7 +126,9 @@ bool CrystalGemBuildInternalRay(CrystalVaryings input, CrystalSurface surface, o
     float3 normalOS = SafeNormalize(TransformWorldToObjectDir(surface.normalWS, false));
     normalOS = dot(normalOS, rayDirectionOS) > 0.0 ? -normalOS : normalOS;
 
-    float3 refractedDirectionOS = refract(rayDirectionOS, normalOS, 0.74);
+    float surfaceNoise = max(CrystalResolveRefractionSurfaceNoise(input, surface.viewDirWS), 0.001);
+    float eta = saturate(1.0 - (surfaceNoise / max(_CrystalRefraction, 0.001)));
+    float3 refractedDirectionOS = refract(rayDirectionOS, normalOS, eta);
     if (dot(refractedDirectionOS, refractedDirectionOS) > 0.0001)
     {
         rayDirectionOS = SafeNormalize(refractedDirectionOS);
@@ -306,6 +308,12 @@ half CrystalGemVolumeStepWeight(half density, half coverage, half mode)
 
 half3 CrystalGemInternalVolume(CrystalVaryings input, CrystalSurface surface)
 {
+    half impurityStrength = saturate(_CrystalGemImpurityStrength);
+    if (impurityStrength <= 0.0h)
+    {
+        return half3(0.0h, 0.0h, 0.0h);
+    }
+
     CrystalGemInternalRay ray;
     if (!CrystalGemBuildInternalRay(input, surface, ray))
     {
@@ -332,7 +340,7 @@ half3 CrystalGemInternalVolume(CrystalVaryings input, CrystalSurface surface)
 
     half volumeMask = saturate(dot(accumulated, half3(0.2126h, 0.7152h, 0.0722h)));
     half fresnelWeight = saturate(lerp(1.0h, surface.fresnel + volumeMask, saturate(_CrystalGemParallaxFresnel)));
-    return accumulated * CrystalGemClampRange(_CrystalGemParallaxStrength, 0.0h, 4.0h) * fresnelWeight;
+    return accumulated * CrystalGemClampRange(_CrystalGemParallaxStrength, 0.0h, 4.0h) * fresnelWeight * impurityStrength;
 }
 
 half3 CrystalGemHighlight(CrystalVaryings input, CrystalSurface surface)
@@ -375,19 +383,26 @@ half3 CrystalGemHighlight(CrystalVaryings input, CrystalSurface surface)
     return color;
 }
 
-half3 CrystalGemReflection(CrystalSurface surface)
+half3 CrystalGemReflection(CrystalVaryings input, CrystalSurface surface)
 {
     half fresnelPower = CrystalGemClampRange(_CrystalGemReflectionFresnel, 0.05h, 4.0h);
     half fresnel = pow(saturate(surface.fresnel), fresnelPower);
     half3 reflectionDirection = reflect(-surface.viewDirWS, surface.normalWS);
-    return SampleSH(reflectionDirection) * fresnel * CrystalGemClampRange(_CrystalGemReflectionStrength, 0.0h, 1.0h);
+    half perceptualRoughness = saturate(_CrystalGemReflectionRoughness);
+    half3 reflection = GlossyEnvironmentReflection(
+        reflectionDirection,
+        input.positionWS,
+        perceptualRoughness,
+        1.0h,
+        GetNormalizedScreenSpaceUV(input.positionCS)
+    );
+    return reflection * fresnel * CrystalGemClampRange(_CrystalGemReflectionStrength, 0.0h, 1.0h);
 }
 
 struct CrystalGemComponents
 {
     half3 baseLayer;
     half3 matCap;
-    half3 reflection;
     half3 rampEmission;
     half3 internalVolume;
 };
@@ -397,7 +412,6 @@ CrystalGemComponents CrystalGemResolveComponents(CrystalVaryings input, CrystalS
     CrystalGemComponents components;
     components.baseLayer = surface.color;
     components.matCap = CrystalGemMatCap(surface);
-    components.reflection = CrystalGemReflection(surface);
     components.rampEmission = surface.emission;
     components.internalVolume = CrystalGemInternalVolume(input, surface);
     return components;
@@ -407,7 +421,6 @@ half3 CrystalGemCompose(CrystalGemComponents components)
 {
     half3 color = components.baseLayer
         + components.matCap
-        + components.reflection
         + components.rampEmission
         + components.internalVolume;
     return max(color, half3(0.0h, 0.0h, 0.0h));
@@ -422,10 +435,13 @@ half3 CrystalGemShadeLighting(CrystalVaryings input, CrystalSurface surface)
 
 half3 CrystalShadeMatCapParallaxGem(CrystalVaryings input, CrystalSurface surface)
 {
+    CrystalGemComponents components = CrystalGemResolveComponents(input, surface);
     CrystalSurface composedSurface = surface;
-    composedSurface.color = CrystalGemCompose(CrystalGemResolveComponents(input, surface));
+    composedSurface.color = CrystalGemCompose(components);
     composedSurface.emission = half3(0.0h, 0.0h, 0.0h);
-    return CrystalGemShadeLighting(input, composedSurface);
+    half3 color = CrystalGemShadeLighting(input, composedSurface);
+    color += CrystalGemReflection(input, surface);
+    return color;
 }
 
 half4 CrystalFragMatCapParallaxGem(CrystalVaryings input, bool isFront : SV_IsFrontFace) : SV_Target

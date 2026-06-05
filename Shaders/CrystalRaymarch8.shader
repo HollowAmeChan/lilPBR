@@ -70,6 +70,7 @@ Shader "lilPBR/Crystal/Raymarch 8"
         [LILFoldoutEnd]
 
         [LILFoldout(Highlight)]
+        _CrystalHighlightDeflection ("高光偏转", Range(0.0, 2.0)) = 0.0
         _CrystalSpecularStrength ("高光强度", Range(0.0, 8.0)) = 1.0
         [HDR] _CrystalSpecularColor ("高光颜色", Color) = (1,1,1,1)
         [LILFoldoutEnd]
@@ -139,6 +140,7 @@ Shader "lilPBR/Crystal/Raymarch 8"
         float _CrystalShadowMinLight;
         float4 _CrystalShadowTint;
         float _CrystalIndirectStrength;
+        float _CrystalHighlightDeflection;
         float _CrystalSpecularStrength;
         float4 _CrystalSpecularColor;
     CBUFFER_END

@@ -13,6 +13,10 @@
 #define CRYSTAL_PBR_SPECULAR_COLOR _CrystalSpecularColor.rgb
 #endif
 
+#ifndef CRYSTAL_HIGHLIGHT_DEFLECTION
+#define CRYSTAL_HIGHLIGHT_DEFLECTION _CrystalHighlightDeflection
+#endif
+
 struct CrystalAttributes
 {
     float4 positionOS : POSITION;
@@ -282,6 +286,14 @@ half3 CrystalApplyShadowTint(half3 color, half shadowLight)
     return lerp(color * _CrystalShadowTint.rgb, color, saturate(shadowLight));
 }
 
+half3 CrystalResolveHighlightViewDir(CrystalSurface surface)
+{
+    half deflection = min(max(CRYSTAL_HIGHLIGHT_DEFLECTION, 0.0h), 2.0h);
+    half eta = lerp(1.0h, 0.58h, deflection);
+    half3 refractedViewDir = -refract(-surface.viewDirWS, surface.normalWS, eta);
+    return SafeNormalize(lerp(surface.viewDirWS, refractedViewDir, deflection));
+}
+
 CrystalSurface CrystalResolveSurface(CrystalVaryings input, half4 mainTex)
 {
     CrystalSurface surface;
@@ -331,7 +343,8 @@ half3 CrystalShade(CrystalVaryings input, CrystalSurface surface)
     half3 color = ambientColor * SampleSH(surface.normalWS) * _CrystalIndirectStrength;
     color += mainShadowedColor * mainLight.color * directShape * mainShadowLight;
 
-    half3 halfDir = SafeNormalize(mainLight.direction + surface.viewDirWS);
+    half3 highlightViewDir = CrystalResolveHighlightViewDir(surface);
+    half3 halfDir = SafeNormalize(mainLight.direction + highlightViewDir);
     half nDotH = saturate(dot(surface.normalWS, halfDir));
     half specPower = exp2(lerp(4.0h, 8.0h, surface.smoothness));
     half3 mainSpecularColor = CrystalApplyShadowTint(CRYSTAL_PBR_SPECULAR_COLOR, mainShadowLight);
@@ -349,7 +362,7 @@ half3 CrystalShade(CrystalVaryings input, CrystalSurface surface)
         half lightShape = lerp(0.2h, 1.0h, lightNdotL) * light.distanceAttenuation * lightShadowLight;
         color += lightShadowedColor * light.color * lightShape;
 
-        half3 lightHalfDir = SafeNormalize(light.direction + surface.viewDirWS);
+        half3 lightHalfDir = SafeNormalize(light.direction + highlightViewDir);
         half lightNdotH = saturate(dot(surface.normalWS, lightHalfDir));
         half3 lightSpecularColor = CrystalApplyShadowTint(CRYSTAL_PBR_SPECULAR_COLOR, lightShadowLight);
         color += pow(lightNdotH, specPower) * surface.smoothness * light.distanceAttenuation * lightShadowLight * light.color * lightSpecularColor * CRYSTAL_PBR_SPECULAR_STRENGTH;

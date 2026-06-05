@@ -53,6 +53,7 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         [LILFoldout(Gem Reflection)]
         _CrystalGemReflectionStrength ("反射强度", Range(0.0, 1.0)) = 0.18
         _CrystalGemReflectionFresnel ("反射边缘", Range(0.05, 4.0)) = 1.0
+        _CrystalGemReflectionRoughness ("反射粗糙度", Range(0.0, 1.0)) = 0.08
         [LILFoldoutEnd]
 
         [LILFoldout(Ramp Emission)]
@@ -68,6 +69,7 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         [LILFoldoutEnd]
 
         [LILFoldout(Internal Impurities)]
+        _CrystalGemImpurityStrength ("杂质强度", Range(0.0, 1.0)) = 1.0
         [Enum(Fractal, 0, Marble, 1, Veins, 2)] _CrystalGemImpurityMode ("杂质算法", Int) = 0
         _CrystalGemImpurityFlowSpeed ("流动速度", Range(0.0, 4.0)) = 0.0
         _CrystalGemImpurityFlowStrength ("流动强度", Range(0.0, 1.0)) = 0.0
@@ -117,6 +119,7 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
     #define CRYSTAL_SURFACE_SMOOTHNESS 1.0h
     #define CRYSTAL_PBR_SPECULAR_STRENGTH 0.0h
     #define CRYSTAL_PBR_SPECULAR_COLOR half3(1.0h, 1.0h, 1.0h)
+    #define CRYSTAL_HIGHLIGHT_DEFLECTION 0.0h
 
     TEXTURE2D(_CrystalVolumeNoise); SAMPLER(sampler_CrystalVolumeNoise);
     TEXTURE2D(_MainTex); SAMPLER(sampler_MainTex);
@@ -179,6 +182,8 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         float _CrystalGemMatCapFresnel;
         float _CrystalGemReflectionStrength;
         float _CrystalGemReflectionFresnel;
+        float _CrystalGemReflectionRoughness;
+        float _CrystalGemImpurityStrength;
         float _CrystalGemImpurityMode;
         float _CrystalGemImpurityFlowSpeed;
         float _CrystalGemImpurityFlowStrength;
@@ -221,6 +226,9 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
             #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_ATLAS
             #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
             #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
             ENDHLSL

@@ -3,7 +3,7 @@ guid: 6814af6333624f11a276a5c46577c43a
 ShaderImporter:
   externalObjects: {}
   defaultTextures:
-  - _CrystalVolumeNoise: {instanceID: 0}
+  - _CrystalVolumeNoise: {fileID: 2800000, guid: ad844ab0133394a4ab64877a0f217154, type: 3}
   - _CrystalRamp: {instanceID: 0}
   - _CrystalMask: {instanceID: 0}
   - _CrystalNormalMap: {instanceID: 0}

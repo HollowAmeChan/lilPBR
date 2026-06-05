@@ -14,11 +14,11 @@ Shader "lilPBR/Crystal/Raymarch 8"
         _CrystalNormalSpherical ("球形法线混合", Range(0.0, 1.0)) = 0.5
         [LILFoldoutEnd]
 
-        [LILFoldout(Desaturate)]
-        _CrystalDesaturateAmount ("去饱和强度", Range(0.0, 1.0)) = 0.75
-        _CrystalDesaturateFresnelExp ("去饱和菲涅尔指数", Range(0.05, 8.0)) = 1.0
-        _CrystalDesaturateLighten ("去饱和提亮", Range(0.0, 4.0)) = 0.5
-        _CrystalDesaturateThickness ("去饱和厚度影响", Range(0.0, 1.0)) = 1.0
+        [LILFoldout(BaseColorProcess)]
+        _CrystalDesaturateAmount ("基色灰度混合", Range(0.0, 1.0)) = 0.75
+        _CrystalDesaturateFresnelExp ("灰度边缘指数", Range(0.05, 8.0)) = 1.0
+        _CrystalDesaturateLighten ("灰度亮度倍率", Range(0.0, 4.0)) = 0.5
+        _CrystalDesaturateThickness ("厚度遮罩权重", Range(0.0, 1.0)) = 1.0
         [LILFoldoutEnd]
 
         [LILFoldout(Refraction Noise)]

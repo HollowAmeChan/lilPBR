@@ -13,11 +13,11 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         _CrystalNormalSpherical ("球形法线混合", Range(0.0, 1.0)) = 0.5
         [LILFoldoutEnd]
 
-        [LILFoldout(Desaturate)]
-        _CrystalDesaturateAmount ("去饱和强度", Range(0.0, 1.0)) = 0.75
-        _CrystalDesaturateFresnelExp ("去饱和菲涅尔指数", Range(0.05, 8.0)) = 1.0
-        _CrystalDesaturateLighten ("去饱和提亮", Range(0.0, 4.0)) = 0.5
-        _CrystalDesaturateThickness ("去饱和厚度影响", Range(0.0, 1.0)) = 1.0
+        [LILFoldout(BaseColorProcess)]
+        _CrystalDesaturateAmount ("基色灰度混合", Range(0.0, 1.0)) = 0.75
+        _CrystalDesaturateFresnelExp ("灰度边缘指数", Range(0.05, 8.0)) = 1.0
+        _CrystalDesaturateLighten ("灰度亮度倍率", Range(0.0, 4.0)) = 0.5
+        _CrystalDesaturateThickness ("厚度遮罩权重", Range(0.0, 1.0)) = 1.0
         [LILFoldoutEnd]
 
         [LILFoldout(Refraction Noise)]
@@ -48,12 +48,6 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         [HDR] _CrystalGemMatCapColor ("MatCap 颜色", Color) = (1,1,1,1)
         _CrystalGemMatCapStrength ("MatCap 强度", Range(0.0, 4.0)) = 1.0
         _CrystalGemMatCapFresnel ("MatCap 边缘增强", Range(0.0, 1.0)) = 0.35
-        [LILFoldoutEnd]
-
-        [LILFoldout(Gem Reflection)]
-        _CrystalGemReflectionStrength ("反射强度", Range(0.0, 1.0)) = 0.18
-        _CrystalGemReflectionFresnel ("反射边缘", Range(0.05, 4.0)) = 1.0
-        _CrystalGemReflectionRoughness ("反射粗糙度", Range(0.0, 1.0)) = 0.08
         [LILFoldoutEnd]
 
         [LILFoldout(Ramp Emission)]
@@ -88,6 +82,9 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         _CrystalIndirectStrength ("间接光强度", Range(0.0, 4.0)) = 1.0
         _CrystalSSAOStrength ("SSAO 强度", Range(0.0, 1.0)) = 0.0
         _CrystalSSAOTint ("SSAO 染色", Color) = (0.0,0.0,0.0,1)
+        _CrystalGemReflectionStrength ("环境反射强度", Range(0.0, 1.0)) = 0.18
+        _CrystalGemReflectionFresnel ("环境反射边缘", Range(0.05, 4.0)) = 1.0
+        _CrystalGemReflectionRoughness ("环境反射粗糙度", Range(0.0, 1.0)) = 0.08
         [LILFoldoutEnd]
 
         [LILFoldout(Shadow)]

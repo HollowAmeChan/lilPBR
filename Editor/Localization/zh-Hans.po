@@ -578,8 +578,14 @@ msgstr "体积雾"
 msgid "Surface"
 msgstr "表面"
 
+msgid "Surface Preprocess"
+msgstr "表面预处理"
+
 msgid "Volume Raymarch"
 msgstr "体积光线步进"
+
+msgid "Internal Impurities 2"
+msgstr "内部杂质 2"
 
 msgid "Linear Mask"
 msgstr "线性遮罩"
@@ -587,8 +593,14 @@ msgstr "线性遮罩"
 msgid "Ramp Emission"
 msgstr "渐变发光"
 
+msgid "Gem Glow"
+msgstr "宝石发光"
+
 msgid "Refraction Noise"
 msgstr "折射噪声"
+
+msgid "Refraction Scattering"
+msgstr "折射与散射"
 
 msgid "Desaturate"
 msgstr "去饱和"
@@ -596,11 +608,17 @@ msgstr "去饱和"
 msgid "Internal Impurities"
 msgstr "内部杂质"
 
+msgid "Gem Internal Impurities"
+msgstr "宝石内部杂质"
+
 msgid "Gem MatCap"
 msgstr "宝石 MatCap"
 
 msgid "Gem Reflection"
 msgstr "宝石反射"
+
+msgid "Environment"
+msgstr "环境光"
 
 msgid "Lighting"
 msgstr "光照"

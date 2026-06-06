@@ -8,19 +8,21 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         _Cutoff ("透明裁剪阈值", Range(0.0, 1.0)) = 0.5
         _CrystalMask ("表面遮罩 (R 边缘, G 厚度)", 2D) = "white" {}
         _CrystalNormalMap ("法线贴图", 2D) = "bump" {}
-        _CrystalNormalScale ("法线缩放", Range(0.0, 4.0)) = 1.0
-        _CrystalNormalStrength ("法线强度", Range(0.0, 2.0)) = 1.0
-        _CrystalNormalSpherical ("球形法线混合", Range(0.0, 1.0)) = 0.5
         [LILFoldoutEnd]
 
-        [LILFoldout(BaseColorProcess)]
+        [LILFoldout(Surface Preprocess)]
+        _CrystalNormalScale ("法线解码缩放", Range(0.0, 4.0)) = 1.0
+        _CrystalNormalStrength ("最终法线强度", Range(0.0, 2.0)) = 1.0
+        _CrystalNormalSpherical ("球形法线混合", Range(0.0, 1.0)) = 0.5
+
         _CrystalDesaturateAmount ("基色灰度混合", Range(0.0, 1.0)) = 0.75
         _CrystalDesaturateFresnelExp ("灰度边缘指数", Range(0.05, 8.0)) = 1.0
         _CrystalDesaturateLighten ("灰度亮度倍率", Range(0.0, 4.0)) = 0.5
         _CrystalDesaturateThickness ("厚度遮罩权重", Range(0.0, 1.0)) = 1.0
         [LILFoldoutEnd]
 
-        [LILFoldout(Refraction Noise)]
+        [LILFoldout(Refraction Scattering)]
+        _CrystalRefraction ("折射强度", Range(0.05, 8.0)) = 1.0
         [ToggleUI] _CrystalUseRefractionNoise ("启用折射表面噪声", Int) = 1
         _CrystalRefractionNoise ("折射表面噪声", 2D) = "white" {}
         _CrystalRefractionNoiseScale ("折射噪声缩放", Range(0.001, 8.0)) = 1.0
@@ -29,10 +31,9 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         _CrystalRefractionNoiseParallax ("折射噪声视差", Range(0.0, 32.0)) = 5.0
         [LILFoldoutEnd]
 
-        [LILFoldout(Volume Raymarch)]
+        [LILFoldout(Internal Impurities 2)]
         [NoScaleOffset] _CrystalVolumeNoise ("体积噪声 (RG)", 2D) = "gray" {}
         _CrystalStepLength ("步进长度", Range(0.0, 4.0)) = 1.0
-        _CrystalRefraction ("折射强度", Range(0.05, 8.0)) = 1.0
         _CrystalVolumeNoiseScale ("体积噪声缩放", Range(0.001, 4.0)) = 0.25
         _CrystalVolumeNoiseExp ("主噪声指数", Range(0.05, 4.0)) = 0.8
         _CrystalVolumeNoiseMultiply ("主噪声倍率", Range(0.0, 16.0)) = 2.25
@@ -50,19 +51,19 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         _CrystalGemMatCapFresnel ("MatCap 边缘增强", Range(0.0, 1.0)) = 0.35
         [LILFoldoutEnd]
 
-        [LILFoldout(Ramp Emission)]
-        [NoScaleOffset] _CrystalRamp ("渐变贴图", 2D) = "white" {}
-        [HDR] _CrystalRampTint ("渐变染色", Color) = (1,1,1,1)
-        _CrystalRampEmissionPower ("发光强度", Range(0.0, 8.0)) = 1.0
-        _CrystalRampContrast ("遮罩对比度", Range(0.25, 4.0)) = 1.0
+        [LILFoldout(Gem Glow)]
+        [NoScaleOffset] _CrystalRamp ("宝石发光渐变", 2D) = "white" {}
+        [HDR] _CrystalRampTint ("宝石发光染色", Color) = (1,1,1,1)
+        _CrystalRampEmissionPower ("宝石发光强度", Range(0.0, 8.0)) = 1.0
+        _CrystalRampContrast ("发光遮罩对比度", Range(0.25, 4.0)) = 1.0
         _CrystalRampThicknessStrength ("厚度权重", Range(0.0, 1.0)) = 1.0
         _CrystalRampEdgeStrength ("边缘权重", Range(0.0, 2.0)) = 0.25
-        _CrystalRampMaskParallax ("遮罩视差", Range(0.0, 16.0)) = 4.0
+        _CrystalRampMaskParallax ("发光遮罩视差", Range(0.0, 16.0)) = 4.0
         _CrystalRampFresnelStrength ("菲涅尔权重", Range(0.0, 1.0)) = 0.0
         _CrystalFresnelPower ("菲涅尔范围", Range(0.05, 8.0)) = 1.0
         [LILFoldoutEnd]
 
-        [LILFoldout(Internal Impurities)]
+        [LILFoldout(Gem Internal Impurities)]
         _CrystalGemImpurityStrength ("杂质强度", Range(0.0, 1.0)) = 1.0
         [Enum(Fractal, 0, Marble, 1, Veins, 2)] _CrystalGemImpurityMode ("杂质算法", Int) = 0
         _CrystalGemImpurityFlowSpeed ("流动速度", Range(0.0, 4.0)) = 0.0
@@ -82,22 +83,27 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         _CrystalIndirectStrength ("间接光强度", Range(0.0, 4.0)) = 1.0
         _CrystalSSAOStrength ("SSAO 强度", Range(0.0, 1.0)) = 0.0
         _CrystalSSAOTint ("SSAO 染色", Color) = (0.0,0.0,0.0,1)
-        _CrystalGemReflectionStrength ("环境反射强度", Range(0.0, 1.0)) = 0.18
-        _CrystalGemReflectionFresnel ("环境反射边缘", Range(0.05, 4.0)) = 1.0
-        _CrystalGemReflectionRoughness ("环境反射粗糙度", Range(0.0, 1.0)) = 0.08
         [LILFoldoutEnd]
 
         [LILFoldout(Shadow)]
         _CrystalShadowStrength ("阴影强度", Range(0.0, 1.0)) = 1.0
-        _CrystalShadowCastStrength ("ShadowCast 强度", Range(0.0, 1.0)) = 1.0
+        _CrystalShadowCastStrength ("HoShadowCast 强度", Range(0.0, 1.0)) = 1.0
         _CrystalShadowMinLight ("阴影最小亮度", Range(0.0, 1.0)) = 0.0
+        _CrystalShadowContrast ("阴影对比度", Range(0.25, 4.0)) = 1.0
         _CrystalShadowTint ("阴影染色", Color) = (0.16,0.22,0.36,1)
+        _CrystalShadowTintStrength ("阴影染色强度", Range(0.0, 1.0)) = 1.0
         [LILFoldoutEnd]
 
         [LILFoldout(Highlight)]
         _CrystalGemHighlightSharpness ("高光锐度", Range(0.0, 1.0)) = 1.0
         _CrystalGemHighlightStrength ("高光强度", Range(0.0, 8.0)) = 1.0
         [HDR] _CrystalGemHighlightColor ("高光颜色", Color) = (1,1,1,1)
+        [LILFoldoutEnd]
+
+        [LILFoldout(Gem Reflection)]
+        _CrystalGemReflectionStrength ("环境反射强度", Range(0.0, 1.0)) = 0.18
+        _CrystalGemReflectionFresnel ("环境反射边缘", Range(0.05, 4.0)) = 1.0
+        _CrystalGemReflectionRoughness ("环境反射粗糙度", Range(0.0, 1.0)) = 0.08
         [LILFoldoutEnd]
 
         [LILFoldout(Advanced)]
@@ -168,7 +174,9 @@ Shader "lilPBR/Crystal/Gem MatCap Parallax 8"
         float _CrystalDesaturateLighten;
         float _CrystalDesaturateThickness;
         float _CrystalShadowMinLight;
+        float _CrystalShadowContrast;
         float4 _CrystalShadowTint;
+        float _CrystalShadowTintStrength;
         float _CrystalIndirectStrength;
         float _CrystalGemHighlightSharpness;
         float _CrystalGemHighlightStrength;

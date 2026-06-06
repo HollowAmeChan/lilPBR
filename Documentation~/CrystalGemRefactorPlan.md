@@ -11,7 +11,7 @@
 - 只有真正复用的逻辑才抽成 helper/interface 函数。
 - 最终合成保持直白，不做复杂框架。
 
-旧 `CrystalRaymarch8.shader` 已经删除。`CrystalMatCapParallaxGem8.shader` 先保留作为对照基线。
+旧 `CrystalRaymarch8.shader` 已经删除。`CrystalMatCapParallaxGem8.shader` 也已在新 shader 验收后删除。
 
 ## 文件规划
 
@@ -28,14 +28,14 @@
   - 放 vertex、surface resolve、各组分函数、最终 fragment 合成。
   - 不再按 optics/internal/glow/fibers/matcap/lighting 拆多个 include。
 
-暂时保留旧文件：
+已删除的旧文件：
 
 - `Shaders/CrystalMatCapParallaxGem8.shader`
 - `Shaders/crystal_core.hlsl`
 - `Shaders/crystal_matcap_parallax_gem_core.hlsl`
 - `Shaders/crystal_raymarch.hlsl`
 
-原因：旧 shader 还依赖它们。新 shader 稳定后，再决定删旧入口和旧 include。
+原因：新 shader 已稳定验收，并且不再依赖旧 raymarch/include 链路。
 
 如果后续确实出现复用，再拆出去。当前阶段不预设多文件架构。
 
@@ -77,7 +77,7 @@ Blend Off
 第一阶段所有“折射、通透、内部反射”的感觉都通过这些假组分完成：
 
 - `Internal Field & Glow`
-- 固定方向 `MatCap`
+- 标准 view-space `MatCap`
 - `Highlight`
 - `Reflection`
 
@@ -156,7 +156,7 @@ Blend Off
 - `CrystalReflection`
 - `CrystalShade`
 
-不要为了统一前缀把每个局部变量都写成 `_CrystalXXX` 或 `crystalXXX`。属性名可以为了材质兼容继续保留旧 `_Crystal...`，但 HLSL 内部变量不必跟着冗长。
+不要为了统一前缀把每个局部变量都写成 `_CrystalXXX` 或 `crystalXXX`。新 shader 第一版已经把材质属性迁移成短名，例如 `_BaseColor`、`_VolumeNoise`、`_MatCapTex`、`_FiberStrength`；只在真正的组分函数和结构名上保留 `Crystal`。
 
 结构体字段也用单数简单名，例如 `surface.edge`、`surface.thickness`。旧 shader 里的 `edges` 可以在迁移时改掉。
 
@@ -212,7 +212,7 @@ Blend Off
 
 ## Internal Field & Glow 详细实现草案
 
-这一节是后续实现和优化的直接依据。变量名按新 shader 的简化命名写，属性名可以继续用旧 `_Crystal...` 或迁移后的短名。
+这一节是后续实现和优化的直接依据。变量名按新 shader 的简化命名写，属性名使用短名。
 
 ### 数据结构
 
@@ -510,7 +510,7 @@ color += glow * glowStrength;
 当前旧实现：
 
 ```hlsl
-volumeMask = saturate(surface.volumeMain + surface.volumeSecondary * _CrystalVolumeSecondaryIntersect);
+volumeMask = saturate(surface.volumeMain + surface.volumeSecondary * _VolumeSecondaryIntersect);
 glowMask = contrast(volumeMask * thickness + edge + fresnel);
 glow = ramp(glowMask) * glowMask * power;
 ```
@@ -602,7 +602,7 @@ glow = ramp(glowMask) * tint * glowMask * power;
 - Glow Strength
 - Glow Ramp
 - Glow Tint
-- Glow Power
+- Glow Strength
 - Glow Contrast
 - Thickness Weight
 - Edge Weight
@@ -643,7 +643,7 @@ Internal Field & Glow 是这次主要优化对象。旧实现只保留了 Better
 - thickness 参与 glow mask，提供内部深度感。
 - ramp 坐标和强度由 `Ramp Main Mask Exp`、`Ramp Fresnel Exp`、`Ramp Fresnel Add` 共同控制。
 
-详细 HLSL 草案见上文 `Internal Field & Glow 详细实现草案`。这里的 Inspector 参数和实现草案保持同一套语义：`Field Strength` 影响基础场和范围，`Glow Strength/Glow Power` 只影响最终发光输出。
+详细 HLSL 草案见上文 `Internal Field & Glow 详细实现草案`。这里的 Inspector 参数和实现草案保持同一套语义：`Field Strength` 影响静态内部场输出，`Glow Strength` 只影响最终发光输出。
 
 ### Dynamic Fibers
 
@@ -673,7 +673,7 @@ MatCap 需要改采样逻辑。旧实现用 view-space normal：
 matcapUV = mul((float3x3)UNITY_MATRIX_V, normalize(surface.normalWS)).xy * 0.5 + 0.5;
 ```
 
-这个会让 MatCap 图案跟着相机旋转，更像屏幕贴图，不太符合宝石折射/内部反射的稳定方向。新 shader 默认改成固定方向 MatCap。
+当前新 shader 改回标准 view-space MatCap，保留传统 MatCap 的视角响应；固定方向和 front/back 混合不进入第一版。
 
 - MatCap Strength
 - MatCap Tex
@@ -731,6 +731,7 @@ Lighting 依然需要拆清楚。Inspector 可以放在一个 `Lighting` foldout
 环境：
 
 - Environment Strength
+- Direct Light Strength
 - Indirect Strength
 - SSAO Strength
 - SSAO Tint
@@ -771,7 +772,7 @@ Lighting 依然需要拆清楚。Inspector 可以放在一个 `Lighting` foldout
 
 建议范围：
 
-- `Field Strength`：`0..1`，控制基础内部场是否参与后续 glow/fibers 范围。
+- `Field Strength`：`0..4`，控制静态内部场输出强度。
 - `Glow Strength`：`0..8`，控制发光输出，可保留 HDR 余量。
 - `Fiber Strength`：`0..1` 或 `0..4`，控制动态絮状输出。
 - `MatCap Strength`：`0..4`。
@@ -871,7 +872,7 @@ glow *= glowMask;
 - 新增 `crystal_gem_composite_core.hlsl`。
 - 默认使用 `RenderType = Opaque`、`Queue = Geometry`、`ZWrite On`、`Blend Off`。
 - 先实现 Surface、ShadowCaster、DepthOnly、DepthNormals。
-- 不动旧 `CrystalMatCapParallaxGem8.shader`。
+- 新 shader 验收后删除旧 `CrystalMatCapParallaxGem8.shader`。
 
 ### Step 2：搬 Surface
 
@@ -899,8 +900,7 @@ glow *= glowMask;
 ### Step 5：MatCap、Lighting 细分和最终合成
 
 - 每个组分一个函数。
-- MatCap 默认使用固定 world/local 方向采样，不再使用纯 view-space normal 跟随相机旋转。
-- MatCap 支持 front/back normal 双采样混合。
+- MatCap 使用标准 view-space normal 采样，不再做固定 world/local 方向和 front/back 双采样混合。
 - Lighting 内部至少拆成 `CrystalEnvironment`、`CrystalShadow`、`CrystalHighlight`、`CrystalReflection`。
 - 每个进入最终合成的组分都有独立 strength，且在 `CrystalShade` 附近能看到相乘关系。
 - `CrystalShade` 里直接加加加。
@@ -911,14 +911,71 @@ glow *= glowMask;
 - 新 shader 能在 Unity 导入并编译。
 - 新 shader 第一版是不透明假宝石：`Opaque/Geometry/ZWrite On/Blend Off`。
 - 不引入真正透明队列、透明混合或透明排序依赖。
-- 旧 `CrystalMatCapParallaxGem8.shader` 不受影响。
+- 旧 `CrystalMatCapParallaxGem8.shader` 和专属 include 已删除；新 shader 不依赖旧 raymarch/include 链路。
 - `Internal Field & Glow`、`Dynamic Fibers` 两组调参互不污染。
-- Dynamic Fibers 第一版不重写算法，只接入新 field mask 和 strength 合成。
+- Dynamic Fibers 第一版不重写算法，只接入新的最终 additive 合成。
 - `Fiber Strength = 0` 时没有动态絮状。
-- `Glow Power = 0` 时没有发光，但内部 field 仍能参与 fibers 范围限制。
+- `Glow Strength = 0` 时没有发光，但 Internal Field 仍可单独显示；Dynamic Fibers 与 Field/Glow 不互相污染。
+
+## 当前落地实现
+
+第一版已经按低文件数方案落地：
+
+- `Shaders/CrystalGemComposite.shader`
+- `Shaders/crystal_gem_composite_core.hlsl`
+
+当前 shader 菜单为 `lilPBR/Crystal/Gem Composite`。SubShader 明确使用不透明队列：
+
+```shaderlab
+"RenderType" = "Opaque"
+"Queue" = "Geometry"
+Blend Off
+ZWrite On
+```
+
+当前没有 include `crystal_raymarch.hlsl`，也没有调用 `CrystalRaymarch8`。`Internal Ray Bend` 只影响内部场采样方向，不做可见背景折射输出。
+
+实现函数对应关系：
+
+- Surface：`GemResolveSurface`
+- Internal Field：`CrystalInternalField`
+- Field + Glow 输出：`CrystalResolveFieldGlow`
+- MatCap：`CrystalMatCap`
+- Dynamic Fibers：`CrystalDynamicFibers`
+- Environment：`CrystalEnvironment`
+- Shadow 合成：`CrystalShadow`
+- Highlight：`CrystalHighlight`
+- Reflection：`CrystalReflection`
+- 最终合成：`CrystalGemComposite`
+
+最终合成当前保持直接加法：
+
+```hlsl
+color += CrystalEnvironment(surface, components.baseLayer, lighting);
+color += GemDirectLights(input, surface, components.baseLayer, lighting);
+color = CrystalApplyMatCapBlend(color, components.matCap);
+color += components.fieldGlow;
+color += components.dynamicFibers;
+color += CrystalHighlight(input, surface, lighting);
+color += CrystalReflection(input, surface);
+```
+
+MatCap 叠加模式当前支持 `Add / Multiply / Screen`。
+
+强度开关当前对应：
+
+- Internal Field：`_FieldStrength`
+- Glow：`_GlowStrength`
+- MatCap：`_MatCapStrength`
+- Dynamic Fibers：`_FiberStrength` 与 `_FiberBrightness`
+- Environment：`_EnvironmentStrength`
+- Direct Light：`_DirectLightStrength`
+- Shadow：`_ShadowStrength` / `_ShadowCastStrength`
+- Highlight：`_HighlightStrength`
+- Reflection：`_ReflectionStrength`
 - 每个组分的 Strength = 0 时，该组分没有最终贡献。
-- `Field Strength/Scale` 改变静态内部结构，也同步影响 glow mask。
+- Field 采样参数改变静态内部结构，也同步影响 glow mask；`Field Strength` 与 `Glow Strength` 分别控制最终输出。
 - `Internal Field & Glow` 至少能分出 noise 2 intersect、thickness emission、edges emission、ramp/fresnel shaping，不再只是单层噪声 ramp。
 - `Style Fade Strength = 0` 时，方向渐隐完全不影响默认宝石效果。
-- MatCap 图案不随相机视图旋转，正背面混合可独立调节。
+- MatCap 使用标准 view-space normal 采样，支持 `Add / Multiply / Screen`，不保留固定方向或 front/back 混合。
 - 最终合成代码保持短而直白。

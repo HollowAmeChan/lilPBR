@@ -1,8 +1,6 @@
 #ifndef INCLUDED_LILPBR_CRYSTAL_CORE
 #define INCLUDED_LILPBR_CRYSTAL_CORE
 
-#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ShadowCast/Shaders/HoShadowCastSampling.hlsl"
-
 #ifndef CRYSTAL_SURFACE_SMOOTHNESS
 #define CRYSTAL_SURFACE_SMOOTHNESS saturate(_CrystalSmoothness)
 #endif
@@ -18,6 +16,9 @@
 #ifndef CRYSTAL_HIGHLIGHT_DEFLECTION
 #define CRYSTAL_HIGHLIGHT_DEFLECTION _CrystalHighlightDeflection
 #endif
+
+float3 _LightDirection;
+float3 _LightPosition;
 
 struct CrystalAttributes
 {
@@ -100,6 +101,26 @@ CrystalVaryings CrystalVert(CrystalAttributes input)
 CrystalVaryings CrystalVertDepth(CrystalAttributes input)
 {
     return CrystalVert(input);
+}
+
+CrystalVaryings CrystalVertShadowCaster(CrystalAttributes input)
+{
+    CrystalVaryings output = CrystalVert(input);
+    half3 normalWS = normalize(output.normalWS);
+    #if _CASTING_PUNCTUAL_LIGHT_SHADOW
+        half3 lightDirectionWS = SafeNormalize(_LightPosition - output.positionWS);
+    #else
+        half3 lightDirectionWS = _LightDirection;
+    #endif
+
+    output.positionWS -= lightDirectionWS * _CrystalShadowCasterOffset;
+    output.positionCS = TransformWorldToHClip(ApplyShadowBias(output.positionWS, normalWS, lightDirectionWS));
+    #if UNITY_REVERSED_Z
+        output.positionCS.z = min(output.positionCS.z, UNITY_NEAR_CLIP_VALUE);
+    #else
+        output.positionCS.z = max(output.positionCS.z, UNITY_NEAR_CLIP_VALUE);
+    #endif
+    return output;
 }
 
 half3 CrystalBlendNormals(half3 a, half3 b)
@@ -276,28 +297,65 @@ half3 CrystalApplySSAOTint(half3 color, half screenSpaceAO)
     return lerp(color * _CrystalSSAOTint.rgb, color, saturate(screenSpaceAO));
 }
 
-half CrystalSampleHoShadowCast(CrystalVaryings input)
+float3 CrystalResolveShadowSamplePositionWS(CrystalVaryings input, CrystalSurface surface)
 {
-    return HoShadowCastAttenuation(input.positionWS);
+    return input.positionWS + surface.normalWS * _CrystalShadowReceiveOffset;
 }
 
-half CrystalResolveShadowCast(half urpShadow, half hoShadowCast)
+half CrystalTooningScale(half value, half border, half blur)
 {
-    half shadowCast = lerp(1.0h, saturate(hoShadowCast), saturate(_CrystalShadowCastStrength));
-    half rawShadow = saturate(saturate(urpShadow) * shadowCast);
-    half curvedShadow = pow(max(rawShadow, 0.0001h), max(_CrystalShadowContrast, 0.001h));
-    return CrystalApplyShadowStrength(curvedShadow, _CrystalShadowStrength);
+    half borderMin = border - blur * 0.5h;
+    half borderMax = border + blur * 0.5h;
+    half width = max(borderMax - borderMin + fwidth(value), 0.0001h);
+    return saturate((saturate(value) - borderMin) / width);
 }
 
-half CrystalResolveShadowLight(half shadow)
+half CrystalApplyShadowBoundaryBlur(half shadow)
 {
-    return lerp(saturate(_CrystalShadowMinLight), 1.0h, saturate(shadow));
+    return CrystalTooningScale(shadow, saturate(_CrystalShadowBorder), max(_CrystalShadowBlur, 0.0h));
 }
 
-half3 CrystalApplyShadowTint(half3 color, half shadowLight)
+half CrystalResolveDirectShapeShadow(half nDotL)
 {
-    half shadowArea = saturate(1.0h - shadowLight) * saturate(_CrystalShadowTintStrength);
-    return lerp(color, color * _CrystalShadowTint.rgb, shadowArea);
+    return CrystalApplyShadowBoundaryBlur(nDotL);
+}
+
+half CrystalResolveMainLightShadowCast(half urpShadow)
+{
+    half shadowCast = CrystalApplyShadowBoundaryBlur(urpShadow);
+    return lerp(1.0h, shadowCast, saturate(_CrystalShadowCastStrength));
+}
+
+half CrystalResolveShadowAttenuation(half urpShadow, half lightShapeShadow)
+{
+    half shadowCast = CrystalResolveMainLightShadowCast(urpShadow);
+    half rawShadow = saturate(shadowCast * saturate(lightShapeShadow));
+    return CrystalApplyShadowStrength(rawShadow, _CrystalShadowStrength);
+}
+
+half CrystalResolveDiffuseShadowMix(half urpShadow, half nDotL)
+{
+    half lightShapeShadow = CrystalResolveDirectShapeShadow(nDotL);
+    return CrystalResolveShadowAttenuation(urpShadow, lightShapeShadow);
+}
+
+half3 CrystalSampleShadowRamp(half shadowAmount)
+{
+    return SAMPLE_TEXTURE2D(_CrystalShadowRamp, sampler_CrystalShadowRamp, float2(saturate(shadowAmount), 0.5)).rgb;
+}
+
+half3 CrystalResolveShadowLayerColor(half3 layerColor, half shadowMix)
+{
+    half shadowAmount = saturate(1.0h - shadowMix);
+    half3 rampShadowColor = layerColor * CrystalSampleShadowRamp(shadowAmount);
+    return lerp(half3(0.0h, 0.0h, 0.0h), rampShadowColor, saturate(_CrystalShadowRampStrength));
+}
+
+half3 CrystalBlendDirectShadowLayer(half3 layerColor, half3 lightColor, half lightShape, half shadowMix)
+{
+    half3 litLayer = layerColor * lightColor * lightShape;
+    half3 shadowLayer = CrystalResolveShadowLayerColor(layerColor, shadowMix) * lightColor * lightShape;
+    return lerp(shadowLayer, litLayer, saturate(shadowMix));
 }
 
 half3 CrystalResolveHighlightViewDir(CrystalSurface surface)
@@ -358,18 +416,16 @@ CrystalSurface CrystalResolveSurface(CrystalVaryings input, half4 mainTex)
 struct CrystalLightingContext
 {
     Light mainLight;
+    float3 shadowPositionWS;
     half screenSpaceAO;
-    half mainShadowLight;
-    half hoShadowCast;
 };
 
-CrystalLightingContext CrystalResolveLightingContext(CrystalVaryings input)
+CrystalLightingContext CrystalResolveLightingContext(CrystalVaryings input, CrystalSurface surface)
 {
     CrystalLightingContext lighting;
-    lighting.mainLight = GetMainLight(TransformWorldToShadowCoord(input.positionWS));
+    lighting.shadowPositionWS = CrystalResolveShadowSamplePositionWS(input, surface);
+    lighting.mainLight = GetMainLight(TransformWorldToShadowCoord(lighting.shadowPositionWS));
     lighting.screenSpaceAO = CrystalSampleScreenSpaceAO(input);
-    lighting.hoShadowCast = CrystalSampleHoShadowCast(input);
-    lighting.mainShadowLight = CrystalResolveShadowLight(CrystalResolveShadowCast(lighting.mainLight.shadowAttenuation, lighting.hoShadowCast));
     return lighting;
 }
 
@@ -381,10 +437,10 @@ half3 CrystalShadeIndirect(CrystalSurface surface, half3 layerColor, CrystalLigh
 
 half3 CrystalShadeMainDirect(CrystalSurface surface, half3 layerColor, CrystalLightingContext lighting)
 {
-    half nDotL = saturate(dot(surface.normalWS, lighting.mainLight.direction));
-    half directShape = lerp(0.25h, 1.0h, nDotL);
-    half3 shadowedColor = CrystalApplyShadowTint(layerColor, lighting.mainShadowLight);
-    return shadowedColor * lighting.mainLight.color * directShape * lighting.mainShadowLight;
+    half lightFacing = dot(surface.normalWS, lighting.mainLight.direction) * 0.5h + 0.5h;
+    half shadowMix = CrystalResolveDiffuseShadowMix(lighting.mainLight.shadowAttenuation, lightFacing);
+    half lightShape = lighting.mainLight.distanceAttenuation;
+    return CrystalBlendDirectShadowLayer(layerColor, lighting.mainLight.color, lightShape, shadowMix);
 }
 
 half3 CrystalShadeAdditionalDirect(CrystalVaryings input, CrystalSurface surface, half3 layerColor, CrystalLightingContext lighting)
@@ -395,13 +451,11 @@ half3 CrystalShadeAdditionalDirect(CrystalVaryings input, CrystalSurface surface
     uint pixelLightCount = GetAdditionalLightsCount();
     for (uint lightIndex = 0u; lightIndex < pixelLightCount; ++lightIndex)
     {
-        Light light = GetAdditionalLight(lightIndex, input.positionWS, half4(1.0h, 1.0h, 1.0h, 1.0h));
-        half lightNdotL = saturate(dot(surface.normalWS, light.direction));
-        half lightShadow = CrystalResolveShadowCast(light.shadowAttenuation, lighting.hoShadowCast);
-        half lightShadowLight = CrystalResolveShadowLight(lightShadow);
-        half3 lightShadowedColor = CrystalApplyShadowTint(layerColor, lightShadowLight);
-        half lightShape = lerp(0.2h, 1.0h, lightNdotL) * light.distanceAttenuation * lightShadowLight;
-        color += lightShadowedColor * light.color * lightShape;
+        Light light = GetAdditionalLight(lightIndex, input.positionWS);
+        half lightFacing = dot(surface.normalWS, light.direction) * 0.5h + 0.5h;
+        half lightShadowMix = CrystalResolveDiffuseShadowMix(1.0h, lightFacing);
+        half lightShape = light.distanceAttenuation;
+        color += CrystalBlendDirectShadowLayer(layerColor, light.color, lightShape, lightShadowMix);
     }
     #endif
 
@@ -422,19 +476,17 @@ half3 CrystalShadePBRSpecular(CrystalVaryings input, CrystalSurface surface, Cry
     half3 halfDir = SafeNormalize(lighting.mainLight.direction + highlightViewDir);
     half nDotH = saturate(dot(surface.normalWS, halfDir));
     half3 mainSpecularColor = max(CRYSTAL_PBR_SPECULAR_COLOR, half3(0.0h, 0.0h, 0.0h));
-    color += pow(nDotH, specPower) * surface.smoothness * lighting.mainShadowLight * lighting.mainLight.color * mainSpecularColor * CRYSTAL_PBR_SPECULAR_STRENGTH;
+    color += pow(nDotH, specPower) * surface.smoothness * lighting.mainLight.distanceAttenuation * lighting.mainLight.color * mainSpecularColor * CRYSTAL_PBR_SPECULAR_STRENGTH;
 
     #if defined(_ADDITIONAL_LIGHTS)
     uint pixelLightCount = GetAdditionalLightsCount();
     for (uint lightIndex = 0u; lightIndex < pixelLightCount; ++lightIndex)
     {
-        Light light = GetAdditionalLight(lightIndex, input.positionWS, half4(1.0h, 1.0h, 1.0h, 1.0h));
-        half lightShadow = CrystalResolveShadowCast(light.shadowAttenuation, lighting.hoShadowCast);
-        half lightShadowLight = CrystalResolveShadowLight(lightShadow);
+        Light light = GetAdditionalLight(lightIndex, input.positionWS);
         half3 lightHalfDir = SafeNormalize(light.direction + highlightViewDir);
         half lightNdotH = saturate(dot(surface.normalWS, lightHalfDir));
         half3 lightSpecularColor = max(CRYSTAL_PBR_SPECULAR_COLOR, half3(0.0h, 0.0h, 0.0h));
-        color += pow(lightNdotH, specPower) * surface.smoothness * light.distanceAttenuation * lightShadowLight * light.color * lightSpecularColor * CRYSTAL_PBR_SPECULAR_STRENGTH;
+        color += pow(lightNdotH, specPower) * surface.smoothness * light.distanceAttenuation * light.color * lightSpecularColor * CRYSTAL_PBR_SPECULAR_STRENGTH;
     }
     #endif
 
@@ -452,7 +504,7 @@ half3 CrystalShadeBaseLighting(CrystalVaryings input, CrystalSurface surface, ha
 
 half3 CrystalShade(CrystalVaryings input, CrystalSurface surface)
 {
-    CrystalLightingContext lighting = CrystalResolveLightingContext(input);
+    CrystalLightingContext lighting = CrystalResolveLightingContext(input, surface);
     CrystalGemGlow gemGlow = CrystalResolveGemGlow(surface);
     half3 color = CrystalShadeBaseLighting(input, surface, surface.baseColor, lighting);
     color += max(gemGlow.color, half3(0.0h, 0.0h, 0.0h));

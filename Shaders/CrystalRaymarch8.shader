@@ -64,11 +64,13 @@ Shader "lilPBR/Crystal/Raymarch 8"
 
         [LILFoldout(Shadow)]
         _CrystalShadowStrength ("阴影强度", Range(0.0, 1.0)) = 1.0
-        _CrystalShadowCastStrength ("HoShadowCast 强度", Range(0.0, 1.0)) = 1.0
-        _CrystalShadowMinLight ("阴影最小亮度", Range(0.0, 1.0)) = 0.0
-        _CrystalShadowContrast ("阴影对比度", Range(0.25, 4.0)) = 1.0
-        _CrystalShadowTint ("阴影染色", Color) = (0.16,0.22,0.36,1)
-        _CrystalShadowTintStrength ("阴影染色强度", Range(0.0, 1.0)) = 1.0
+        _CrystalShadowCastStrength ("ShadowCast 强度", Range(0.0, 1.0)) = 1.0
+        _CrystalShadowBorder ("阴影边界位置", Range(0.0, 1.0)) = 0.5
+        _CrystalShadowBlur ("阴影边界模糊", Range(0.0, 2.0)) = 1.0
+        _CrystalShadowReceiveOffset ("阴影接收偏移", Range(-0.1, 0.1)) = 0.0
+        _CrystalShadowCasterOffset ("投影深度偏移", Range(-0.1, 0.1)) = 0.0
+        [NoScaleOffset] _CrystalShadowRamp ("阴影 LUT Ramp", 2D) = "white" {}
+        _CrystalShadowRampStrength ("阴影 LUT 强度", Range(0.0, 1.0)) = 0.0
         [LILFoldoutEnd]
 
         [LILFoldout(Highlight)]
@@ -96,6 +98,7 @@ Shader "lilPBR/Crystal/Raymarch 8"
     TEXTURE2D(_CrystalMask); SAMPLER(sampler_CrystalMask);
     TEXTURE2D(_CrystalNormalMap); SAMPLER(sampler_CrystalNormalMap);
     TEXTURE2D(_CrystalRefractionNoise); SAMPLER(sampler_CrystalRefractionNoise);
+    TEXTURE2D(_CrystalShadowRamp); SAMPLER(sampler_CrystalShadowRamp);
 
     CBUFFER_START(UnityPerMaterial)
         float4 _CrystalBaseColor;
@@ -106,6 +109,8 @@ Shader "lilPBR/Crystal/Raymarch 8"
         float _CrystalSSAOStrength;
         float4 _CrystalSSAOTint;
         float _CrystalShadowCastStrength;
+        float _CrystalShadowBorder;
+        float _CrystalShadowBlur;
         float4 _CrystalNormalMap_ST;
         float _CrystalNormalStrength;
         float _CrystalNormalSpherical;
@@ -138,10 +143,9 @@ Shader "lilPBR/Crystal/Raymarch 8"
         float _CrystalDesaturateFresnelExp;
         float _CrystalDesaturateLighten;
         float _CrystalDesaturateThickness;
-        float _CrystalShadowMinLight;
-        float _CrystalShadowContrast;
-        float4 _CrystalShadowTint;
-        float _CrystalShadowTintStrength;
+        float _CrystalShadowReceiveOffset;
+        float _CrystalShadowCasterOffset;
+        float _CrystalShadowRampStrength;
         float _CrystalIndirectStrength;
         float _CrystalHighlightDeflection;
         float _CrystalSpecularStrength;
@@ -174,7 +178,6 @@ Shader "lilPBR/Crystal/Raymarch 8"
             #pragma fragment CrystalFragForward
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
-            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
             #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
             ENDHLSL
@@ -190,7 +193,7 @@ Shader "lilPBR/Crystal/Raymarch 8"
             Cull [_Cull]
 
             HLSLPROGRAM
-            #pragma vertex CrystalVertDepth
+            #pragma vertex CrystalVertShadowCaster
             #pragma fragment CrystalFragDepth
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
             ENDHLSL

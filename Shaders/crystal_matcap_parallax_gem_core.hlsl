@@ -358,18 +358,16 @@ half3 CrystalGemHighlight(CrystalVaryings input, CrystalSurface surface, Crystal
     half nDotH = saturate(dot(surface.normalWS, halfDir));
     half highlightStrength = CrystalGemClampRange(_CrystalGemHighlightStrength, 0.0h, 8.0h);
     half3 highlightColor = max(_CrystalGemHighlightColor.rgb, half3(0.0h, 0.0h, 0.0h));
-    color += pow(nDotH, specPower) * sharpness * lighting.mainShadowLight * lighting.mainLight.color * highlightColor * highlightStrength;
+    color += pow(nDotH, specPower) * sharpness * lighting.mainLight.distanceAttenuation * lighting.mainLight.color * highlightColor * highlightStrength;
 
     #if defined(_ADDITIONAL_LIGHTS)
     uint pixelLightCount = GetAdditionalLightsCount();
     for (uint lightIndex = 0u; lightIndex < pixelLightCount; ++lightIndex)
     {
-        Light light = GetAdditionalLight(lightIndex, input.positionWS, half4(1.0h, 1.0h, 1.0h, 1.0h));
+        Light light = GetAdditionalLight(lightIndex, input.positionWS);
         half3 lightHalfDir = SafeNormalize(light.direction + surface.viewDirWS);
         half lightNdotH = saturate(dot(surface.normalWS, lightHalfDir));
-        half lightShadow = CrystalResolveShadowCast(light.shadowAttenuation, lighting.hoShadowCast);
-        half lightShadowLight = CrystalResolveShadowLight(lightShadow);
-        color += pow(lightNdotH, specPower) * sharpness * light.distanceAttenuation * lightShadowLight * light.color * highlightColor * highlightStrength;
+        color += pow(lightNdotH, specPower) * sharpness * light.distanceAttenuation * light.color * highlightColor * highlightStrength;
     }
     #endif
 
@@ -412,7 +410,7 @@ CrystalGemComponents CrystalGemResolveComponents(CrystalVaryings input, CrystalS
 
 half3 CrystalGemShadeLighting(CrystalVaryings input, CrystalSurface surface, CrystalGemComponents components)
 {
-    CrystalLightingContext lighting = CrystalResolveLightingContext(input);
+    CrystalLightingContext lighting = CrystalResolveLightingContext(input, surface);
     half3 color = CrystalShadeBaseLighting(input, surface, components.baseLayer, lighting);
     color += max(components.matCap, half3(0.0h, 0.0h, 0.0h));
     color += max(components.gemGlow, half3(0.0h, 0.0h, 0.0h));

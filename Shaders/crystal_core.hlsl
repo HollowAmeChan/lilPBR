@@ -107,13 +107,6 @@ half3 CrystalBlendNormals(half3 a, half3 b)
     return normalize(half3(a.xy + b.xy, a.z * b.z));
 }
 
-half3 CrystalApplyNormalStrength(half3 normalTS, half strength)
-{
-    normalTS.xy *= strength;
-    normalTS.z = sqrt(saturate(1.0h - dot(normalTS.xy, normalTS.xy)));
-    return normalize(normalTS);
-}
-
 half3x3 CrystalTangentToWorld(CrystalVaryings input)
 {
     half3 normalWS = normalize(input.normalWS);
@@ -124,8 +117,7 @@ half3x3 CrystalTangentToWorld(CrystalVaryings input)
 
 half3 CrystalResolveNormalTS(float2 uv)
 {
-    half3 normalTS = UnpackNormalScale(SAMPLE_TEXTURE2D(_CrystalNormalMap, sampler_CrystalNormalMap, uv * _CrystalNormalMap_ST.xy + _CrystalNormalMap_ST.zw), _CrystalNormalScale);
-    return CrystalApplyNormalStrength(normalTS, _CrystalNormalStrength);
+    return UnpackNormalScale(SAMPLE_TEXTURE2D(_CrystalNormalMap, sampler_CrystalNormalMap, uv * _CrystalNormalMap_ST.xy + _CrystalNormalMap_ST.zw), _CrystalNormalStrength);
 }
 
 half3 CrystalResolveNormalWS(CrystalVaryings input)

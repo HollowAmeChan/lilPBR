@@ -12,8 +12,7 @@ Shader "lilPBR/Crystal/Raymarch 8"
         [LILFoldoutEnd]
 
         [LILFoldout(Surface Preprocess)]
-        _CrystalNormalScale ("法线解码缩放", Range(0.0, 4.0)) = 1.0
-        _CrystalNormalStrength ("最终法线强度", Range(0.0, 2.0)) = 1.0
+        _CrystalNormalStrength ("法线强度", Range(0.0, 4.0)) = 1.0
         _CrystalNormalSpherical ("球形法线混合", Range(0.0, 1.0)) = 0.5
 
         _CrystalDesaturateAmount ("基色灰度混合", Range(0.0, 1.0)) = 0.75
@@ -108,7 +107,6 @@ Shader "lilPBR/Crystal/Raymarch 8"
         float4 _CrystalSSAOTint;
         float _CrystalShadowCastStrength;
         float4 _CrystalNormalMap_ST;
-        float _CrystalNormalScale;
         float _CrystalNormalStrength;
         float _CrystalNormalSpherical;
         float _CrystalStepLength;

@@ -45,7 +45,6 @@ struct CrystalMaskData
 {
     half edges;
     half thickness;
-    half thicknessForDesaturate;
 };
 
 struct CrystalSurface
@@ -222,7 +221,6 @@ CrystalMaskData CrystalResolveMask(CrystalVaryings input, half3 viewDirWS)
     CrystalMaskData data;
     data.edges = saturate(mask.r);
     data.thickness = thickness;
-    data.thicknessForDesaturate = saturate(lerp(1.0h, thickness, _CrystalDesaturateThickness));
     return data;
 }
 
@@ -380,10 +378,14 @@ void CrystalApplyNormalPreprocess(CrystalVaryings input, inout CrystalSurface su
 
 void CrystalApplyBaseColorProcess(CrystalMaskData masks, inout CrystalSurface surface)
 {
-    half processMask = pow(saturate(surface.fresnel), max(_CrystalDesaturateFresnelExp, 0.001h)) * masks.thicknessForDesaturate;
-    half3 baseColor = surface.baseColor;
-    half luma = dot(baseColor, half3(0.2126h, 0.7152h, 0.0722h));
-    surface.baseColor = lerp(baseColor, half3(luma, luma, luma) * _CrystalDesaturateLighten, processMask * _CrystalDesaturateAmount);
+    half strength = saturate(_CrystalColorProcessStrength);
+    half thicknessMask = saturate(masks.thickness * saturate(_CrystalThicknessTintStrength));
+    half edgeMask = saturate(masks.edges * saturate(_CrystalEdgeTintStrength));
+    half fresnelMask = pow(saturate(surface.fresnel), max(_CrystalFresnelTintPower, 0.001h)) * saturate(_CrystalFresnelTintStrength);
+    half3 depthTint = lerp(max(_CrystalOuterTint.rgb, half3(0.0h, 0.0h, 0.0h)), max(_CrystalInnerTint.rgb, half3(0.0h, 0.0h, 0.0h)), thicknessMask);
+    half3 edgeTint = max(_CrystalEdgeTint.rgb, half3(0.0h, 0.0h, 0.0h));
+    half3 finalTint = lerp(depthTint, edgeTint, saturate(edgeMask + fresnelMask));
+    surface.baseColor = lerp(surface.baseColor, surface.baseColor * finalTint, strength);
 }
 
 void CrystalApplySurfacePreprocess(CrystalVaryings input, CrystalMaskData masks, inout CrystalSurface surface)

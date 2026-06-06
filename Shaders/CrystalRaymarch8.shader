@@ -15,10 +15,14 @@ Shader "lilPBR/Crystal/Raymarch 8"
         _CrystalNormalStrength ("法线强度", Range(0.0, 4.0)) = 1.0
         _CrystalNormalSpherical ("球形法线混合", Range(0.0, 1.0)) = 0.5
 
-        _CrystalDesaturateAmount ("基色灰度混合", Range(0.0, 1.0)) = 0.75
-        _CrystalDesaturateFresnelExp ("灰度边缘指数", Range(0.05, 8.0)) = 1.0
-        _CrystalDesaturateLighten ("灰度亮度倍率", Range(0.0, 4.0)) = 0.5
-        _CrystalDesaturateThickness ("厚度遮罩权重", Range(0.0, 1.0)) = 1.0
+        [Space(8)] _CrystalColorProcessStrength ("颜色变化强度", Range(0.0, 1.0)) = 0.75
+        [HDR] _CrystalOuterTint ("外层色调", Color) = (1,1,1,1)
+        [HDR] _CrystalInnerTint ("内部色调", Color) = (0.5,0.5,0.5,1)
+        _CrystalThicknessTintStrength ("厚度权重", Range(0.0, 1.0)) = 1.0
+        [Space(4)] [HDR] _CrystalEdgeTint ("边缘色调", Color) = (1,1,1,1)
+        _CrystalEdgeTintStrength ("边缘权重", Range(0.0, 1.0)) = 0.25
+        _CrystalFresnelTintStrength ("视角边缘权重", Range(0.0, 1.0)) = 0.5
+        _CrystalFresnelTintPower ("视角边缘范围", Range(0.05, 8.0)) = 1.0
         [LILFoldoutEnd]
 
         [LILFoldout(Refraction Scattering)]
@@ -139,10 +143,14 @@ Shader "lilPBR/Crystal/Raymarch 8"
         float _CrystalRefractionNoiseStrength;
         float _CrystalRefractionNoiseAdd;
         float _CrystalRefractionNoiseParallax;
-        float _CrystalDesaturateAmount;
-        float _CrystalDesaturateFresnelExp;
-        float _CrystalDesaturateLighten;
-        float _CrystalDesaturateThickness;
+        float _CrystalColorProcessStrength;
+        float4 _CrystalOuterTint;
+        float4 _CrystalInnerTint;
+        float _CrystalThicknessTintStrength;
+        float4 _CrystalEdgeTint;
+        float _CrystalEdgeTintStrength;
+        float _CrystalFresnelTintStrength;
+        float _CrystalFresnelTintPower;
         float _CrystalShadowReceiveOffset;
         float _CrystalShadowCasterOffset;
         float _CrystalShadowRampStrength;

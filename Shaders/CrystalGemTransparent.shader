@@ -26,7 +26,7 @@ Shader "lilPBR/Crystal/Gem Transparent"
         [LILFoldoutEnd]
 
         [LILFoldout(Dispersion)]
-        _ChromaticAberration ("色散", Range(-0.08, 0.08)) = 0.015
+        _ChromaticAberration ("色散", Range(-0.08, 0.25)) = 0.015
         [LILFoldoutEnd]
 
         [LILFoldout(Internal Field And Glow)]

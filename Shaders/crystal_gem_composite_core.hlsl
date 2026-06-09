@@ -138,7 +138,17 @@ half4 GemSampleMain(GemVaryings input)
 
 void GemClipAlpha(half alpha)
 {
-    clip(alpha - saturate(_Cutoff));
+    half cutoff = saturate(_Cutoff);
+    if (cutoff > 0.0h)
+    {
+        // Use a strict threshold so cutoff 1.0 clips fully opaque texels too.
+        clip(alpha - cutoff - 0.0001h);
+    }
+}
+
+half GemResolveAlpha(half4 mainTex)
+{
+    return saturate(mainTex.a * _BaseColor.a);
 }
 
 half3x3 GemTangentToWorld(GemVaryings input)
@@ -914,7 +924,7 @@ half4 GemFragForward(GemVaryings input, bool isFront : SV_IsFrontFace) : SV_Targ
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
     half4 mainTex = GemSampleMain(input);
-    GemClipAlpha(mainTex.a);
+    GemClipAlpha(GemResolveAlpha(mainTex));
     GemSurface surface = GemResolveSurface(input, mainTex, true);
     if (!isFront)
     {
@@ -929,7 +939,7 @@ half4 GemFragDepth(GemVaryings input) : SV_Target
 {
     UNITY_SETUP_INSTANCE_ID(input);
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-    GemClipAlpha(GemSampleMain(input).a);
+    GemClipAlpha(GemResolveAlpha(GemSampleMain(input)));
     return 0;
 }
 
@@ -939,7 +949,7 @@ half4 GemFragDepthNormals(GemVaryings input, bool isFront : SV_IsFrontFace) : SV
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
     half4 mainTex = GemSampleMain(input);
-    GemClipAlpha(mainTex.a);
+    GemClipAlpha(GemResolveAlpha(mainTex));
     GemSurface surface = GemResolveSurface(input, mainTex, false);
     half3 normalWS = isFront ? surface.normalWS : -surface.normalWS;
     return half4(normalize(normalWS) * 0.5h + 0.5h, 1.0h);

@@ -5,7 +5,7 @@ Shader "lilPBR/Crystal/Gem Composite"
         [LILFoldout(Surface)]
         [LILPropertyCache] _BaseColor ("基础颜色", Color) = (0.18,0.45,0.95,1)
         _MainTex ("主贴图", 2D) = "white" {}
-        _Cutoff ("Alpha 裁剪", Range(0.0, 1.0)) = 0.0
+        _Cutoff ("Alpha 裁剪", Range(0.0, 1.0)) = 0.5
         _MaskTex ("表面遮罩 (R 边缘, G 厚度)", 2D) = "white" {}
         _NormalMap ("法线贴图", 2D) = "bump" {}
         [LILFoldoutEnd]
@@ -254,8 +254,8 @@ Shader "lilPBR/Crystal/Gem Composite"
         Tags
         {
             "RenderPipeline" = "UniversalPipeline"
-            "RenderType" = "Opaque"
-            "Queue" = "Geometry"
+            "RenderType" = "TransparentCutout"
+            "Queue" = "AlphaTest"
             "IgnoreProjector" = "True"
         }
 

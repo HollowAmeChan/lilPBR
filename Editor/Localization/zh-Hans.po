@@ -581,41 +581,35 @@ msgstr "表面"
 msgid "Surface Preprocess"
 msgstr "表面预处理"
 
-msgid "Volume Raymarch"
-msgstr "体积光线步进"
+msgid "Internal Field And Glow"
+msgstr "内部场与发光"
 
-msgid "Internal Impurities 2"
-msgstr "内部杂质 2"
+msgid "Output"
+msgstr "输出"
 
-msgid "Linear Mask"
-msgstr "线性遮罩"
+msgid "Volume Sampling"
+msgstr "体积采样"
 
-msgid "Ramp Emission"
-msgstr "渐变发光"
+msgid "Noise Shaping"
+msgstr "噪声塑形"
 
-msgid "Gem Glow"
-msgstr "宝石发光"
+msgid "Refraction And Surface Noise"
+msgstr "折射与表面噪声"
 
-msgid "Refraction Noise"
-msgstr "折射噪声"
+msgid "Glow Mask"
+msgstr "辉光遮罩"
 
-msgid "Refraction Scattering"
-msgstr "折射与散射"
+msgid "MatCap"
+msgstr "MatCap"
 
-msgid "Desaturate"
-msgstr "去饱和"
+msgid "Dynamic Fibers"
+msgstr "动态絮状"
 
-msgid "Internal Impurities"
-msgstr "内部杂质"
+msgid "Direct Light And Shadow"
+msgstr "直接光与阴影"
 
-msgid "Gem Internal Impurities"
-msgstr "宝石内部杂质"
-
-msgid "Gem MatCap"
-msgstr "宝石 MatCap"
-
-msgid "Gem Reflection"
-msgstr "宝石反射"
+msgid "Reflection"
+msgstr "反射"
 
 msgid "Environment"
 msgstr "环境光"
@@ -625,9 +619,6 @@ msgstr "光照"
 
 msgid "Highlight"
 msgstr "高光"
-
-msgid "Debug"
-msgstr "调试"
 
 
 

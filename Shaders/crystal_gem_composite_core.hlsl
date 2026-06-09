@@ -881,6 +881,7 @@ half3 CrystalGemComposite(GemVaryings input, GemSurface surface)
     GemLightingData lighting = GemResolveLighting(input, surface);
 
     half3 color = half3(0.0h, 0.0h, 0.0h);
+    color += components.baseLayer;
     color += CrystalEnvironment(surface, components.baseLayer, lighting);
     color += GemDirectLights(input, surface, components.baseLayer, lighting);
     color = CrystalApplyMatCapBlend(color, components.matCap);

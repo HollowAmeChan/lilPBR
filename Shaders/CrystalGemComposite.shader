@@ -13,6 +13,7 @@ Shader "lilPBR/Crystal/Gem Composite"
         [LILFoldout(Surface Preprocess)]
         _NormalStrength ("法线强度", Range(0.0, 4.0)) = 1.0
         _SphericalNormalBlend ("球形法线混合", Range(0.0, 1.0)) = 0.5
+        _FresnelPower ("整体菲涅尔范围", Range(0.05, 8.0)) = 1.0
 
         [Space(8)] _ColorProcessStrength ("颜色处理强度", Range(0.0, 1.0)) = 0.75
         [HDR] _OuterTint ("外层染色", Color) = (1,1,1,1)
@@ -25,36 +26,47 @@ Shader "lilPBR/Crystal/Gem Composite"
         [LILFoldoutEnd]
 
         [LILFoldout(Internal Field And Glow)]
+        [LILFoldout(Output)]
         _FieldStrength ("内部场强度", Range(0.0, 4.0)) = 1.0
         _GlowStrength ("辉光强度", Range(0.0, 8.0)) = 1.0
-        [NoScaleOffset] _VolumeNoise ("体积噪声 (RG)", 2D) = "gray" {}
+
+        [LILFoldoutEnd]
+        [LILFoldout(Volume Sampling)]
+        [Enum(World, 0, Local, 1, LocalOneToOne, 2)] _VolumeSpace ("体积空间", Int) = 1
+        [LILVector3] _VolumeOffset ("体积偏移 XYZ", Vector) = (0,0,0,0)
+        [NoScaleOffset] _VolumeNoise ("体积噪声 (R 主, G 次级)", 2D) = "gray" {}
         _StepLength ("步进长度", Range(0.0, 4.0)) = 1.0
-        _VolumeNoiseScale ("体积噪声缩放", Range(0.001, 4.0)) = 0.25
-        _VolumeMainPower ("主噪声指数", Range(0.05, 4.0)) = 0.8
-        _VolumeMainMultiply ("主噪声倍增", Range(0.0, 16.0)) = 2.25
-        _VolumeSecondaryPower ("次级噪声指数", Range(0.05, 4.0)) = 0.5
-        _VolumeSecondaryMultiply ("次级噪声倍增", Range(0.0, 8.0)) = 0.125
-        _VolumeSecondaryIntersect ("次级交叠强度", Range(0.0, 4.0)) = 1.0
-        _FieldMaskPower ("场遮罩指数", Range(0.05, 4.0)) = 1.25
         _FieldStepFade ("步进衰减", Range(0.0, 2.0)) = 1.0
 
-        [Space(8)] _InternalRayBend ("内部光路弯曲", Range(0.05, 8.0)) = 1.0
-        [ToggleUI] _UseSurfaceNoise ("启用表面噪声", Int) = 1
-        _SurfaceNoise ("表面噪声", 2D) = "white" {}
-        _SurfaceNoiseScale ("表面噪声缩放", Range(0.001, 8.0)) = 1.0
-        _SurfaceNoiseStrength ("表面噪声强度", Range(0.0, 1.0)) = 1.0
-        _SurfaceNoiseParallax ("表面噪声视差", Range(0.0, 32.0)) = 5.0
+        [LILFoldoutEnd]
+        [LILFoldout(Noise Shaping)]
+        _VolumeNoiseScale ("噪声缩放", Range(0.001, 4.0)) = 0.25
+        _VolumeMainPower ("主噪声指数", Range(0.05, 4.0)) = 0.8
+        _VolumeMainMultiply ("主噪声增益", Range(0.0, 16.0)) = 2.25
+        _VolumeSecondaryPower ("次级噪声指数", Range(0.05, 4.0)) = 0.5
+        _VolumeSecondaryMultiply ("次级噪声增益", Range(0.0, 8.0)) = 0.125
+        _VolumeSecondaryIntersect ("次级场混合", Range(0.0, 4.0)) = 1.0
+        _FieldMaskPower ("场遮罩指数", Range(0.05, 4.0)) = 1.25
 
-        [Space(8)] [NoScaleOffset] _GlowRamp ("辉光渐变", 2D) = "white" {}
+        [LILFoldoutEnd]
+        [LILFoldout(Refraction And Surface Noise)]
+        _InternalRayBend ("内部光路弯曲", Range(0.05, 8.0)) = 1.0
+        [ToggleUI] _UseSurfaceNoise ("启用表面噪声", Int) = 1
+        [LILIf(_UseSurfaceNoise, 1)] _SurfaceNoise ("表面噪声", 2D) = "white" {}
+        [LILIf(_UseSurfaceNoise, 1)] _SurfaceNoiseScale ("表面噪声缩放", Range(0.001, 8.0)) = 1.0
+        [LILIf(_UseSurfaceNoise, 1)] _SurfaceNoiseStrength ("表面噪声强度", Range(0.0, 1.0)) = 1.0
+        [LILIf(_UseSurfaceNoise, 1)] _SurfaceNoiseParallax ("表面噪声视差", Range(0.0, 32.0)) = 5.0
+
+        [LILFoldoutEnd]
+        [LILFoldout(Glow Mask)]
+        [NoScaleOffset] _GlowRamp ("辉光渐变", 2D) = "white" {}
         [HDR] _GlowTint ("辉光染色", Color) = (1,1,1,1)
-        _GlowContrast ("辉光遮罩对比", Range(0.25, 4.0)) = 1.0
+        _GlowContrast ("辉光对比", Range(0.25, 4.0)) = 1.0
         _GlowThicknessWeight ("厚度权重", Range(0.0, 1.0)) = 1.0
         _GlowEdgeWeight ("边缘权重", Range(0.0, 2.0)) = 0.25
         _GlowFresnelWeight ("菲涅尔权重", Range(0.0, 1.0)) = 0.0
-        _FresnelPower ("菲涅尔范围", Range(0.05, 8.0)) = 1.0
 
-        [Space(8)] [Enum(World, 0, Local, 1, LocalOneToOne, 2)] _VolumeSpace ("体积空间", Int) = 1
-        [LILVector3] _VolumeOffset ("体积偏移 XYZ", Vector) = (0,0,0,0)
+        [LILFoldoutEnd]
         [LILFoldoutEnd]
 
         [LILFoldout(MatCap)]

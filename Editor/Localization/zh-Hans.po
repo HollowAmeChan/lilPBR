@@ -605,6 +605,21 @@ msgstr "MatCap"
 msgid "Dynamic Fibers"
 msgstr "动态絮状"
 
+msgid "Fiber Output"
+msgstr "絮状输出"
+
+msgid "Fiber Flow"
+msgstr "絮状流动"
+
+msgid "Fiber Sampling"
+msgstr "絮状采样"
+
+msgid "Fiber Shape"
+msgstr "絮状形态"
+
+msgid "Fiber Color"
+msgstr "絮状颜色"
+
 msgid "Direct Light And Shadow"
 msgstr "直接光与阴影"
 

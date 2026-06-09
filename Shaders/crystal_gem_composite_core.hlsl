@@ -455,6 +455,21 @@ float3 FiberAnimatePosition(float3 position, float stepT)
     return p;
 }
 
+float3 FiberResolveSamplePosition(float3 sampleOS)
+{
+    float3 samplePosition = sampleOS;
+    if (_FiberSpace < 0.5)
+    {
+        samplePosition = TransformObjectToWorld(sampleOS);
+    }
+    else if (_FiberSpace > 1.5)
+    {
+        samplePosition *= GemObjectScale();
+    }
+
+    return samplePosition + _FiberOffset.xyz;
+}
+
 half FiberCoverage()
 {
     return saturate(0.35h + FiberDepth() * 0.0625h);
@@ -686,7 +701,8 @@ half3 CrystalDynamicFibers(GemVaryings input, GemSurface surface)
         float stepT = (i + 0.5) * (1.0 / 24.0);
         float3 sampleOS = ray.entryOS + ray.directionOS * (ray.travelDistance * stepT);
         float3 normalizedSample = sampleOS / ray.radius;
-        float3 impuritySample = FiberAnimatePosition(normalizedSample, stepT);
+        float3 fiberSample = FiberResolveSamplePosition(sampleOS) / ray.radius;
+        float3 impuritySample = FiberAnimatePosition(fiberSample, stepT);
         half density = FiberVolumeDensity(normalizedSample, impuritySample, ray.coverage, contrast, mode);
         half phase = FiberPhase(impuritySample, stepT);
         half3 sampleColor = FiberSampleColor(density, phase, mode);

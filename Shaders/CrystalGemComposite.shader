@@ -78,19 +78,36 @@ Shader "lilPBR/Crystal/Gem Composite"
         [LILFoldoutEnd]
 
         [LILFoldout(Dynamic Fibers)]
+        [LILFoldout(Fiber Output)]
         _FiberStrength ("动态絮状强度", Range(0.0, 1.0)) = 1.0
-        [Enum(Fractal, 0, Marble, 1, Veins, 2)] _FiberMode ("动态絮状模式", Int) = 0
+        _FiberBrightness ("絮状亮度", Range(0.0, 4.0)) = 1.25
+        _FiberFresnel ("絮状边缘混合", Range(0.0, 1.0)) = 0.25
+
+        [LILFoldoutEnd]
+        [LILFoldout(Fiber Flow)]
         _FiberFlowSpeed ("流动速度", Range(0.0, 4.0)) = 0.0
         _FiberFlowStrength ("流动强度", Range(0.0, 1.0)) = 0.0
         _FiberFlowPhase ("流动相位", Range(0.0, 6.283)) = 0.0
+
+        [LILFoldoutEnd]
+        [LILFoldout(Fiber Sampling)]
+        [Enum(World, 0, Local, 1, LocalOneToOne, 2)] _FiberSpace ("絮状采样空间", Int) = 1
+        [LILVector3] _FiberOffset ("絮状采样偏移 XYZ", Vector) = (0,0,0,0)
+
+        [LILFoldoutEnd]
+        [LILFoldout(Fiber Shape)]
+        [Enum(Fractal, 0, Marble, 1, Veins, 2)] _FiberMode ("动态絮状模式", Int) = 0
         _FiberScale ("絮状密度", Range(0.5, 6.0)) = 2.25
         _FiberDepth ("絮状深度", Range(0.0, 16.0)) = 12.0
-        _FiberBrightness ("絮状亮度", Range(0.0, 4.0)) = 1.25
         _FiberSharpness ("絮状锐度", Range(0.25, 8.0)) = 1.15
-        _FiberFresnel ("絮状边缘混合", Range(0.0, 1.0)) = 0.25
+
+        [LILFoldoutEnd]
+        [LILFoldout(Fiber Color)]
         [HDR] _FiberMainColor ("絮状主色", Color) = (1,0.72,0.18,1)
         [HDR] _FiberSecondaryColor ("絮状变化色", Color) = (1,0.16,0.02,1)
         _FiberColorVariation ("絮状颜色变化", Range(0.0, 1.0)) = 0.65
+
+        [LILFoldoutEnd]
         [LILFoldoutEnd]
 
         [LILFoldout(Environment)]
@@ -199,6 +216,8 @@ Shader "lilPBR/Crystal/Gem Composite"
         float _FiberFlowSpeed;
         float _FiberFlowStrength;
         float _FiberFlowPhase;
+        float _FiberSpace;
+        float4 _FiberOffset;
         float _FiberScale;
         float _FiberDepth;
         float _FiberBrightness;

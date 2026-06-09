@@ -228,22 +228,7 @@ half GemRefractionSurfaceNoise(GemVaryings input, half3 viewDirWS)
     float2 uv = input.uv * _SurfaceNoise_ST.xy + _SurfaceNoise_ST.zw;
     uv -= viewDirTS.xy / max(abs(viewDirTS.z), 0.25h) * _SurfaceNoiseParallax * 0.002;
     half noise = SAMPLE_TEXTURE2D(_SurfaceNoise, sampler_SurfaceNoise, uv * _SurfaceNoiseScale).r;
-    return saturate(lerp(1.0h, noise + _SurfaceNoiseAdd, _SurfaceNoiseStrength));
-}
-
-half GemStyleDirectionFade(float3 volumePosition)
-{
-    half strength = saturate(_StyleFadeStrength);
-    if (strength <= 0.0h)
-    {
-        return 1.0h;
-    }
-
-    float3 dir = SafeNormalize(_StyleFadeDirection.xyz);
-    float coord = dot(volumePosition, dir) + _StyleFadeOffset;
-    half softness = max(_StyleFadeSoftness, 0.001h);
-    half fade = smoothstep(-softness, softness, coord);
-    return lerp(1.0h, fade, strength);
+    return saturate(lerp(1.0h, noise, _SurfaceNoiseStrength));
 }
 
 half2 CrystalInternalField(GemVaryings input, GemSurface surface)
@@ -270,7 +255,6 @@ half2 CrystalInternalField(GemVaryings input, GemSurface surface)
     half mainMask = 0.0h;
     half secondaryMask = 0.0h;
     float stepDistance = _StepLength * 0.125;
-    float styleFade = GemStyleDirectionFade(position);
 
     [unroll]
     for (int i = 0; i < 8; i++)
@@ -288,8 +272,8 @@ half2 CrystalInternalField(GemVaryings input, GemSurface surface)
         half stepFade = saturate(1.0h - stepT * _FieldStepFade);
         half mainSample = pow(saturate(noise.r), max(_VolumeMainPower, 0.001h)) * _VolumeMainMultiply * 1.45h;
         half secondarySample = pow(saturate(noise.g), max(_VolumeSecondaryPower, 0.001h)) * _VolumeSecondaryMultiply * 2.0h;
-        mainMask += saturate(pow(saturate(mainSample), _FieldMaskPower)) * stepFade * styleFade;
-        secondaryMask += saturate(secondarySample) * stepFade * styleFade;
+        mainMask += saturate(pow(saturate(mainSample), _FieldMaskPower)) * stepFade;
+        secondaryMask += saturate(secondarySample) * stepFade;
     }
 
     return saturate(half2(mainMask, secondaryMask));

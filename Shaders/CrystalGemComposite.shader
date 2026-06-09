@@ -43,7 +43,6 @@ Shader "lilPBR/Crystal/Gem Composite"
         _SurfaceNoise ("表面噪声", 2D) = "white" {}
         _SurfaceNoiseScale ("表面噪声缩放", Range(0.001, 8.0)) = 1.0
         _SurfaceNoiseStrength ("表面噪声强度", Range(0.0, 1.0)) = 1.0
-        _SurfaceNoiseAdd ("表面噪声叠加", Range(0.0, 1.0)) = 0.0
         _SurfaceNoiseParallax ("表面噪声视差", Range(0.0, 32.0)) = 5.0
 
         [Space(8)] [NoScaleOffset] _GlowRamp ("辉光渐变", 2D) = "white" {}
@@ -54,11 +53,7 @@ Shader "lilPBR/Crystal/Gem Composite"
         _GlowFresnelWeight ("菲涅尔权重", Range(0.0, 1.0)) = 0.0
         _FresnelPower ("菲涅尔范围", Range(0.05, 8.0)) = 1.0
 
-        [Space(8)] _StyleFadeStrength ("风格方向渐隐强度", Range(0.0, 1.0)) = 0.0
-        [LILVector3] _StyleFadeDirection ("风格方向渐隐 XYZ", Vector) = (0,1,0,0)
-        _StyleFadeOffset ("风格方向渐隐偏移", Range(-1.0, 1.0)) = 0.0
-        _StyleFadeSoftness ("风格方向渐隐柔和度", Range(0.01, 2.0)) = 0.5
-        [Enum(World, 0, Local, 1, LocalOneToOne, 2)] _VolumeSpace ("体积空间", Int) = 1
+        [Space(8)] [Enum(World, 0, Local, 1, LocalOneToOne, 2)] _VolumeSpace ("体积空间", Int) = 1
         [LILVector3] _VolumeOffset ("体积偏移 XYZ", Vector) = (0,0,0,0)
         [LILFoldoutEnd]
 
@@ -171,7 +166,6 @@ Shader "lilPBR/Crystal/Gem Composite"
         float4 _SurfaceNoise_ST;
         float _SurfaceNoiseScale;
         float _SurfaceNoiseStrength;
-        float _SurfaceNoiseAdd;
         float _SurfaceNoiseParallax;
         float4 _GlowTint;
         float _GlowContrast;
@@ -179,10 +173,6 @@ Shader "lilPBR/Crystal/Gem Composite"
         float _GlowEdgeWeight;
         float _GlowFresnelWeight;
         float _FresnelPower;
-        float _StyleFadeStrength;
-        float4 _StyleFadeDirection;
-        float _StyleFadeOffset;
-        float _StyleFadeSoftness;
         float _VolumeSpace;
         float4 _VolumeOffset;
 

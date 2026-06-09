@@ -581,6 +581,21 @@ msgstr "表面"
 msgid "Surface Preprocess"
 msgstr "表面预处理"
 
+msgid "Surface Normals"
+msgstr "表面法线"
+
+msgid "Transparency And Refraction"
+msgstr "透明与折射"
+
+msgid "Opacity"
+msgstr "不透明度"
+
+msgid "Dispersion"
+msgstr "色散"
+
+msgid "Reflection And Highlight"
+msgstr "反射与高光"
+
 msgid "Internal Field And Glow"
 msgstr "内部场与发光"
 

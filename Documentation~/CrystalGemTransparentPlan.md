@@ -150,7 +150,7 @@ refracted.b = SampleSceneColor(uvB).b;
 
 参数：
 
-- `_Transparency`
+- `_Opacity`
 - `_IOR`
 - `_RefractionStrength`
 - `_RefractionFresnelPower`
@@ -160,7 +160,7 @@ refracted.b = SampleSceneColor(uvB).b;
 
 默认值建议：
 
-- `_Transparency = 0.45`
+- `_Opacity = 0.45`
 - `_IOR = 1.45`
 - `_RefractionStrength = 0.04`
 - `_RefractionFresnelPower = 1.0`
@@ -199,7 +199,7 @@ color = lerp(color, color * baseColor.rgb, _BaseTintStrength);
 color += reflection * fresnel * _ReflectionStrength;
 color += highlight * _HighlightStrength;
 
-half alpha = saturate(_Transparency * baseAlpha);
+half alpha = saturate(_Opacity * baseAlpha);
 return half4(color, alpha);
 ```
 
@@ -234,7 +234,7 @@ color += components.dynamicFibers;
 color += CrystalReflection(input, surface);
 color += CrystalHighlight(input, surface);
 
-return half4(max(color, 0.0h), surface.alpha * _Transparency);
+return half4(max(color, 0.0h), surface.alpha * _Opacity);
 ```
 
 ## 现有模块复用判断
@@ -368,7 +368,7 @@ return half4(max(color, 0.0h), surface.alpha * _Transparency);
   - `_SphericalNormalBlend`
   - `_FresnelPower`
 - `Transparency And Refraction`
-  - `_Transparency`
+  - `_Opacity`
   - `_IOR`
   - `_RefractionStrength`
   - `_RefractionFresnelPower`
@@ -393,11 +393,11 @@ return half4(max(color, 0.0h), surface.alpha * _Transparency);
   - `_Cull`
   - Debug mode。
 
-## 不透明版本清理
+## 不透明版本保留
 
-`CrystalGemComposite.shader` 里表面预处理的颜色处理可以删掉，因为不透明版现在主要靠内部场、MatCap、Reflection、Highlight 和基础光照。
+`CrystalGemComposite.shader` 继续保留 `Surface Preprocess` 里的表面颜色处理。透明版不搬这组参数和函数，因为透明版的表面颜色只做弱 tint，主要视觉来自背景折射、内部场、MatCap、絮状、反射和高光。
 
-建议删除：
+透明版不新增/不迁移：
 
 - `_ColorProcessStrength`
 - `_OuterTint`
@@ -409,20 +409,15 @@ return half4(max(color, 0.0h), surface.alpha * _Transparency);
 - `_FresnelTintPower`
 - `GemApplyBaseColorProcess(...)`
 - `GemResolveSurface(...)` 里的 `GemApplyBaseColorProcess(masks, surface);`
-- `zh-Hans.po` 中对应的冗余翻译项。
 
-`Surface Preprocess` 建议改名为 `Surface Normals`，只保留：
-
-- `_NormalStrength`
-- `_SphericalNormalBlend`
-- `_FresnelPower`
+这只是透明版的取舍，不要求修改不透明版。
 
 ## 实施阶段
 
-### Phase 0: 清理不透明版
+### Phase 0: 明确模块边界
 
-- 删除表面颜色处理相关属性、CBUFFER 字段和 HLSL 函数。
-- 更新中文汉化。
+- 不透明版保留 `Surface Preprocess`。
+- 透明版不搬表面颜色处理相关属性、CBUFFER 字段和 HLSL 函数。
 - 保持现有 cutout alpha clip 行为。
 - 统一 CRLF，避免 Unity 混合换行警告。
 
@@ -467,7 +462,7 @@ return half4(max(color, 0.0h), surface.alpha * _Transparency);
 - `_IOR` 和 `_RefractionStrength` 有清楚可见的折射变化。
 - `_ChromaticAberration` 能产生可控 RGB 色散。
 - normal map 会改变折射方向。
-- `_Transparency` 能控制透明度。
+- `_Opacity` 能控制不透明度。
 - 不引入 OIT、Renderer Feature、depth prepass 或额外透明排序系统。
 - 首版不包含 Built-in SubShader。
 - 不破坏现有 `CrystalGemComposite.shader`。

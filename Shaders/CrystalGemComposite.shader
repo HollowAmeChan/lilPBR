@@ -255,7 +255,7 @@ Shader "lilPBR/Crystal/Gem Composite"
         {
             "RenderPipeline" = "UniversalPipeline"
             "RenderType" = "TransparentCutout"
-            "Queue" = "AlphaTest"
+            "Queue" = "Geometry+100"
             "IgnoreProjector" = "True"
         }
 

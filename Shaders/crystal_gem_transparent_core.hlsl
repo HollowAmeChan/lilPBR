@@ -62,6 +62,7 @@ struct GemComponents
     half3 fieldGlow;
     half3 matCap;
     half3 dynamicFibers;
+    half3 fire;
 };
 
 half GemClamp(half value, half minValue, half maxValue)
@@ -74,6 +75,12 @@ float2 GemRotate2(float2 value, float angle)
     float s = sin(angle);
     float c = cos(angle);
     return float2(value.x * c - value.y * s, value.x * s + value.y * c);
+}
+
+half3 GemSaturateColor(half3 color, half saturation)
+{
+    half luminance = dot(color, half3(0.2126h, 0.7152h, 0.0722h));
+    return max(lerp(half3(luminance, luminance, luminance), color, max(saturation, 0.0h)), half3(0.0h, 0.0h, 0.0h));
 }
 
 GemVaryings GemVert(GemAttributes input)
@@ -716,6 +723,192 @@ half3 CrystalReflection(GemVaryings input, GemSurface surface)
     return reflection * max(_ReflectionTint.rgb, half3(0.0h, 0.0h, 0.0h)) * fresnel * strength;
 }
 
+half3 FireSpectralWeight(int spectralIndex)
+{
+    if (spectralIndex == 0)
+    {
+        return half3(0.8h, 0.0h, 1.0h);
+    }
+
+    if (spectralIndex == 1)
+    {
+        return half3(0.0h, 0.22h, 1.0h);
+    }
+
+    if (spectralIndex == 2)
+    {
+        return half3(0.0h, 1.0h, 0.82h);
+    }
+
+    if (spectralIndex == 3)
+    {
+        return half3(0.35h, 1.0h, 0.0h);
+    }
+
+    if (spectralIndex == 4)
+    {
+        return half3(1.0h, 0.68h, 0.0h);
+    }
+
+    return half3(1.0h, 0.0h, 0.06h);
+}
+
+half FireSpectralOffset(int spectralIndex)
+{
+    return ((half)spectralIndex - 2.5h) * 0.4h;
+}
+
+half FireHighlightResponse(half nDotH, half threshold, half sharpness)
+{
+    half broadPower = exp2(lerp(5.0h, 9.0h, sharpness));
+    half needlePower = exp2(lerp(8.0h, 14.0h, sharpness));
+    half broad = pow(saturate(nDotH), broadPower) * lerp(0.35h, 0.08h, sharpness);
+    half needle = pow(saturate(nDotH), needlePower);
+    half response = max(broad, needle);
+    return pow(saturate((response - threshold) / max(1.0h - threshold, 0.001h)), lerp(1.4h, 0.5h, sharpness));
+}
+
+half FireFacetMask(GemVaryings input, GemSurface surface, half spectralOffset)
+{
+    half directionalMask = pow(saturate(surface.fresnel + dot(surface.normalWS, surface.viewDirWS) * 0.25h), 0.6h);
+    half edgeMask = lerp(1.0h, saturate(surface.fresnel + surface.edges * 0.5h), saturate(_FireFresnelWeight * 0.5h));
+    half fieldMask = lerp(0.75h, 1.35h, saturate(surface.fieldMask + surface.thickness * 0.5h));
+    half scintillation = lerp(1.0h, saturate(directionalMask + surface.edges * 0.35h), saturate(_FireScintillation));
+    return saturate(edgeMask * fieldMask * scintillation);
+}
+
+float3 FireFacetNormal(GemVaryings input, GemSurface surface, half spectralOffset)
+{
+    float3 tangentWS = SafeNormalize(input.tangentWS.xyz);
+    float3 bitangentWS = SafeNormalize(cross(surface.normalWS, tangentWS) * input.tangentWS.w);
+    half facetFrequency = max(_FireFacetScale, 1.0h);
+    half angularA = sin(dot(surface.viewDirWS, tangentWS) * facetFrequency + spectralOffset * 2.37h);
+    half angularB = cos(dot(surface.viewDirWS, bitangentWS) * facetFrequency * 0.73h - spectralOffset * 1.91h);
+    half perturbStrength = saturate(_FireScintillation) * 0.18h;
+    float3 worldDir = SafeNormalize(
+        surface.normalWS +
+        tangentWS * angularA * perturbStrength +
+        bitangentWS * angularB * perturbStrength);
+    return worldDir;
+}
+
+float3 FireTraceDirection(GemVaryings input, GemSurface surface, half spectralOffset)
+{
+    float3 rayDir = -surface.viewDirWS;
+    float3 normalWS = FireFacetNormal(input, surface, spectralOffset);
+    float etaBase = 1.0 / max(_IOR + spectralOffset * _FireDispersion, 1.001);
+    half bounceCount = saturate((_FireBounces - 1.0h) * (1.0h / 7.0h)) * 7.0h + 1.0h;
+
+    [unroll]
+    for (int i = 0; i < 8; i++)
+    {
+        half bounceT = (i + 1.0h) * 0.137h + spectralOffset * 0.31h;
+        half bounceWeight = saturate(bounceCount - (half)i);
+        float3 facetNormal = FireFacetNormal(input, surface, spectralOffset + bounceT);
+        float3 refracted = refract(rayDir, facetNormal, etaBase);
+        float3 nextRayDir;
+        if (dot(refracted, refracted) <= 0.0001)
+        {
+            nextRayDir = reflect(rayDir, facetNormal);
+        }
+        else
+        {
+            half internalMix = saturate(0.45h + surface.thickness * 0.35h + surface.fresnel * 0.2h);
+            nextRayDir = SafeNormalize(lerp(refracted, reflect(rayDir, facetNormal), internalMix));
+        }
+
+        rayDir = SafeNormalize(lerp(rayDir, nextRayDir, bounceWeight));
+        normalWS = SafeNormalize(lerp(normalWS, facetNormal, 0.55 * bounceWeight));
+    }
+
+    float3 exitDir = refract(rayDir, -normalWS, max(_IOR + spectralOffset * _FireDispersion, 1.001));
+    if (dot(exitDir, exitDir) <= 0.0001)
+    {
+        exitDir = reflect(rayDir, -normalWS);
+    }
+
+    return SafeNormalize(exitDir);
+}
+
+half3 CrystalFireSampleLight(GemSurface surface, Light light, float3 facetNormal, float3 tracedDir, half facetMask)
+{
+    if (facetMask <= 0.0h)
+    {
+        return half3(0.0h, 0.0h, 0.0h);
+    }
+
+    half3 refractedHalfDir = SafeNormalize(light.direction + surface.viewDirWS + tracedDir * 0.18);
+    half3 reflectedHalfDir = SafeNormalize(light.direction + surface.viewDirWS);
+    half nDotH = max(saturate(dot(facetNormal, refractedHalfDir)), saturate(dot(facetNormal, reflectedHalfDir)) * 0.82h);
+    half threshold = saturate(_FireThreshold * 0.25h);
+    half response = FireHighlightResponse(nDotH, threshold, saturate(_FireSharpness));
+    half fresnelBoost = lerp(1.0h, surface.fresnel + surface.edges, saturate(_FireFresnelWeight));
+    return response * fresnelBoost * light.distanceAttenuation * light.color * GemClamp(_FireLightStrength, 0.0h, 8.0h);
+}
+
+half3 CrystalFire(GemVaryings input, GemSurface surface)
+{
+    half strength = GemClamp(_FireStrength, 0.0h, 32.0h);
+    if (strength <= 0.0h)
+    {
+        return half3(0.0h, 0.0h, 0.0h);
+    }
+
+    half3 spectralColor = half3(0.0h, 0.0h, 0.0h);
+    float2 screenUV = GetNormalizedScreenSpaceUV(input.positionCS);
+    half threshold = max(_FireThreshold, 0.0h);
+    half sharpness = saturate(_FireSharpness);
+    half envStrength = GemClamp(_FireEnvironmentStrength, 0.0h, 8.0h);
+    Light mainLight = GetMainLight();
+
+    [unroll]
+    for (int spectralIndex = 0; spectralIndex < 6; spectralIndex++)
+    {
+        half spectralOffset = FireSpectralOffset(spectralIndex);
+        half3 spectralWeight = FireSpectralWeight(spectralIndex);
+        float3 tracedDir = FireTraceDirection(input, surface, spectralOffset);
+        float3 facetNormal = FireFacetNormal(input, surface, spectralOffset);
+        half facetMask = FireFacetMask(input, surface, spectralOffset);
+
+        half perceptualRoughness = lerp(0.0h, 0.08h, 1.0h - sharpness);
+        half3 env = GlossyEnvironmentReflection(
+            tracedDir,
+            input.positionWS,
+            perceptualRoughness,
+            1.0h,
+            screenUV
+        );
+
+        float2 screenOffset = mul((float3x3)UNITY_MATRIX_V, tracedDir).xy;
+        half3 sceneFlash = GemSampleSceneColor(screenUV + screenOffset * (_RefractionStrength + _FireDispersion * spectralOffset) * 0.65h);
+        half3 lightFire = CrystalFireSampleLight(surface, mainLight, facetNormal, tracedDir, facetMask);
+
+        #if defined(_ADDITIONAL_LIGHTS)
+        uint pixelLightCount = GetAdditionalLightsCount();
+        for (uint lightIndex = 0u; lightIndex < pixelLightCount; ++lightIndex)
+        {
+            Light light = GetAdditionalLight(lightIndex, input.positionWS);
+            lightFire += CrystalFireSampleLight(surface, light, facetNormal, tracedDir, facetMask);
+        }
+        #endif
+
+        half3 environmentSource = env * envStrength + sceneFlash * envStrength * 0.35h;
+        half envBright = max(max(environmentSource.r, environmentSource.g), environmentSource.b);
+        half envGated = pow(saturate((envBright - threshold) / max(envBright + 0.001h, 0.001h)), lerp(2.4h, 0.7h, sharpness));
+
+        half directThreshold = threshold * 0.35h;
+        half directBright = max(max(lightFire.r, lightFire.g), lightFire.b);
+        half directGated = pow(saturate((directBright - directThreshold) / max(directBright + 0.001h, 0.001h)), lerp(1.3h, 0.45h, sharpness));
+
+        spectralColor += (environmentSource * envGated + lightFire * directGated) * spectralWeight * facetMask;
+    }
+
+    spectralColor *= 0.45h;
+    spectralColor = GemSaturateColor(spectralColor, _FireSaturation);
+    half3 tint = max(_FireTint.rgb, half3(0.0h, 0.0h, 0.0h)) * max(_FireTint.a, 0.0h);
+    return spectralColor * tint * strength;
+}
+
 half3 CrystalHighlight(GemVaryings input, GemSurface surface)
 {
     if (_HighlightStrength <= 0.0 || _HighlightSharpness <= 0.0)
@@ -756,6 +949,7 @@ GemComponents CrystalGemResolveComponents(GemVaryings input, GemSurface surface)
     components.fieldGlow = max(fieldGlow.field + fieldGlow.glow, half3(0.0h, 0.0h, 0.0h));
     components.matCap = max(CrystalMatCap(surface), half3(0.0h, 0.0h, 0.0h));
     components.dynamicFibers = max(CrystalDynamicFibers(input, surface), half3(0.0h, 0.0h, 0.0h));
+    components.fire = max(CrystalFire(input, surface), half3(0.0h, 0.0h, 0.0h));
     return components;
 }
 
@@ -769,6 +963,7 @@ half3 CrystalGemTransparent(GemVaryings input, GemSurface surface)
     color += components.fieldGlow;
     color += components.dynamicFibers;
     color += CrystalReflection(input, surface);
+    color += components.fire;
     color += CrystalHighlight(input, surface);
     return max(color, half3(0.0h, 0.0h, 0.0h));
 }

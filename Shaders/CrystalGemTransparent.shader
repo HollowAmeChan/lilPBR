@@ -29,6 +29,21 @@ Shader "lilPBR/Crystal/Gem Transparent"
         _ChromaticAberration ("色散", Range(-0.08, 0.25)) = 0.015
         [LILFoldoutEnd]
 
+        [LILFoldout(Fire)]
+        _FireStrength ("火彩强度", Range(0.0, 32.0)) = 0.0
+        _FireDispersion ("火彩色散", Range(0.0, 0.25)) = 0.04
+        _FireBounces ("内部折返次数", Range(1.0, 8.0)) = 5.0
+        _FireSharpness ("火彩锐度", Range(0.0, 1.0)) = 0.9
+        _FireThreshold ("火彩阈值", Range(0.0, 4.0)) = 0.8
+        _FireSaturation ("火彩饱和度", Range(0.0, 4.0)) = 2.0
+        _FireFresnelWeight ("边缘权重", Range(0.0, 2.0)) = 0.75
+        _FireScintillation ("切面闪烁", Range(0.0, 1.0)) = 0.5
+        _FireFacetScale ("切面密度", Range(1.0, 64.0)) = 20.0
+        _FireLightStrength ("直射火彩", Range(0.0, 8.0)) = 1.5
+        _FireEnvironmentStrength ("环境火彩", Range(0.0, 8.0)) = 1.0
+        [HDR] _FireTint ("火彩染色", Color) = (1,1,1,1)
+        [LILFoldoutEnd]
+
         [LILFoldout(Internal Field And Glow)]
         [LILFoldout(Output)]
         _FieldStrength ("内部场强度", Range(0.0, 4.0)) = 1.0
@@ -163,6 +178,19 @@ Shader "lilPBR/Crystal/Gem Transparent"
         float4 _RefractionTint;
         float _RefractionContrast;
         float _ChromaticAberration;
+
+        float _FireStrength;
+        float _FireDispersion;
+        float _FireBounces;
+        float _FireSharpness;
+        float _FireThreshold;
+        float _FireSaturation;
+        float _FireFresnelWeight;
+        float _FireScintillation;
+        float _FireFacetScale;
+        float _FireLightStrength;
+        float _FireEnvironmentStrength;
+        float4 _FireTint;
 
         float _FieldStrength;
         float _GlowStrength;

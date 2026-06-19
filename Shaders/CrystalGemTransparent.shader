@@ -24,21 +24,22 @@ Shader "lilPBR/Crystal/Gem Transparent"
         _FresnelPower ("整体菲涅尔范围", Range(0.05, 8.0)) = 1.0
         [LILFoldoutEnd]
 
-        [LILFoldout(Transparency And Refraction)]
-        _Opacity ("不透明度", Range(0.0, 1.0)) = 0.45
-        _OpticalBlend ("光学层混合", Range(0.0, 1.0)) = 0.72
+        [LILFoldout(Optics)]
+        [LILFoldout(Visibility And Refraction)]
+        _Opacity ("显示强度", Range(0.0, 1.0)) = 1.0
+        _OpticalBlend ("背景替换强度", Range(0.0, 1.0)) = 0.72
         _BaseTintStrength ("基础颜色染色", Range(0.0, 1.0)) = 0.25
         _IOR ("折射率", Range(1.001, 2.5)) = 1.45
         _RefractionStrength ("折射强度", Range(-0.25, 0.25)) = 0.04
         _RefractionFresnelPower ("折射菲涅尔", Range(0.05, 8.0)) = 1.0
         [HDR] _RefractionTint ("折射染色", Color) = (1,1,1,1)
         _RefractionContrast ("折射对比", Range(0.25, 4.0)) = 1.2
-        [LILFoldoutEnd]
-
-        [LILFoldout(Dispersion)]
         _ChromaticAberration ("色散", Range(-0.08, 0.25)) = 0.015
         [LILFoldoutEnd]
-
+        [LILFoldout(Double Sided)]
+        [ToggleUI] _UseDoubleSidedPass ("双 Pass 正反面", Int) = 0
+        [LILIf(_UseDoubleSidedPass, 1)] _BackfaceWeight ("背面贡献", Range(0.0, 1.0)) = 0.5
+        [LILFoldoutEnd]
         [LILFoldout(Fire)]
         _FireStrength ("火彩强度", Range(0.0, 32.0)) = 0.0
         _FireDispersion ("火彩色散", Range(0.0, 0.25)) = 0.04
@@ -52,6 +53,7 @@ Shader "lilPBR/Crystal/Gem Transparent"
         _FireLightStrength ("直射火彩", Range(0.0, 8.0)) = 1.5
         _FireEnvironmentStrength ("环境火彩", Range(0.0, 8.0)) = 1.0
         [HDR] _FireTint ("火彩染色", Color) = (1,1,1,1)
+        [LILFoldoutEnd]
         [LILFoldoutEnd]
 
         [LILFoldout(Internal Field And Glow)]
@@ -151,8 +153,6 @@ Shader "lilPBR/Crystal/Gem Transparent"
         [LILFoldoutEnd]
 
         [LILFoldout(Advanced)]
-        [ToggleUI] _UseDoubleSidedPass ("双 Pass 正反面", Int) = 0
-        [LILIf(_UseDoubleSidedPass, 1)] _BackfaceWeight ("背面贡献", Range(0.0, 1.0)) = 0.5
         [Enum(Off, 0, Front, 1, Back, 2)] [LILFoldoutEnd] _Cull ("剔除模式", Int) = 2
     }
 
@@ -172,6 +172,8 @@ Shader "lilPBR/Crystal/Gem Transparent"
     TEXTURE2D(_NormalMap); SAMPLER(sampler_NormalMap);
     TEXTURE2D(_SurfaceNoise); SAMPLER(sampler_SurfaceNoise);
     TEXTURE2D(_MatCapTex); SAMPLER(sampler_MatCapTex);
+
+    float _HoTransparentActive;
 
     CBUFFER_START(UnityPerMaterial)
         float4 _BaseColor;

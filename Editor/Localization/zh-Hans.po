@@ -584,6 +584,15 @@ msgstr "表面预处理"
 msgid "Surface Normals"
 msgstr "表面法线"
 
+msgid "Optics"
+msgstr "光学"
+
+msgid "Visibility And Refraction"
+msgstr "显示与折射"
+
+msgid "Double Sided"
+msgstr "双面绘制"
+
 msgid "Transparency And Refraction"
 msgstr "透明与折射"
 
@@ -592,6 +601,9 @@ msgstr "不透明度"
 
 msgid "Dispersion"
 msgstr "色散"
+
+msgid "Fire"
+msgstr "火彩"
 
 msgid "Reflection And Highlight"
 msgstr "反射与高光"

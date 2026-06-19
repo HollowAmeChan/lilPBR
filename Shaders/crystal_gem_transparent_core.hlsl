@@ -993,6 +993,7 @@ half4 GemFragForwardCore(GemVaryings input, bool isFront)
         surface.fresnel = GemFresnel(surface.normalWS, surface.viewDirWS, _FresnelPower);
     }
 
+    // _Opacity is a visibility mask for hiding mesh regions, not the glass blend amount.
     half visibility = saturate(surface.alpha * _Opacity);
     if (visibility <= 0.0001h)
     {
@@ -1007,12 +1008,12 @@ half4 GemFragForwardCore(GemVaryings input, bool isFront)
     half backfaceWeight = (isFront || _UseDoubleSidedPass <= 0.5h) ? 1.0h : saturate(_BackfaceWeight);
     half3 additiveColor = max(outputColor - transmission, half3(0.0h, 0.0h, 0.0h));
     half3 premultipliedColor = (transmission + additiveColor) * visibility * backfaceWeight;
-    return half4(premultipliedColor, opticalBlend * backfaceWeight);
+    return half4(premultipliedColor, opticalBlend * visibility * backfaceWeight);
 }
 
 half4 GemFragForwardSingle(GemVaryings input, bool isFront : SV_IsFrontFace) : SV_Target
 {
-    if (_UseDoubleSidedPass > 0.5h)
+    if (_UseDoubleSidedPass > 0.5h && _HoTransparentActive > 0.5h)
     {
         discard;
     }
@@ -1022,7 +1023,7 @@ half4 GemFragForwardSingle(GemVaryings input, bool isFront : SV_IsFrontFace) : S
 
 half4 GemFragForwardDouble(GemVaryings input, bool isFront : SV_IsFrontFace) : SV_Target
 {
-    if (_UseDoubleSidedPass <= 0.5h)
+    if (_UseDoubleSidedPass <= 0.5h || _HoTransparentActive <= 0.5h)
     {
         discard;
     }

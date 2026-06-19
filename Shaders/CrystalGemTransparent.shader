@@ -7,6 +7,15 @@ Shader "lilPBR/Crystal/Gem Transparent"
         _MainTex ("主贴图", 2D) = "white" {}
         _MaskTex ("表面遮罩 (R 边缘, G 厚度)", 2D) = "white" {}
         _NormalMap ("法线贴图", 2D) = "bump" {}
+        _EdgeMaskStrength ("边缘遮罩强度", Range(0.0, 4.0)) = 1.0
+        _EdgeMaskPower ("边缘遮罩指数", Range(0.05, 4.0)) = 1.0
+        _EdgeMaskContrast ("边缘遮罩对比", Range(0.0, 4.0)) = 1.0
+        _EdgeMaskOffset ("边缘遮罩偏移", Range(-1.0, 1.0)) = 0.0
+        _ThicknessMaskStrength ("厚度遮罩强度", Range(0.0, 4.0)) = 1.0
+        _ThicknessMaskPower ("厚度遮罩指数", Range(0.05, 4.0)) = 1.0
+        _ThicknessMaskContrast ("厚度遮罩对比", Range(0.0, 4.0)) = 1.0
+        _ThicknessMaskOffset ("厚度遮罩偏移", Range(-1.0, 1.0)) = 0.0
+        _ThicknessParallaxStrength ("厚度视差强度", Range(0.0, 4.0)) = 1.0
         [LILFoldoutEnd]
 
         [LILFoldout(Surface Normals)]
@@ -17,6 +26,7 @@ Shader "lilPBR/Crystal/Gem Transparent"
 
         [LILFoldout(Transparency And Refraction)]
         _Opacity ("不透明度", Range(0.0, 1.0)) = 0.45
+        _OpticalBlend ("光学层混合", Range(0.0, 1.0)) = 0.72
         _BaseTintStrength ("基础颜色染色", Range(0.0, 1.0)) = 0.25
         _IOR ("折射率", Range(1.001, 2.5)) = 1.45
         _RefractionStrength ("折射强度", Range(-0.25, 0.25)) = 0.04
@@ -141,6 +151,8 @@ Shader "lilPBR/Crystal/Gem Transparent"
         [LILFoldoutEnd]
 
         [LILFoldout(Advanced)]
+        [ToggleUI] _UseDoubleSidedPass ("双 Pass 正反面", Int) = 0
+        [LILIf(_UseDoubleSidedPass, 1)] _BackfaceWeight ("背面贡献", Range(0.0, 1.0)) = 0.5
         [Enum(Off, 0, Front, 1, Back, 2)] [LILFoldoutEnd] _Cull ("剔除模式", Int) = 2
     }
 
@@ -166,11 +178,21 @@ Shader "lilPBR/Crystal/Gem Transparent"
         float4 _MainTex_ST;
         float4 _MaskTex_ST;
         float4 _NormalMap_ST;
+        float _EdgeMaskStrength;
+        float _EdgeMaskPower;
+        float _EdgeMaskContrast;
+        float _EdgeMaskOffset;
+        float _ThicknessMaskStrength;
+        float _ThicknessMaskPower;
+        float _ThicknessMaskContrast;
+        float _ThicknessMaskOffset;
+        float _ThicknessParallaxStrength;
         float _NormalStrength;
         float _SphericalNormalBlend;
         float _FresnelPower;
 
         float _Opacity;
+        float _OpticalBlend;
         float _BaseTintStrength;
         float _IOR;
         float _RefractionStrength;
@@ -247,6 +269,8 @@ Shader "lilPBR/Crystal/Gem Transparent"
         float _HighlightSharpness;
         float _HighlightStrength;
         float4 _HighlightColor;
+        float _UseDoubleSidedPass;
+        float _BackfaceWeight;
     CBUFFER_END
 
     #include "crystal_gem_transparent_core.hlsl"
@@ -266,14 +290,52 @@ Shader "lilPBR/Crystal/Gem Transparent"
         {
             Name "ForwardLit"
             Tags { "LightMode" = "UniversalForward" }
-            Blend SrcAlpha OneMinusSrcAlpha
+            Blend One OneMinusSrcAlpha
             ZWrite Off
             ZTest LEqual
             Cull [_Cull]
 
             HLSLPROGRAM
             #pragma vertex GemVert
-            #pragma fragment GemFragForward
+            #pragma fragment GemFragForwardSingle
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_ATLAS
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "HoTransparentBackface"
+            Tags { "LightMode" = "HoTransparentBackface" }
+            Blend One OneMinusSrcAlpha
+            ZWrite Off
+            ZTest LEqual
+            Cull Front
+
+            HLSLPROGRAM
+            #pragma vertex GemVert
+            #pragma fragment GemFragForwardDouble
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_ATLAS
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "HoTransparentFrontface"
+            Tags { "LightMode" = "HoTransparentFrontface" }
+            Blend One OneMinusSrcAlpha
+            ZWrite Off
+            ZTest LEqual
+            Cull Back
+
+            HLSLPROGRAM
+            #pragma vertex GemVert
+            #pragma fragment GemFragForwardDouble
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
             #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
             #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION

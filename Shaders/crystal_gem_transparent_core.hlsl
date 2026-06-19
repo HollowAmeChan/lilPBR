@@ -120,6 +120,14 @@ half GemFresnel(half3 normalWS, half3 viewDirWS, half power)
     return pow(saturate(1.0h - dot(normalWS, viewDirWS)), max(power, 0.001h));
 }
 
+half GemShapeMask(half value, half strength, half power, half contrast, half offset)
+{
+    half shaped = saturate(value + offset);
+    shaped = pow(shaped, max(power, 0.001h));
+    shaped = saturate((shaped - 0.5h) * contrast + 0.5h);
+    return saturate(shaped * strength);
+}
+
 half3 GemResolveNormalWS(GemVaryings input)
 {
     half3 normalTS = UnpackNormalScale(
@@ -136,7 +144,7 @@ float2 GemParallaxMaskUV(GemVaryings input, half3 viewDirWS, half parallaxScale)
     half3 viewDirTS = mul(transpose(tangentToWorld), viewDirWS);
     float2 baseUV = input.uv * _MaskTex_ST.xy + _MaskTex_ST.zw;
     float height = SAMPLE_TEXTURE2D(_MaskTex, sampler_MaskTex, baseUV).g;
-    float2 parallax = viewDirTS.xy / max(abs(viewDirTS.z), 0.25h) * (height - 0.5h) * parallaxScale * 0.002;
+    float2 parallax = viewDirTS.xy / max(abs(viewDirTS.z), 0.25h) * (height - 0.5h) * parallaxScale * _ThicknessParallaxStrength * 0.002;
     return baseUV - parallax;
 }
 
@@ -146,8 +154,8 @@ GemMask GemResolveMask(GemVaryings input, half3 viewDirWS)
     half4 mask = SAMPLE_TEXTURE2D(_MaskTex, sampler_MaskTex, maskUV);
 
     GemMask data;
-    data.edges = saturate(mask.r);
-    data.thickness = saturate(mask.g);
+    data.edges = GemShapeMask(mask.r, _EdgeMaskStrength, _EdgeMaskPower, _EdgeMaskContrast, _EdgeMaskOffset);
+    data.thickness = GemShapeMask(mask.g, _ThicknessMaskStrength, _ThicknessMaskPower, _ThicknessMaskContrast, _ThicknessMaskOffset);
     return data;
 }
 
@@ -953,12 +961,16 @@ GemComponents CrystalGemResolveComponents(GemVaryings input, GemSurface surface)
     return components;
 }
 
-half3 CrystalGemTransparent(GemVaryings input, GemSurface surface)
+half3 CrystalGemTransmission(GemVaryings input, GemSurface surface)
 {
-    GemComponents components = CrystalGemResolveComponents(input, surface);
-
     half3 color = CrystalRefraction(input, surface);
     color = lerp(color, color * surface.baseColor, saturate(_BaseTintStrength));
+    return max(color, half3(0.0h, 0.0h, 0.0h));
+}
+
+half3 CrystalGemTransparent(GemVaryings input, GemSurface surface, GemComponents components)
+{
+    half3 color = CrystalGemTransmission(input, surface);
     color = CrystalApplyMatCapBlend(color, components.matCap);
     color += components.fieldGlow;
     color += components.dynamicFibers;
@@ -968,7 +980,7 @@ half3 CrystalGemTransparent(GemVaryings input, GemSurface surface)
     return max(color, half3(0.0h, 0.0h, 0.0h));
 }
 
-half4 GemFragForward(GemVaryings input, bool isFront : SV_IsFrontFace) : SV_Target
+half4 GemFragForwardCore(GemVaryings input, bool isFront)
 {
     UNITY_SETUP_INSTANCE_ID(input);
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
@@ -981,8 +993,41 @@ half4 GemFragForward(GemVaryings input, bool isFront : SV_IsFrontFace) : SV_Targ
         surface.fresnel = GemFresnel(surface.normalWS, surface.viewDirWS, _FresnelPower);
     }
 
-    half alpha = saturate(surface.alpha * _Opacity);
-    return half4(CrystalGemTransparent(input, surface), alpha);
+    half visibility = saturate(surface.alpha * _Opacity);
+    if (visibility <= 0.0001h)
+    {
+        discard;
+    }
+
+    half opticalBlend = saturate(_OpticalBlend);
+    GemComponents components = CrystalGemResolveComponents(input, surface);
+    half3 transmission = CrystalGemTransmission(input, surface);
+    half3 outputColor = CrystalGemTransparent(input, surface, components);
+
+    half backfaceWeight = (isFront || _UseDoubleSidedPass <= 0.5h) ? 1.0h : saturate(_BackfaceWeight);
+    half3 additiveColor = max(outputColor - transmission, half3(0.0h, 0.0h, 0.0h));
+    half3 premultipliedColor = (transmission + additiveColor) * visibility * backfaceWeight;
+    return half4(premultipliedColor, opticalBlend * backfaceWeight);
+}
+
+half4 GemFragForwardSingle(GemVaryings input, bool isFront : SV_IsFrontFace) : SV_Target
+{
+    if (_UseDoubleSidedPass > 0.5h)
+    {
+        discard;
+    }
+
+    return GemFragForwardCore(input, isFront);
+}
+
+half4 GemFragForwardDouble(GemVaryings input, bool isFront : SV_IsFrontFace) : SV_Target
+{
+    if (_UseDoubleSidedPass <= 0.5h)
+    {
+        discard;
+    }
+
+    return GemFragForwardCore(input, isFront);
 }
 
 #endif

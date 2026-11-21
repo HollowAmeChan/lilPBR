@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "version": "dev",
+  "release_tag": "dev",
+  "release_name": "lilPBR development build",
+  "repository": "HollowAmeChan/lilPBR",
+  "channel": "dev",
+  "package_name": "jp.lilxyzw.lilpbr",
+  "package_version": "1.0.0"
+}

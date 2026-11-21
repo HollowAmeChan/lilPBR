@@ -1,0 +1,8 @@
+{
+  "repository": "HollowAmeChan/lilPBR",
+  "packages": [
+    {
+      "path": "."
+    }
+  ]
+}

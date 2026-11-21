@@ -56,3 +56,7 @@ D:/Unity_Fork/lilToon-URP-Extensions/Runtime/PlanarReflection/HoPlanarReflection
 ```
 
 如果使用完整本地渲染系统，还应同时加入 `lilToon`、`lilToon-URP-Extensions` 和本地 URP 包。
+
+## 日期版本与安装包
+
+推送默认分支后自动发布日期版本（`YYYYMMDD-HHMMSS`）与 Unity 安装包；在 GitHub Releases 下载 `.tgz`，通过 Package Manager 从 tarball 安装。版本对齐、手动发布与安装说明见 [发布说明](.github/RELEASING.md)。
